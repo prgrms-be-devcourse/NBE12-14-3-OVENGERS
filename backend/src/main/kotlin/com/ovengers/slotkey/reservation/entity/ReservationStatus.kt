@@ -1,4 +1,4 @@
-package com.ovengers.slotkey.reservation.entity;
+package com.ovengers.slotkey.reservation.entity
 
 /**
  * 예약 상태 7종 (docs/core-domain-decisions.md core-domain-decisions 3-2).
@@ -10,12 +10,12 @@ package com.ovengers.slotkey.reservation.entity;
  *                           +--(start + 15분 미체크인)--> NO_SHOW
  * </pre>
  */
-public enum ReservationStatus {
+enum class ReservationStatus {
     HELD,
     EXPIRED,
     CONFIRMED,
     IN_USE,
     COMPLETED,
     CANCELLED,
-    NO_SHOW
+    NO_SHOW,
 }

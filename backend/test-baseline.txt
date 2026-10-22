@@ -3,4 +3,5 @@
 # 2026-10-22: step-0(#8)의 ReservationRefundPolicyTest 5개 반영. 136 suites, 1053 tests, skipped 0.
 # 2026-10-22: 응답·오류·공간/통계 회귀 19건 추가. 137 suites, 1072 tests, skipped 0.
 # 2026-10-22: 예약 결제 동시성·멱등성 및 환불 경계 테스트 6건 추가.
-tests=1078
+# 2026-10-22: 목요일 정책 경계 3건과 JPQL 프로젝션 1건 추가.
+tests=1082
