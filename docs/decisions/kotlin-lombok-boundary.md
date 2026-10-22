@@ -107,7 +107,7 @@ Lombok은 Java 컴파일 시점에 getter·생성자·builder를 생성한다. K
 
 ## 5. 검증
 
-아직 구현 전이므로 **검증 계획**이다.
+아래 1~8은 전체 전환의 **검증 계획**이며, 실행한 범위의 결과는 이어서 별도 기록한다.
 
 1. **첫 전환 PR(`step-0`)**: `ReservationRefundPolicy`는 Lombok을 쓰지 않는 순수 정적 클래스다. 이 파일을 Kotlin으로 바꾸고, 현재 없는 `ReservationRefundPolicyTest`를 새로 추가한다. Java 호출부 `ReservationCancelService`가 그대로 컴파일되는지 확인한다.
 2. **`step-1` 순수 정책 3개**: `ReservationTimePolicy`, `DoorAccessTimePolicy`, `SpaceOperatingHoursPolicy`를 전환한다. 기존 테스트 `ReservationTimePolicyTest`(14개), `DoorAccessTimePolicyTest`(9개), `SpaceOperatingHoursPolicyTest`(5개)가 그대로 통과해야 한다.
@@ -119,6 +119,17 @@ Lombok은 Java 컴파일 시점에 getter·생성자·builder를 생성한다. K
 8. **Spring 컨텍스트**: `@RequiredArgsConstructor` 서비스를 Kotlin 테스트에서 직접 생성하는 경우, 명시적 생성자 추가 후 `@SpringBootTest` 또는 단위 테스트가 통과하는지 확인한다.
 
 Kotlin Lombok 플러그인을 도입하지 않으므로 “플러그인 설정 테스트”는 없다. 이 결정의 검증은 **컴파일 성공·기존 테스트·경계 호출 테스트**다.
+
+### 2026-10-22 목요일 담당 정책 전환 검증 결과
+
+- 대상: `b263e07`에서 분기한 `feat/kotlin-thursday-policies` 작업 트리. 기존 환불 정책과 나머지 담당 정책·Enum·예외·프로젝션 6개를 검증했다.
+- `ReservationTimePolicy`가 사용하는 `BusinessException`의 Lombok `@Getter`를 제거하고 동일한 `getErrorCode()`를 명시했다. Java 생성자·기존 Java 호출부는 유지했다. Java 빌드 후 Kotlin 테스트에서도 기존 getter를 읽을 수 있었으므로 이번 실행을 “Lombok 미해결 참조 재현”으로 해석하지 않는다.
+- 선택 테스트 70개(6 스위트) 통과, 실패·오류·스킵 0. `javap`으로 정책 정적 메서드와 예외 생성자·상속 가능성을 확인했다.
+- 나노초 검사를 임시로 제거했을 때 새 경계 테스트 2개가 모두 실패했고, 원래 검사를 보존한 Kotlin 전환 후 통과했다. 변이는 최종 코드에 남기지 않았다.
+- Kotlin 전환 파일에 Lombok import/애노테이션은 없다. 남은 Java 사용처 때문에 Gradle Java annotation processor는 유지했다. 엔티티 22개 선행 delombok은 이번 범위에서 진행하지 않았다.
+- 전환 후 전체 컴파일·테스트·bootJar 명령은 종료 0(137 스위트·1,057개, 실패·오류·스킵 0). 필터 없는 clean build는 기존 ktlint 26건으로 종료 1이다. 전체 실행·기존 ktlint 제약·독립 검증 여부는 [단계 보고](../lab/notes/kotlin-thursday-policies/step-1.md)와 [테스트 결과](../testing/test-results.md)에 기록한다. CI·운영 배포 성공으로 확대 해석하지 않는다.
+
+- **PR 준비 최종 검증:** dev `2186ca1` 반영 후 코드 `1190d04`의 필터 없는 `clean build`가 종료 0(8분 54초)으로 통과했다. ktlint 위반 0, 139 스위트·1,082개 통과(실패·오류·스킵 0), 테스트 수 검사 통과. 초기 ktlint 26건은 dev #21에서 해소됐다. 자기검증이며 독립 검증·CI는 별도다.
 
 ## 6. 한계와 재검토 조건
 
