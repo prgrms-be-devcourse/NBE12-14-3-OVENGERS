@@ -81,6 +81,107 @@ class ReservationPaymentConcurrencyTest extends ReservationIntegrationTestSuppor
     }
 
     @Test
+    @DisplayName("서로 다른 예약을 동시에 결제해도 회원 잔액을 초과하여 차감하지 않는다")
+    void pay_differentReservationsConcurrently_preventsOverdraft() {
+        Long anotherSpaceId = createSpace();
+
+        ReservationResponse anotherHold = reservationHoldService.createHold(
+                memberId,
+                anotherSpaceId,
+                tomorrowAt(16, 0),
+                tomorrowAt(17, 0)
+        );
+
+        // 각 예약은 10,000원이고, 두 예약을 모두 결제하기에는 잔액이 부족한 상태
+        int chargeAmount = hold.totalAmount();
+        int balanceBefore = chargeAmount + PRICE_PER_SLOT;
+
+        assertThat(anotherHold.totalAmount()).isEqualTo(chargeAmount);
+        setBalance(memberId, balanceBefore);
+
+        // 서로 다른 멱등키로 두 예약을 동시에 결제
+        List<Runnable> tasks = List.of(
+                () -> reservationPaymentConfirmService.confirm(
+                        memberId,
+                        hold.reservationId(),
+                        hold.spaceVersion(),
+                        "overdraft-key-1"
+                ),
+                () -> reservationPaymentConfirmService.confirm(
+                        memberId,
+                        anotherHold.reservationId(),
+                        anotherHold.spaceVersion(),
+                        "overdraft-key-2"
+                )
+        );
+
+        List<Throwable> results = runConcurrently(tasks);
+
+
+        assertThat(successCount(results)).isEqualTo(1);
+        assertThat(failures(results)).containsExactly(ErrorCode.INSUFFICIENT_BALANCE);
+        assertThat(balanceOf(memberId)).isEqualTo(balanceBefore - chargeAmount);
+        assertThat(List.of(statusOf(hold.reservationId()), statusOf(anotherHold.reservationId()))).containsExactlyInAnyOrder("CONFIRMED", "HELD");
+
+        // 성공한 예약에만 차감 원장이 기록됐는지 확인
+        for (ReservationResponse target : List.of(hold, anotherHold)) {
+            Long reservationId = target.reservationId();
+
+            if ("CONFIRMED".equals(statusOf(reservationId))) {
+                assertThat(countLedger(reservationId, "RESERVATION_CHARGE")).isEqualTo(1);
+                assertThat(sumLedger(reservationId, "RESERVATION_CHARGE")).isEqualTo(-chargeAmount);
+                assertThat(countHistory(reservationId, "CONFIRMED")).isEqualTo(1);
+            } else {
+                assertThat(countLedger(reservationId, "RESERVATION_CHARGE")).isZero();
+                assertThat(countHistory(reservationId, "CONFIRMED")).isZero();
+            }
+        }
+
+        assertThat(countIdempotencyKeys(memberId)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("같은 Idempotency-Key라도 서로 다른 예약이면 각각 결제된다")
+    void pay_sameKeyForDifferentReservations_chargesBoth() {
+        // 같은 회원의 서로 다른 예약 준비
+        Long anotherSpaceId = createSpace();
+
+        ReservationResponse anotherHold = reservationHoldService.createHold(
+                memberId,
+                anotherSpaceId,
+                tomorrowAt(16, 0),
+                tomorrowAt(17, 0)
+        );
+
+        int totalAmount = hold.totalAmount() + anotherHold.totalAmount();
+
+        // 서로 다른 예약에 동일한 멱등키 사용
+        ReservationResponse first = reservationPaymentConfirmService.confirm(
+                memberId,
+                hold.reservationId(),
+                hold.spaceVersion(),
+                "same-key-different-reservation"
+        );
+
+        ReservationResponse second = reservationPaymentConfirmService.confirm(
+                memberId,
+                anotherHold.reservationId(),
+                anotherHold.spaceVersion(),
+                "same-key-different-reservation"
+        );
+
+        assertThat(first.status()).isEqualTo("CONFIRMED");
+        assertThat(second.status()).isEqualTo("CONFIRMED");
+        assertThat(first.reservationId()).isNotEqualTo(second.reservationId());
+        assertThat(balanceOf(memberId)).isEqualTo(INITIAL_BALANCE - totalAmount);
+        assertThat(countLedger(hold.reservationId(), "RESERVATION_CHARGE")).isEqualTo(1);
+        assertThat(countLedger(anotherHold.reservationId(), "RESERVATION_CHARGE")).isEqualTo(1);
+        assertThat(sumLedger(hold.reservationId(), "RESERVATION_CHARGE")).isEqualTo(-hold.totalAmount());
+        assertThat(sumLedger(anotherHold.reservationId(), "RESERVATION_CHARGE")).isEqualTo(-anotherHold.totalAmount());
+        assertThat(countIdempotencyKeys(memberId)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("같은 Idempotency-Key로 결제가 동시에 들어와도 크레딧은 1회만 차감되고, 이후 같은 키 재요청은 최초 응답을 그대로 돌려준다")
     void pay_sameKeyConcurrently_chargesOnceAndReplays() {
         List<Runnable> tasks = new ArrayList<>();
