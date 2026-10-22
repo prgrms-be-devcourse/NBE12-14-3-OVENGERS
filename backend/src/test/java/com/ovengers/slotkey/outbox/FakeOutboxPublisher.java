@@ -15,7 +15,7 @@ public class FakeOutboxPublisher implements OutboxPublisher {
     @Override
     public void publish(String topic, String key, String payload) {
         if (failWhen.test(payload)) {
-            throw new OutboxPublishException("fake publish failure", null);
+            throw new OutboxPublishException("fake publish failure");
         }
         sent.add(new Sent(topic, key, payload));
     }

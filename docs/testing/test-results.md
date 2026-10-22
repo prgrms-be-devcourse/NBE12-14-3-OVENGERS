@@ -8,6 +8,68 @@
 
 ---
 
+## 0-KT2. 목요일 전환 타입 non-null 후속 변경 (2026-10-22, 로컬)
+
+> 사용자의 nullable 제거 요청을 반영한 코드 `3c65285`, 브랜치 `feat/kotlin-thursday-policies`, PR #26. 초기 boxed Long·null 입력 보존 계약은 [non-null 결정](../decisions/kotlin-thursday-non-null-contract.md)으로 변경했다. 외부 PG 누락 값의 결과 모름 처리와 HTTP Bean Validation 경계는 유지했다.
+
+| 실행 | 결과 |
+| --- | --- |
+| 변경 전 Java null 계약 테스트 | 4개 모두 실패 (예상된 RED) |
+| 변경 후 선택 테스트 | 8 스위트·107개 통과, 실패/오류/스킵 0 |
+| 전체 `env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED ./gradlew --no-daemon clean build` | **종료 0, 9분 27초**, ktlint 위반 0 |
+| 전체 테스트 | **140 스위트·1,085개 통과, 실패/오류/스킵 0** |
+| 테스트 수 검사 | 종료 0, `tests=1085 baseline=1085 skipped=0 failures=0 errors=0` |
+| XML 시각 | 2026-10-22 16:42:39~16:51:36 KST |
+
+- 기존 Kotlin null 테스트 4개를 Java non-null 계약 테스트 4개로 대체하고, PG 코드 누락·명시적 null·null 본문 테스트 3개를 더했다. 테스트 하한은 1,082 → 1,085다.
+- 실제 MySQL JPQL 생성자 조회, Java 결제 소유권 비교, PG 비정상 JSON과 Outbox 실패 경로를 포함한다. Kotlin 운영·테스트 소스에서 물음표와 이중 느낌표는 모두 0건이다.
+- 환경은 앞선 macOS/JDK 21/Gradle 8.10.2/Docker MySQL Testcontainers와 같다. 로그 `/tmp/slotkey-non-null-full.log`, XML `/tmp/slotkey-non-null-full-xml/`는 임시 파일이다.
+- 구현자 **자기검증**이다. 독립 전체 검증·새 CI 결과·실제 외부 서비스·운영 배포는 별도다. 변경 파일·가정·리뷰 체크리스트는 [step-2 보고](../lab/notes/kotlin-thursday-policies/step-2.md)에 있다.
+
+---
+
+## 0-KT1-PR. 최신 dev 반영 후 목요일 전환 PR 검증 (2026-10-22, 로컬)
+
+> 코드 `1190d04`(`feat/kotlin-thursday-policies`), 기반 `origin/dev` `2186ca1`. 아래 초기 실행 이후 dev에 머지된 #21의 ktlint 수정과 #24까지의 테스트 보강을 반영했다. 초기 clean build 실패를 이 최종 결과와 구분한다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 명령 | `env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED ./gradlew --no-daemon clean build` |
+| 전체 빌드 | **종료 0, BUILD SUCCESSFUL in 8m 54s**, ktlint 운영/테스트 위반 0 |
+| 테스트 | **139 스위트·1,082개 통과, 실패/오류/스킵 0** |
+| XML 시각 | 2026-10-22 16:12:05~16:20:34 KST |
+| 테스트 수 검사 | 종료 0, `tests=1082 baseline=1082 skipped=0 failures=0 errors=0` |
+| 실행 근거 | `/tmp/slotkey-thursday-pr-build.log`, XML `/tmp/slotkey-thursday-pr-xml/` (임시 파일) |
+
+- 기존 dev 기준선 1,078개에 이번 전환의 4개를 더해 하한을 1,082개로 올렸다. Kotlin 전환 테스트의 기존 기대값은 유지했다.
+- 환경은 아래 초기 실행과 같은 macOS/JDK 21/Gradle 8.10.2/Docker MySQL Testcontainers다. 초기 실패 원인이던 기존 ktlint 26건은 dev #21로 해소됐으며 이 전환 PR에서 별도로 고치지 않았다.
+- 구현자의 **자기검증**이다. 별도 검증자의 전체 재실행, GitHub CI, 운영 배포 및 실제 외부 서비스 연결은 이 결과에 포함하지 않는다. 인계는 [단계 보고](../lab/notes/kotlin-thursday-policies/step-1.md)를 참조한다.
+
+---
+
+## 0-KT1. 목요일 담당 정책 Kotlin 전환 (2026-10-22, 로컬)
+
+> `b263e07`에서 분기한 `feat/kotlin-thursday-policies`의 미커밋 작업 트리. 기존 환불 정책을 재검증하고 이태호 담당 나머지 6개와 정책 테스트를 Kotlin으로 전환했다. 구현자의 **자기검증**이며, 별도 세션 코드 검토는 실행 결과 재검증과 구분한다.
+
+| 실행 | 결과 |
+| --- | --- |
+| 전환 전 전체 `./gradlew --no-daemon test` | 종료 0, 136 스위트·1,053개 통과, 실패/오류/스킵 0, 8분 1초 |
+| 새 나노초 경계 테스트 변이 검증 | 검사 누락 임시 변이에서 2개 모두 실패(종료 1), 변이 복구·전환 후 통과 |
+| 전환 후 선택 테스트 | 종료 0, 6 스위트·70개 통과, 실패/오류/스킵 0 |
+| 전환 후 `./gradlew --no-daemon clean compileKotlin compileJava test bootJar` | **종료 0, 137 스위트·1,057개 통과, 실패/오류/스킵 0**, 7분 53초 |
+| CI와 같은 테스트 수 검사 스크립트 | 종료 0, `tests=1057`, `baseline=1057`, `skipped=0` |
+| 전환 전·후 필터 없는 `clean build` | 종료 1, 기존 auth/member/inquiry Kotlin 7개 파일의 ktlint 26건. 전환 후 새 Kotlin 파일의 위반은 0건 |
+| 프론트 `node --test tests/*.cjs` / `npx tsc --noEmit` | 80/80 통과, 스킵 0 / 종료 0 |
+
+- 실행 환경: macOS, Microsoft OpenJDK 21.0.11, Gradle 8.10.2, Docker/MySQL Testcontainers, Fake PG/메일·Kafka OFF. 백엔드 테스트 명령은 `env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED`로 실행했다.
+- 전체 테스트 XML 타임스탬프: 2026-10-22 15:30:14~15:37:48 KST. 전체 실행 로그 `/tmp/slotkey-thursday-full.log`, XML `/tmp/slotkey-thursday-full-xml/`. 전환 전 XML `/tmp/slotkey-thursday-baseline-xml/`. `/tmp` 자료는 임시 파일이다.
+- 기존 시간 정책 14개·PG 분류 35개·환불 정책 5개를 유지했고, 초/나노초 경계 2개·Kotlin 오류 접근 1개·실제 DB JPQL 프로젝션 1개를 추가했다. 테스트 수 하한도 1,053 → 1,057로 올렸다.
+- 전환 후 `clean build`는 전체 테스트 산출물을 보존하려고 임시 init 스크립트로 build 디렉터리만 분리했다. 검사·테스트 제외 옵션은 사용하지 않았다. 전체 테스트·패키징 통과와 `clean build` 실패를 구분한다.
+- `javap`의 Java 정적 호출·record 접근자·boxed `Long` 생성자 및 실행 JAR의 대상 7개/Kotlin 런타임 포함을 확인했다. CI, 독립 전체 테스트 재실행, 실행 JAR의 HTTP 기동, 운영 배포와 실제 외부 PG/SMTP/Kafka 연결은 확인하지 않았다.
+- 상세 변경 목록·기존 ktlint 파일 목록·경미한 진단 문자열 차이는 [단계 보고](../lab/notes/kotlin-thursday-policies/step-1.md), 설계 근거는 [Lombok 경계](../decisions/kotlin-lombok-boundary.md)·[data class 범위](../decisions/kotlin-data-class-scope.md)를 참조한다.
+
+---
+
 ## 0-0. 기능 동결 기준선 실행 기록 (2026-10-20, 로컬)
 
 > 화·수 계획과 목요일 혼용 빌드 시범 전의 **기능 동결(Feature Freeze) 기준선**이다. 아래 수치는 로컬 실측이며 실제 배포 환경 검증과 별개다. 이번 실행은 대단위 1 범위이며 Kotlin 코드·프로덕션 로직은 변경하지 않았다.

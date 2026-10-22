@@ -48,7 +48,7 @@ class OutboxRelayTest {
     @Test
     void attemptsUpdateFailureDoesNotStopTheRound() {
         pending(event(1), event(2));
-        doThrow(new OutboxPublishException("kafka down", null)).when(publisher).publish(any(), any(), eq("{\"id\":1}"));
+        doThrow(new OutboxPublishException("kafka down")).when(publisher).publish(any(), any(), eq("{\"id\":1}"));
         doThrow(new IllegalStateException("db down")).when(repository).increaseAttempts(1L);
 
         relay.relayPending();

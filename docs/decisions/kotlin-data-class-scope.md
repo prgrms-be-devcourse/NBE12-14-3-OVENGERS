@@ -124,6 +124,10 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 | --- | --- | --- |
 | 담당자 간 충돌 없는 병렬 전환 | Kotlin다운 null 안전성 일부 포기, `@JvmRecord` 제약(상속·추가 상태 불가) | 전환 완료 후 정리 작업으로 재검토 |
 
+### 2-6. 2026-10-22 PR #26 후속 요청: 내부 예약 프로젝션의 non-null 식별자
+
+사용자가 이번 PR의 nullable 선언을 모두 제거하도록 요청했다. `ReservationTargetInfo`는 `Long?` 대신 `Long`을 사용하며 생성자·접근자는 primitive long으로 바뀐다. 실제 JPQL 조회와 Java 소유권 비교 호출부를 함께 검증한다. 이 변경은 내부 프로젝션에 한정하며, 2-5의 HTTP 요청 DTO null/검증 규칙은 유지한다. 선택 이유·대안·검증은 [목요일 non-null 계약](kotlin-thursday-non-null-contract.md)에 기록한다. 아래 최초 전환의 boxed Long 검증은 변경 전 이력이다.
+
 ## 3. 기각한 대안과 이유
 
 | 대안 | 장점 | 기각한 이유 |
@@ -147,7 +151,7 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 
 ## 5. 검증
 
-아직 DTO를 Kotlin으로 바꾸기 전이므로 **검증 계획**이다.
+아래 1~9는 전체 전환의 **검증 계획**이며, 실제 실행한 타입의 결과를 이어서 기록한다.
 
 1. **`SlotWindow` 경계(`step-1`)**: `SpaceOperatingHoursPolicy`를 Kotlin으로 바꾸고 nested `SlotWindow`를 `@JvmRecord data class`로 선언한다. Java `SpaceSlotAvailabilityService`의 `window.start()`/`window.end()`가 그대로 컴파일되는지 확인한다. `SpaceOperatingHoursPolicyTest` 5개와 `SpaceSlotAvailabilityServiceTest`의 관련 케이스가 통과해야 한다.
 2. **Java record 접근자**: `LoginRequest`를 전환할 때 `AuthController`의 `request.email()`/`request.password()`, `IssuedRefreshToken`을 전환할 때 `AuthService`의 `.sessionId()`/`.rawToken()`이 컴파일되는지 확인한다. `@JvmRecord`를 붙이거나 호출부를 같은 PR에서 바꾼다.
@@ -158,6 +162,16 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 7. **Spring Bean 금지 확인**: Kotlin 소스에서 `@Service`/`@Component`가 붙은 `data class`가 0개인지 grep 또는 ArchUnit으로 확인한다.
 8. **`@ConfigurationProperties` 파일럿**: `TossPaymentsProperties`를 Kotlin으로 옮길 때 `ApplicationContextRunner` 또는 `@SpringBootTest`로 바인딩·기본값·검증을 확인한다. `SpaceImageProperties`는 mutable 기본값을 유지하며 일반 class로 둔다.
 9. **전체 회귀**: `./gradlew --no-daemon clean build`로 기존 테스트와 새 DTO 경계 테스트가 모두 통과해야 한다. 135개 스위트·1,048건은 10/20 기준선이며, 전환 커밋의 실제 실행 수와 실패/스킵을 기록한다.
+
+### 2026-10-22 `ReservationTargetInfo` 검증 결과
+
+- `feat/kotlin-thursday-policies` 작업 트리에서 내부 JPQL 프로젝션을 `@JvmRecord data class`로 전환했다. `Long?`로 Java 원본의 boxed `Long` 생성자와 null 허용을 보존했다.
+- `javap`으로 `java.lang.Record` 상속, `(java.lang.Long, java.lang.Long)` 생성자와 `spaceId()`/`memberId()` 접근자를 확인했다. 기존 Java 서비스·테스트 호출부가 컴파일됐다.
+- 실제 MySQL의 `ReservationRepository.findTargetInfoById()` 생성자 프로젝션 테스트가 저장한 공간·회원 식별자를 그대로 반환했다. 선택 실행 70개 중 해당 테스트 1개가 통과했다.
+- 진단 문자열은 Java record의 `ReservationTargetInfo[spaceId=..., memberId=...]`에서 Kotlin data class의 `ReservationTargetInfo(spaceId=..., memberId=...)`로 달라진다. 이에 의존하는 호출부는 찾지 못했으며, HTTP 응답·DB 값·이벤트 payload로 쓰지 않는다. 이 형식에 의존하는 관측 도구가 발견되면 재검토한다.
+- 전환 후 전체 컴파일·테스트·bootJar 명령은 1,057개 통과(실패·오류·스킵 0), 종료 0이다. 필터 없는 clean build는 기존 ktlint 26건으로 실패했다. 요청/응답 DTO·이벤트·설정 바인딩 전체의 검증을 완료했다는 뜻은 아니다. 전체 회귀와 검증 한계는 [단계 보고](../lab/notes/kotlin-thursday-policies/step-1.md)에 있다.
+
+- **PR 준비 최종 검증:** dev `2186ca1` 반영 후 코드 `1190d04`의 필터 없는 `clean build`가 종료 0(8분 54초)으로 통과했다. ktlint 위반 0, 139 스위트·1,082개 통과(실패·오류·스킵 0), 테스트 수 검사 통과. 초기 ktlint 26건은 dev #21에서 해소됐다. 자기검증이며 독립 검증·CI는 별도다.
 
 ## 6. 한계와 재검토 조건
 
