@@ -1,6 +1,6 @@
-package com.ovengers.slotkey.credit.entity;
+package com.ovengers.slotkey.credit.entity
 
-public enum CreditTransactionType {
+enum class CreditTransactionType {
     SIGNUP_GRANT,
     ADMIN_GRANT,
     RESERVATION_CHARGE,
