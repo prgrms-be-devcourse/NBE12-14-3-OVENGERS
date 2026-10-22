@@ -17,20 +17,6 @@ class ReservationTimePolicyTest {
     private val now = LocalDateTime.of(2026, 9, 17, 10, 0)
 
     @Test
-    @DisplayName("시작 또는 종료 시각이 null이면 VALIDATION_FAILED 예외가 발생한다")
-    fun validate_nullTime_throwsValidationFailed() {
-        val valid = LocalDateTime.of(2026, 9, 17, 14, 0)
-
-        assertThatThrownBy { ReservationTimePolicy.validate(null, valid, opening, closing, now) }
-            .isInstanceOf(BusinessException::class.java)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.VALIDATION_FAILED)
-
-        assertThatThrownBy { ReservationTimePolicy.validate(valid, null, opening, closing, now) }
-            .isInstanceOf(BusinessException::class.java)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.VALIDATION_FAILED)
-    }
-
-    @Test
     @DisplayName("종료 시각이 시작 시각보다 늦지 않으면 INVALID_RESERVATION_TIME 예외가 발생한다")
     fun validate_endNotAfterStart_throwsInvalidTime() {
         val start = LocalDateTime.of(2026, 9, 17, 14, 0)
@@ -164,17 +150,6 @@ class ReservationTimePolicyTest {
     }
 
     @Test
-    @DisplayName("연장 시각 정보가 null이면 VALIDATION_FAILED 예외가 발생한다")
-    fun validateExtension_nullTime_throwsValidationFailed() {
-        assertThatThrownBy { ReservationTimePolicy.validateExtension(null, extendFrom, closing) }
-            .isInstanceOf(BusinessException::class.java)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.VALIDATION_FAILED)
-        assertThatThrownBy { ReservationTimePolicy.validateExtension(extendFrom, null, closing) }
-            .isInstanceOf(BusinessException::class.java)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.VALIDATION_FAILED)
-    }
-
-    @Test
     @DisplayName("운영 시간 안에서 30분 단위로 같은 날 연장하면 예외 없이 통과한다")
     fun validateExtension_validExtension_doesNotThrow() {
         val newEnd = LocalDateTime.of(2026, 9, 18, 21, 30)
@@ -216,14 +191,14 @@ class ReservationTimePolicyTest {
 
     @Test
     @DisplayName("예약 시간 오류는 Kotlin 호출부에서도 기존 오류 코드와 상세를 제공한다")
-    fun validate_nullStart_preservesBusinessError() {
+    fun validateExtension_invalidRange_preservesBusinessError() {
         val exception =
             catchThrowableOfType(
-                { ReservationTimePolicy.validate(null, now.plusHours(1), opening, closing, now) },
+                { ReservationTimePolicy.validateExtension(extendFrom, extendFrom, closing) },
                 BusinessException::class.java,
             )
 
         assertThat(exception.errorCode).isEqualTo(ErrorCode.VALIDATION_FAILED)
-        assertThat(exception.message).isEqualTo("예약 시작/종료 시각은 필수입니다.")
+        assertThat(exception.message).isEqualTo("연장 시각은 기존 종료 시각보다 늦어야 합니다.")
     }
 }

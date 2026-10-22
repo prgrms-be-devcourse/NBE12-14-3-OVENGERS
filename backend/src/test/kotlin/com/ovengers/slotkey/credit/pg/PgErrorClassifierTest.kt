@@ -4,15 +4,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.NullAndEmptySource
+import org.junit.jupiter.params.provider.EmptySource
 import org.junit.jupiter.params.provider.ValueSource
 
 class PgErrorClassifierTest {
     @ParameterizedTest
-    @NullAndEmptySource
+    @EmptySource
     @ValueSource(strings = ["   "])
     @DisplayName("4xx 응답의 에러 코드가 없으면 결과 모름으로 분류한다")
-    fun classify_clientErrorWithoutCode_returnsIndeterminate(errorCode: String?) {
+    fun classify_clientErrorWithoutCode_returnsIndeterminate(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
@@ -21,10 +21,10 @@ class PgErrorClassifierTest {
     }
 
     @ParameterizedTest
-    @NullAndEmptySource
+    @EmptySource
     @ValueSource(strings = ["   "])
     @DisplayName("5xx 응답의 에러 코드가 없으면 결과 모름으로 분류한다")
-    fun classify_serverErrorWithoutCode_returnsIndeterminate(errorCode: String?) {
+    fun classify_serverErrorWithoutCode_returnsIndeterminate(errorCode: String) {
         val result = PgErrorClassifier.classify(500, errorCode)
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
@@ -55,7 +55,7 @@ class PgErrorClassifierTest {
         ],
     )
     @DisplayName("공식 문서의 사용자 측 거절 코드는 명확한 거절로 분류한다")
-    fun classify_userDecline_returnsDeclined(errorCode: String?) {
+    fun classify_userDecline_returnsDeclined(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.DECLINED)
@@ -75,7 +75,7 @@ class PgErrorClassifierTest {
         ],
     )
     @DisplayName("공식 문서의 인증 키·요청 설정 오류는 우리 측 문제로 분류한다")
-    fun classify_merchantProblem_returnsUnknownMerchantError(errorCode: String?) {
+    fun classify_merchantProblem_returnsUnknownMerchantError(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
@@ -86,7 +86,7 @@ class PgErrorClassifierTest {
     @ParameterizedTest
     @ValueSource(strings = ["COMMON_ERROR", "UNKNOWN_ERROR", "FAILED_INTERNAL_SYSTEM_PROCESSING"])
     @DisplayName("5xx 및 분류되지 않은 오류는 결과 모름으로 분류한다")
-    fun classify_indeterminate_returnsUnknown(errorCode: String?) {
+    fun classify_indeterminate_returnsUnknown(errorCode: String) {
         val result = PgErrorClassifier.classify(500, errorCode)
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)

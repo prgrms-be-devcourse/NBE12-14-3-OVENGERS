@@ -36,9 +36,9 @@ object PgErrorClassifier {
     @JvmStatic
     fun classify(
         httpStatus: Int,
-        errorCode: String?,
+        errorCode: String,
     ): PgConfirmationResult {
-        if (errorCode == null || errorCode.isBlank()) {
+        if (errorCode.isBlank()) {
             return PgConfirmationResult.unknown(errorCode, PgConfirmationResult.UnknownReason.INDETERMINATE)
         }
         if (errorCode == "ALREADY_PROCESSED_PAYMENT") {

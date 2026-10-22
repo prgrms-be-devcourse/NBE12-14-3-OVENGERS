@@ -84,10 +84,10 @@ public final class TossPaymentsPgClient implements PgClient {
                     request.orderId(),
                     exception.getResponseBodyAsByteArray()
             );
-            PgConfirmationResult result = PgErrorClassifier.classify(
-                    exception.getStatusCode().value(),
-                    error == null ? null : error.code()
-            );
+            String errorCode = error == null ? null : error.code();
+            PgConfirmationResult result = errorCode == null
+                    ? indeterminate()
+                    : PgErrorClassifier.classify(exception.getStatusCode().value(), errorCode);
             warnConfirmationFailure(
                     request.orderId(),
                     result,

@@ -21,15 +21,12 @@ object ReservationTimePolicy {
      */
     @JvmStatic
     fun validate(
-        startTime: LocalDateTime?,
-        endTime: LocalDateTime?,
-        opening: LocalTime?,
-        closing: LocalTime?,
-        now: LocalDateTime?,
+        startTime: LocalDateTime,
+        endTime: LocalDateTime,
+        opening: LocalTime,
+        closing: LocalTime,
+        now: LocalDateTime,
     ) {
-        if (startTime == null || endTime == null) {
-            throw BusinessException(ErrorCode.VALIDATION_FAILED, "예약 시작/종료 시각은 필수입니다.")
-        }
         if (!startTime.isBefore(endTime)) {
             throw BusinessException(ErrorCode.INVALID_RESERVATION_TIME, "종료 시각은 시작 시각보다 늦어야 합니다.")
         }
@@ -52,13 +49,10 @@ object ReservationTimePolicy {
 
     @JvmStatic
     fun validateExtension(
-        currentEndTime: LocalDateTime?,
-        newEndTime: LocalDateTime?,
-        closing: LocalTime?,
+        currentEndTime: LocalDateTime,
+        newEndTime: LocalDateTime,
+        closing: LocalTime,
     ) {
-        if (currentEndTime == null || newEndTime == null) {
-            throw BusinessException(ErrorCode.VALIDATION_FAILED, "연장 시각 정보는 필수입니다.")
-        }
         if (!newEndTime.isAfter(currentEndTime)) {
             throw BusinessException(ErrorCode.VALIDATION_FAILED, "연장 시각은 기존 종료 시각보다 늦어야 합니다.")
         }

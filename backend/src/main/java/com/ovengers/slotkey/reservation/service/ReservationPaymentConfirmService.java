@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 예약 2단계: 결제 확인(core-domain-decisions 2-1, core-domain-decisions 6-2). 돈이 움직이는 지점이라 Idempotency-Key가 여기 붙는다
@@ -59,7 +60,7 @@ public class ReservationPaymentConfirmService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
 
         // 2. 비소유자의 접근을 Space 잠금 및 version 검증 전에 차단 (정보 탐색 및 불필요한 락 획득 방지)
-        if (!targetInfo.memberId().equals(memberId)) {
+        if (!Objects.equals(targetInfo.memberId(), memberId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_NOT_OWNER);
         }
 

@@ -5,6 +5,6 @@ package com.ovengers.slotkey.reservation.dto
  */
 @JvmRecord
 data class ReservationTargetInfo(
-    val spaceId: Long?,
-    val memberId: Long?,
+    val spaceId: Long,
+    val memberId: Long,
 )
