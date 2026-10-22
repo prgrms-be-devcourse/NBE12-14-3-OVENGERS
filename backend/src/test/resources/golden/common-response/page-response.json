@@ -1,0 +1,16 @@
+{
+  "content": [
+    {
+      "id": 11,
+      "name": "공간 A"
+    },
+    {
+      "id": 12,
+      "name": "공간 B"
+    }
+  ],
+  "page": 1,
+  "size": 20,
+  "totalElements": 45,
+  "totalPages": 3
+}

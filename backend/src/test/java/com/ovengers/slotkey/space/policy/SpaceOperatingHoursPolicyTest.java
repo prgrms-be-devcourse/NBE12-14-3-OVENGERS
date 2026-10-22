@@ -40,7 +40,7 @@ class SpaceOperatingHoursPolicyTest {
     }
 
     @Test
-    @DisplayName("시작 시각이 종료 시각과 같거나 늦으면 빈 목록을 반환한다")
+    @DisplayName("시작 시각이 종료 시각과 같거나 늦거나 null이면 빈 목록을 반환한다")
     void generateSlots_invalidHours_returnsEmptyList() {
         // given
         LocalDate date = LocalDate.of(2026, 9, 20);
@@ -49,6 +49,24 @@ class SpaceOperatingHoursPolicyTest {
         assertThat(policy.generateSlots(date, LocalTime.of(18, 0), LocalTime.of(9, 0))).isEmpty();
         assertThat(policy.generateSlots(date, LocalTime.of(9, 0), LocalTime.of(9, 0))).isEmpty();
         assertThat(policy.generateSlots(date, null, LocalTime.of(18, 0))).isEmpty();
+        assertThat(policy.generateSlots(date, LocalTime.of(9, 0), null)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("30분 한 칸 운영시간은 슬롯 1개를 생성한다")
+    void generateSlots_singleSlot() {
+        LocalDate date = LocalDate.of(2026, 9, 20);
+
+        List<SpaceOperatingHoursPolicy.SlotWindow> slots = policy.generateSlots(
+                date,
+                LocalTime.of(9, 0),
+                LocalTime.of(9, 30)
+        );
+
+        assertThat(slots).containsExactly(new SpaceOperatingHoursPolicy.SlotWindow(
+                LocalDateTime.of(2026, 9, 20, 9, 0),
+                LocalDateTime.of(2026, 9, 20, 9, 30)
+        ));
     }
 
     @Test
@@ -93,6 +111,20 @@ class SpaceOperatingHoursPolicyTest {
         assertThat(policy.isWithinOperatingHours(opening, closing, LocalTime.of(9, 0), null)).isFalse();
         assertThat(policy.isWithinOperatingHours(null, closing, LocalTime.of(9, 0), LocalTime.of(10, 0))).isFalse();
         assertThat(policy.isWithinOperatingHours(opening, null, LocalTime.of(9, 0), LocalTime.of(10, 0))).isFalse();
+
+        // 운영시간 자체가 유효하지 않은 경우
+        assertThat(policy.isWithinOperatingHours(
+                LocalTime.of(18, 0),
+                LocalTime.of(9, 0),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0)
+        )).isFalse();
+        assertThat(policy.isWithinOperatingHours(
+                LocalTime.of(9, 0),
+                LocalTime.of(9, 0),
+                LocalTime.of(9, 0),
+                LocalTime.of(10, 0)
+        )).isFalse();
     }
 
     @Test
