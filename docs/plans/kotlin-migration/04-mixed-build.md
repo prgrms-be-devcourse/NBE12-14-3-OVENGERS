@@ -10,24 +10,24 @@ Kotlin Gradle 플러그인은 **`1.9.25` 하나로 고정**한다(Spring Boot 3.
 
 ## `kotlin-migration/step-0-mixed-build` 범위
 
-목요일 첫 PR은 혼용 빌드만 연다. 도메인 코드를 대량 전환하지 않는다.
+10/22(목) 첫 PR은 혼용 빌드와 순수 환불 정책 1개를 시범 전환한다. 이후 작업도 현재 3차 저장소에서 진행한다.
 
-1. `plugins`에 `org.jetbrains.kotlin.jvm`, `org.jetbrains.kotlin.plugin.spring`, `org.jetbrains.kotlin.plugin.jpa`를 `1.9.25`로 추가하고, `jvmToolchain(21)`·`-Xjsr305=strict`를 설정한다.
+1. `plugins`에 `org.jetbrains.kotlin.jvm`, `org.jetbrains.kotlin.plugin.spring`, `org.jetbrains.kotlin.plugin.jpa`를 `1.9.25`로 추가하고, `jvmToolchain(21)`·`-Xjsr305=strict`를 설정한다. `allOpen`에 `jakarta.persistence.Entity`·`MappedSuperclass`·`Embeddable`을 등록한다([JPA 결정](../../decisions/kotlin-jpa-entity-open.md)).
 2. `kotlin-reflect`, `jackson-module-kotlin`을 추가하고 `src/main/kotlin`, `src/test/kotlin`을 연다. 패키지 `com.ovengers.slotkey`는 유지한다.
 3. 시범 파일 1개는 [`ReservationRefundPolicy`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/policy/ReservationRefundPolicy.java)로 한다. Java 정적 호출자 [`ReservationCancelService`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/service/ReservationCancelService.java)가 있으므로 Kotlin `object`의 `@JvmStatic`을 쓰거나 호출부를 같은 PR에서 수정한다. 같은 이름의 `.java`와 `.kt`를 동시에 두지 않는다.
 4. 시범 전환 PR에서 `ReservationRefundPolicyTest`를 추가해 경계값(정확히 1시간 전, 1시간 전 직후, 시작 정각, 홀수 금액의 정수 나눗셈)을 직접 고정한다. 기존 `ReservationCancelServiceTest`, `ReservationCancelConcurrencyTest`도 재실행한다.
 5. Java 테스트에서 Kotlin 클래스를, Kotlin 테스트에서 기존 Java 클래스를 호출해 양방향 컴파일을 확인한다.
 
-이 PR의 롤백은 단일 revert로 Java 원본을 복구하는 것이다. 스키마·API·직렬화·메시지 형식을 바꾸지 않는다. 본격 도메인 전환은 3차 새 레포에서 [07](07-code-migration.md)의 `step-2` 이후로 진행한다.
+이 PR의 롤백은 단일 revert로 Java 원본을 복구하는 것이다. 스키마·API·직렬화·메시지 형식을 바꾸지 않는다. 이후 현재 저장소에서 [07](07-code-migration.md)의 `step-1` 순수 정책 → `step-2` DTO 순서로 이어간다.
 
 ## 빌드 설정 수정 순서
 
-1. `plugins`에 `org.jetbrains.kotlin.jvm`, `org.jetbrains.kotlin.plugin.spring`, `org.jetbrains.kotlin.plugin.jpa`를 같은 검증 버전(`1.9.25`)으로 추가한다. `java { toolchain ... 21 }`와 Kotlin JVM toolchain을 21로 맞춘다. 엔티티를 아직 Kotlin으로 옮기지 않더라도 JPA 플러그인의 설정·컴파일 성공을 확인한다.
+1. `plugins`에 `org.jetbrains.kotlin.jvm`, `org.jetbrains.kotlin.plugin.spring`, `org.jetbrains.kotlin.plugin.jpa`를 같은 검증 버전(`1.9.25`)으로 추가한다. `java { toolchain ... 21 }`와 Kotlin JVM toolchain을 21로 맞춘다. `kotlin-spring`의 all-open 기능에 JPA 애너테이션 3종을 `allOpen`으로 추가 등록한다. 엔티티 전환 전에도 이 설정의 컴파일 성공을 확인한다.
 2. `dependencies`에 `org.jetbrains.kotlin:kotlin-reflect`와 `com.fasterxml.jackson.module:jackson-module-kotlin`을 추가한다. Spring Boot 관리 버전과 Kotlin 플러그인 버전이 충돌하지 않는지 `dependencyInsight`로 점검한다. Java Lombok 의존성은 혼용 기간에 유지한다.
 3. `src/main/kotlin`과 `src/test/kotlin`을 사용한다. 저장소의 Java 패키지 이름 `com.ovengers.slotkey`는 그대로 둔다. Kotlin 파일을 Java 소스 디렉터리로 옮기지 않는다.
 4. 첫 시범 파일은 의존이 적고 행위 테스트가 이미 있는 정책/유틸 하나로 정한다. `step-0`에서는 `ReservationRefundPolicy`를 선택하며, Java의 정적 호출자가 있으므로 Kotlin `object`의 `@JvmStatic` 또는 Java 호출부 수정까지 한 PR에 포함한다. 같은 이름의 Java·Kotlin 클래스를 동시에 두지 않는다. 기존 서비스·동시성 테스트와 새 `ReservationRefundPolicyTest`가 통과해야 한다.
 5. Java 테스트에서 새 Kotlin 클래스를 호출하고, Kotlin 테스트에서 기존 Java 클래스를 호출해 양방향 경계를 확인한다. Lombok 생성 멤버를 Kotlin이 직접 참조하는 경우는 [05 문서](05-lombok-boundary.md)의 선택을 적용한다.
-6. [`backend-ci.yml`](../../../.github/workflows/backend-ci.yml)의 Ubuntu `build`는 PR 및 `dev` 푸시에서 `./gradlew build`를 실행한다. `dev`의 self-hosted `deploy`는 이미 **`./gradlew clean build -x test`**로 JAR를 다시 빌드하므로 Kotlin 클래스·런타임 포함 여부를 양쪽에서 확인한다. JAR 설치 후 systemd로 재시작하고 서비스 활성 상태·이번 재시작 이후의 기동 완료 로그를 검사한다. 테스트된 JAR 전달로 바꾸려면 별도 CI 변경으로 다루며, 배포 clean 도입을 미완료 작업으로 적지 않는다.
+6. [`backend-ci.yml`](../../../.github/workflows/backend-ci.yml)의 Ubuntu `build`는 PR 및 `dev` 푸시에서 `./gradlew build`를 실행한다. self-hosted `deploy`는 `DEPLOY_ENABLED == 'true'`인 `dev` 푸시에만 실행되고 `./gradlew clean build -x test`로 재빌드한다. `step-0`에서는 로컬/검증 환경의 JAR·기동을 확인한다. 운영 배포는 `step-6` 통과 후 별도 활성화할 때 JAR·systemd·이번 기동 로그·HTTP 응답을 확인한다. 배포 설정의 clean 재빌드는 이미 구현되어 있다.
 
 ## 검증 명령과 관찰 지점
 
@@ -57,8 +57,8 @@ cd backend
 ## 완료 조건
 
 - 로컬의 필터 없는 `clean build`와 CI `build`에서 양방향 컴파일·전체 테스트·패키징이 통과한다. Ubuntu `build`에는 clean이 없고 self-hosted `deploy`에는 있다는 차이를 기록한다.
-- `kotlin-migration/step-0-mixed-build`는 Kotlin 플러그인 3종·`kotlin-reflect`·Jackson Kotlin 모듈·`src/*/kotlin` 디렉터리와 `ReservationRefundPolicy` 시범 1개, `ReservationRefundPolicyTest`만 포함한다. 단일 revert로 Java 원본을 복구할 수 있어야 한다.
-- `dev` 배포의 Kotlin 포함 JAR와 systemd 재기동·기동 로그를 확인한다. 기능 검증은 별도로 공개 `GET /api/v1/spaces`의 200 등 정상 응답을 확인하고, 로그 검사만으로 기능 통과를 주장하지 않는다.
+- `kotlin-migration/step-0-mixed-build`는 Kotlin 플러그인 3종·JPA 대상 `allOpen` 설정·`kotlin-reflect`·Jackson Kotlin 모듈·`src/*/kotlin` 경로, `ReservationRefundPolicy` 시범 전환과 그 테스트·양방향 호출 검증을 포함한다. 단일 revert로 Java 원본을 복구할 수 있어야 한다.
+- 로컬/검증 환경에서 Kotlin 포함 JAR의 기동과 공개 `GET /api/v1/spaces`의 200 등 정상 응답을 확인한다. 운영 배포는 이번 단계의 필수 실행이 아니며, `step-6` 통과 후 활성화되어 실행한 경우 systemd·기동 로그·HTTP 응답을 별도로 남긴다.
 - 현재 API 계약과 DB 스키마가 유지되고, 시범 파일의 기존 테스트가 통과한다.
 - 선택한 Kotlin 버전(`1.9.25`)과 호환성 확인 근거가 [결정 문서](../../decisions/kotlin-plugin-version.md)와 PR에 기록된다. Spring Boot·Gradle 업그레이드는 별도 변경으로 남긴다.
 

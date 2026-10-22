@@ -44,7 +44,7 @@
 ## P0 보강 시점
 
 - **순수 정책·유틸 시범 전환은 P0 추가 보강 없이 시작할 수 있다.** `ReservationRefundPolicy`는 `ReservationCancelServiceTest`·`ReservationCancelConcurrencyTest`가 행위를 간접 고정하고 있으며, 첫 전환 PR에서 경계값을 직접 고정하는 `ReservationRefundPolicyTest`를 추가한다. `ReservationTimePolicyTest`(14), `DoorAccessTimePolicyTest`(9), `SpaceOperatingHoursPolicyTest`(5)는 이미 있다.
-- **엔티티·서비스 본 전환(3차 새 레포) 전까지 아래 P0를 완료한다.** 문의 회원 소유권·DB 상태, 서로 다른 예약의 잔액 초과 동시 차감, 위약금 구간의 REFUND/PENALTY 두 원장 행, Auth V2 세션·RT 재사용, 관리자 상세·이력 계약, 비활성 출입 로그의 독립 트랜잭션을 대상으로 한다.
+- **현재 3차 저장소에서 엔티티·DB를 사용하는 서비스 전환 전까지 아래 P0를 완료한다.** 문의 회원 소유권·DB 상태, 서로 다른 예약의 잔액 초과 동시 차감, 위약금 구간의 REFUND/PENALTY 두 원장 행, Auth V2 세션·RT 재사용, 관리자 상세·이력 계약, 비활성 출입 로그의 독립 트랜잭션을 대상으로 한다. 날짜별 배치는 [요일별 계획](daily/00-overview.md)을 따른다.
 - P0 보강도 기능 동결 커밋의 언어·트랜잭션 경계를 바꾸지 않는다. 보강 테스트가 현재 Java 구현의 결함을 드러내면 전환과 분리해 수정 여부를 결정한다.
 
 ## 실행 순서
@@ -70,7 +70,7 @@
 - 2026-10-20 `d1a15ec` 기준선은 `cd backend && ./gradlew clean build` 종료 코드 0과 1,048/1,048 통과로 확보됐다. 이후 각 전환 PR도 Docker 사용 환경에서 같은 명령이 통과하고 새 실행 기록이 남아야 한다.
 - 문의의 권한·검증·상태 전이가 HTTP 응답과 DB 재조회로 확인된다.
 - 빈 클래스 5개 각각의 테스트 목적 또는 제거 근거가 정리된다.
-- `dev` 푸시 시 `build` 성공 뒤 self-hosted `deploy`가 실행되는지 확인한다. 현재 배포는 clean 재빌드·systemd 재시작·기동 완료 로그 검사다. 이는 기능 HTTP 검증이 아니며 `-x test`를 테스트 통과로 세지 않는다.
+- PR/`dev` 푸시의 `build` 결과를 확인한다. self-hosted `deploy`는 `DEPLOY_ENABLED == 'true'`인 `dev` 푸시에만 실행된다. `step-6` 통과 후 배포를 활성화해 실행한 경우 clean 재빌드·systemd 재시작·기동 로그를 별도 확인한다. 배포 미실행과 테스트 실패를 구분하고, `-x test`를 테스트 통과로 세지 않는다.
 - 현재 `spring.test.context.cache.maxSize=2`를 유지하고, Fake PG/메일·Kafka OFF 기반 검증을 실제 외부 서비스/브로커 E2E와 구분한다. **기준선 실행만으로 P0 보강 완료를 주장하지 않는다.**
 
 다음 작업: [금전·경합](02-money-and-concurrency.md), [API 계약](03-api-contract.md).

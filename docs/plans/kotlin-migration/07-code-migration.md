@@ -9,7 +9,7 @@
 - **3차 새 레포(`NBE12-14-3-OVENGERS`)**: `step-0`(혼용 빌드·`ReservationRefundPolicy` 시범)부터 `step-6`까지 전 단계를 이 레포에서 진행한다. 기준점은 2차 레포 `dev`의 `v1.0.0`(코드는 `d1a15ec`와 동일)이며, 이 문서의 단계 ID와 롤백 경계를 그대로 유지한다.
 - **2차 레포(`NBE12-14-2-OVENGERS`)**: 전환 작업을 하지 않는 Java 기준선 보관용이다. 과거 PR·커밋·CI 링크는 이 레포의 기록이다.
 
-## 첫 전환 PR 범위 (지시 4번)
+## 첫 전환 PR 범위
 
 `step-0`은 혼용 빌드와 `ReservationRefundPolicy` 시범 전환까지 수행한다. 이어 `step-1`에서 나머지 순수 정책을 한 PR에 하나씩 전환한다.
 
@@ -22,7 +22,7 @@
 
 **롤백 경계:** 각 PR은 스키마·공개 API·직렬화·메시지 형식을 바꾸지 않으므로 단일 revert로 Java 원본을 복구한다. 한 PR에 두 정책 이상을 섞지 않아 revert 범위를 좁게 유지한다. `ReservationRefundPolicy`에는 기존 전용 단위 테스트가 없으므로, 전환 전에 경계값 테스트를 먼저 추가해 실패/통과를 확인한 뒤 Kotlin으로 옮긴다.
 
-## `kotlin-migration/step-N` 검증 체크리스트 (지시 5번)
+## `step-0`~`step-6` 검증 체크리스트
 
 | 단계 ID | 범위·대상 파일 | 필수 테스트 명령 | 정적/계약 확인 | 롤백 기준 |
 | --- | --- | --- | --- | --- |
@@ -31,10 +31,10 @@
 | `step-2` DTO·비영속 서비스 | [03](03-api-contract.md)의 DTO, 비영속 서비스 | 관련 `*ControllerTest`/`*ServiceTest` → `clean build` → `cd frontend && node --test tests/*.cjs && npx tsc --noEmit` | JSON 골든 표본(필드명·null 생략·날짜/enum), Bean Validation 위치, Jackson 직렬화. | PR revert. 공개 계약 변경은 언어 전환과 분리. |
 | `step-3` 컨트롤러·설정 | 컨트롤러, 보안 필터, `@ConfigurationProperties` | `*SecurityIntegrationTest`, `*ControllerTest`, 프로필 기동 테스트 → `clean build` | 401/403/429·`Retry-After`·쿠키 속성, `@ModelAttribute`/`Pageable` 기본값, 프로필별 바인딩. | PR revert. 쿠키·오류 코드 변경은 별도 계약 PR. |
 | `step-4` 엔티티·JPA/JDBC | 비핵심 엔티티(`WaitlistEntry`, `Notification`, `SpaceRankingSnapshot` 등), JDBC 저장소 | `./gradlew test --tests '*RepositoryTest' --tests '*IntegrationTest'` → `clean build` | `EntityManager` save/flush/clear/재조회, LAZY 프록시, Auditing, MapsId·nullable, `javap`로 엔티티 open 확인. Flyway V1~V26. | 스키마 변경이 없을 때만 revert. 있으면 forward-compatible migration 선행. |
-| `step-5` 핵심 도메인 | 인증(`AuthSession`/`RefreshToken`/rate limit), PG 충전, 예약·출입, Outbox·알림, 통계 | 도메인 동시성·통합 테스트 → `clean build` | 금액·원장·잠금 순서, RT 재사용·세션 폐기, `REQUIRES_NEW` 경계, Outbox payload 호환, proxy open. | 스키마·메시지 호환 유지 시 PR revert. 데이터 변경은 별도 롤백 계획. |
-| `step-6` 마무리 | 남은 Java/Lombok, 혼용 플러그인·annotation processor | `./gradlew clean build` + `bootRun`(local) + 프론트 검증 + 배포 JAR/systemd 로그 | 전체 Flyway V1~V26, 인증→충전→예약 결제→출입→취소→Outbox/알림, 통계 조회/확정. 남은 Java 목록·이유. | 정리 PR revert. Java 폴백은 전체 검증 전까지 유지. |
+| `step-5` 핵심 도메인 | 인증 세션/토큰·회원, 크레딧·PG 충전, 공간·예약·출입. `step-4`에서 옮긴 이벤트·통계와의 연결도 재검증 | 도메인 동시성·통합 테스트 → `clean build` | 금액·원장·잠금 순서, RT 재사용·세션 폐기, `REQUIRES_NEW` 경계, Outbox payload 호환, proxy open. | 스키마·메시지 호환 유지 시 PR revert. 데이터 변경은 별도 롤백 계획. |
+| `step-6` 마무리 | 남은 Java/Lombok, 혼용 플러그인·annotation processor | `./gradlew clean build` + local/검증 환경 JAR 기동 + 프론트 검증. 운영 배포 활성화 시 JAR/systemd/HTTP 별도 확인 | 전체 Flyway V1~V26, 인증→충전→예약 결제→출입→취소→Outbox/알림, 통계 조회/확정. 남은 Java 목록·이유. | 정리 PR revert. Java 폴백은 전체 검증 전까지 유지. |
 
-각 단계는 **하나의 PR = 하나의 정책 또는 밀접한 파일 묶음**이다. 위 명령은 최소값이며, 변경 파일에 따라 관련 테스트를 추가한다. CI `build`와 `dev`의 `clean build -x test`·systemd 기동 로그는 서로 다른 증거로 기록한다.
+각 단계는 **하나의 PR = 하나의 정책 또는 밀접한 파일 묶음**이다. 위 명령은 최소값이며, 변경 파일에 따라 관련 테스트를 추가한다. 운영 `deploy`는 `DEPLOY_ENABLED == 'true'`인 `dev` 푸시에만 실행한다. 전환 중 각 PR의 CI `build`와 로컬/검증 환경 기동, `step-6` 통과 후 실제 운영 배포 결과는 서로 다른 증거로 기록한다.
 
 ## 전환 순서
 
@@ -66,7 +66,7 @@
 2. nullable 선언을 DB 컬럼과 요청 계약에 맞춘다. `Optional` 반환이나 Java 플랫폼 타입은 명시적으로 처리한다. `Int`/`Long` 선택은 기존 JSON 숫자·DB 타입과 맞추고, 금액 계산의 오버플로 검증을 보존한다.
 3. `record`의 값 비교·접근자, Lombok builder·getter, Java 정적 메서드가 Java 호출부에서 어떻게 보였는지 확인한다. Kotlin `data class`는 DTO에 우선 사용하고 엔티티에서는 [06 문서](06-jpa-and-proxies.md)의 기준을 적용한다.
 4. `Clock`을 통한 시간 계산, 오류 코드, 로깅, `@Transactional` 경계를 유지한다. 자동 변환 도구 결과는 수동으로 읽고 Java의 변경 가능 컬렉션·null 의미가 달라지지 않았는지 확인한다.
-5. 관련 테스트 → 필터 없는 `cd backend && ./gradlew clean build` → HTTP/공유 직렬화에 영향이 있으면 `cd frontend && node --test tests/*.cjs && npx tsc --noEmit` 순으로 실행한다. frontend CI는 백엔드만 변경한 PR에는 자동 실행되지 않는다. 공개 타입/화면 변경은 lint·static export 빌드도 수행한다. Docker 없이 실 DB가 필수인 PR을 완료로 판정하지 않는다. CI `build`와 `dev`의 clean 재빌드·systemd 기동 로그/정상 HTTP 응답도 구분해 확인한다.
+5. 관련 테스트 → 필터 없는 `cd backend && ./gradlew clean build` → HTTP/공유 직렬화에 영향이 있으면 `cd frontend && node --test tests/*.cjs && npx tsc --noEmit` 순으로 실행한다. frontend CI는 백엔드만 변경한 PR에는 자동 실행되지 않는다. 공개 타입/화면 변경은 lint·static export 빌드도 수행한다. Docker 없이 실 DB가 필수인 PR을 완료로 판정하지 않는다. CI·로컬/검증 환경 기동·활성화 후 실제 운영 배포는 확인한 범위대로 따로 기록한다.
 6. PR에 전환한 파일, Java 호출부 수정, 계약 차이 여부, 명령·결과를 기록한다. API 동작이 바뀌면 `docs/api/api-spec.md`와 `frontend/src/types/api.ts`를 같은 PR에서 갱신한다.
 
 ## 완료 판단
