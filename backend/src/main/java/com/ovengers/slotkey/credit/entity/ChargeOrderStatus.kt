@@ -4,5 +4,5 @@ enum class ChargeOrderStatus {
     PENDING,
     CONFIRMING,
     PAID,
-    FAILED
+    FAILED,
 }

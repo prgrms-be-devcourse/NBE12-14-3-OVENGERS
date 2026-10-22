@@ -7,5 +7,5 @@ enum class CreditTransactionType {
     REFUND,
     PENALTY,
     WITHDRAWAL_EXPIRATION,
-    TOP_UP
+    TOP_UP,
 }
