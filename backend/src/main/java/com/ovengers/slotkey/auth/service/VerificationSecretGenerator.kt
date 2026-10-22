@@ -13,7 +13,7 @@ class VerificationSecretGenerator {
         String.format(
             Locale.ROOT,
             "%08d",
-            secureRandom.nextInt(100000000),
+            secureRandom.nextInt(100_000_000),
         )
 
     fun generateGrant(): String {

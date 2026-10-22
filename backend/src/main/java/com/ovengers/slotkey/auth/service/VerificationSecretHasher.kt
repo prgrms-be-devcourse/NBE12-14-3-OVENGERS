@@ -14,15 +14,14 @@ import javax.crypto.spec.SecretKeySpec
 class VerificationSecretHasher(
     @Value("\${app.verification.hash-secret}") secret: String,
 ) {
-    private val key: SecretKeySpec
+    private val key: SecretKeySpec =
+        Base64.getDecoder().decode(secret).let { keyBytes ->
+            require(keyBytes.size >= 32) {
+                "인증 검증용 비밀키는 최소 32바이트여야 합니다."
+            }
 
-    init {
-        val keyBytes = Base64.getDecoder().decode(secret)
-
-        require(keyBytes.size >= 32) { "인증 검증용 비밀키는 최소 32바이트여야 합니다." }
-
-        this.key = SecretKeySpec(keyBytes, "HmacSHA256")
-    }
+            SecretKeySpec(keyBytes, "HmacSHA256")
+        }
 
     fun hashCode(
         guardId: Long,

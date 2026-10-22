@@ -233,7 +233,7 @@ public class AdminMemberController {
             @AuthenticationPrincipal AuthPrincipal authPrincipal) {
         memberAuthorizationService.validateCanManageMember(authPrincipal);
         MemberStatusChangeResponse response =
-                adminMemberService.suspend(memberId, request.reason(), authPrincipal.memberId());
+                adminMemberService.suspend(memberId, request.reason, authPrincipal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -274,7 +274,7 @@ public class AdminMemberController {
             @AuthenticationPrincipal AuthPrincipal authPrincipal) {
         memberAuthorizationService.validateCanManageMember(authPrincipal);
         MemberStatusChangeResponse response =
-                adminMemberService.restore(memberId, request.reason(), authPrincipal.memberId());
+                adminMemberService.restore(memberId, request.reason, authPrincipal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
