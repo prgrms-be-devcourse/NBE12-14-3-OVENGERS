@@ -24,7 +24,7 @@ JPA 목록만으로 전환 범위를 끝내지 않는다. [`ProcessedEventStore`
 
 1. [04 혼용 빌드](04-mixed-build.md)에서 고정한 Kotlin `1.9.25`의 JPA 플러그인이 무인자 생성자를 제공하는지 확인하고, 엔티티 `open`은 `kotlin-spring`/`allopen` preset으로 명시한다. Kotlin 2.3.20 이상의 JPA `all-open` preset은 업그레이드 시 재검토한다. Spring `@Service`·`@Configuration`은 `kotlin-spring` 프록시 설정을 확인한다.
 2. 엔티티별로 `@Table`, `@Id`, `@GeneratedValue`, `@Column`, `@Enumerated`, 관계·지연 로딩, 상속 필드를 표로 기록한다. Kotlin에서 애너테이션이 필드에 놓이도록 `@field:` 지정 여부를 확인한다. 실제 매핑은 `EntityManager` 저장·flush·clear·재조회로 검증한다.
-3. JPA 엔티티는 변경 가능한 상태와 영속성 식별자를 갖는다. 자동 `equals/hashCode/toString`이 연관관계를 순회하거나 미영속/영속 객체 동등성을 바꾸지 않도록 `data class`를 기본 선택으로 사용하지 않는다. 필수 필드는 생성 팩터리에서 보장하되 JPA의 무인자 인스턴스화 경로도 테스트한다.
+3. JPA 엔티티와 `@MappedSuperclass`에는 [채택한 결정](../../decisions/kotlin-jpa-entity-open.md)에 따라 `data class`를 사용하지 않는다. 일반 클래스로 기존 동등성·연관관계·생성 팩터리를 유지하고 JPA의 무인자 인스턴스화 경로도 테스트한다.
 4. `Space.version = 0`, nullable 시각 필드와 `Member.balance`의 기본값이 신규 생성·DB 재조회에서 유지되는지 확인한다. `RefreshToken.member`·`RefreshToken.authSession`은 `entityManager.flush(); entityManager.clear()` 후 프록시 초기화 전/후를 확인해 예기치 않은 즉시 로딩을 찾는다.
 5. [`JpaAuditingConfig`](../../../backend/src/main/java/com/ovengers/slotkey/global/config/JpaAuditingConfig.java)의 주입 `Clock`과 감사 로그의 MANDATORY를 확인한다. 인증 grant/guard·SlotReleasedRecorder·ProcessedEventStore도 MANDATORY이며 호출자 없는 호출의 거절과 비즈니스 변경의 동반 롤백을 보존한다. PG 외부 호출·relay는 DB 트랜잭션 밖에 남기고 준비/확정/상태 갱신의 빈 경계를 유지한다. Kotlin final/self-invocation으로 AOP를 우회하지 않는지 실제 Spring 빈과 DB로 검증한다.
 6. `SpaceImageProperties`와 `TossPaymentsProperties`의 경로/URI/Duration·기본값/nullable·환경변수 우선순위를 기동 테스트로 확인한다. 인증 HMAC·SMTP 발신/계정 일치, Fake PG/test 프로필, Kafka와 스케줄러 활성 조건은 [04](04-mixed-build.md)의 기동 표를 따른다.

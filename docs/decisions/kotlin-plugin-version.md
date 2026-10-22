@@ -12,9 +12,11 @@ related: [kotlin-lombok-boundary.md, kotlin-jpa-entity-open.md, kotlin-data-clas
 > **상태:** 채택 (2026-10-20). 아직 혼용 빌드 PR을 만들기 전이므로 **구현 전 채택**이며, `kotlin-migration/step-0`의 클린 빌드로 최종 확정한다.
 > 기준: `dev` `d1a15eca3228c8b1b1f9260fc7a686860d2b1e44`, Spring Boot 3.3.4, Gradle 8.10.2, Java 21 toolchain.
 
+> 2026-10-22 설명 정정: Kotlin과 Jackson의 버전 체계를 구분하고 테스트 수를 과거 기준선으로 명시했다. 채택일과 구현 전 상태는 유지한다.
+
 ## 한 줄 요약
 
-Spring Boot 3.3.4 BOM이 관리하는 Kotlin **1.9.25**를 플러그인·stdlib·reflect·Jackson Kotlin 모듈의 단일 버전으로 고정해, Java→Kotlin 전환과 툴체인 업그레이드를 같은 PR에서 섞지 않는다.
+Kotlin 플러그인·stdlib·reflect는 Spring Boot 3.3.4의 Kotlin 버전 **1.9.25**에 맞추고, `jackson-module-kotlin`은 별도의 Jackson BOM 버전 **2.17.2**를 따른다. Java→Kotlin 전환과 툴체인 업그레이드는 같은 PR에 섞지 않는다.
 
 ## 1. 문제와 배경
 
@@ -110,7 +112,7 @@ Kotlin 공식 [Gradle 호환성 표](https://kotlinlang.org/docs/gradle-configur
 
 | 얻는 것 | 잃는 것(비용·위험) | 완화책 |
 | --- | --- | --- |
-| Boot BOM과 플러그인·stdlib·reflect·Jackson 모듈의 단일 버전 | Kotlin 2.x의 K2 컴파일러·최신 언어 기능을 당장 쓰지 못한다. | 마이그레이션 기간에는 1.9.25를 유지하고, Spring Boot 업그레이드 또는 전환 완료 후 별도 PR에서 2.x를 검토한다. |
+| Kotlin 플러그인·stdlib·reflect의 버전 일치와 Jackson BOM 위임 | Kotlin 2.x의 K2 컴파일러·최신 언어 기능을 당장 쓰지 못한다. | 마이그레이션 기간에는 Kotlin 1.9.25를 유지하고, Jackson 모듈은 해당 BOM 버전을 사용한다. 업그레이드는 별도 PR에서 검토한다. |
 | 버전 덮어쓰기 없음, 재현 가능한 빌드 | 1.9.25는 2024년 버전으로, 1.9.x 라인의 기능·버그 수정이 더 이상 활발하지 않다. | 전환 기간을 짧게 유지하고, 보안·호환성 이슈가 확인되면 2.x 전환을 앞당긴다. |
 | BOM 정합성 | Gradle 8.10.2는 KGP 1.9.25의 공식 완전 지원 범위(≤8.1.1) 밖이다. | `step-0`에서 `clean build --warning-mode all`로 검증하고, 실패 시 wrapper 8.1.1 또는 KGP 2.1.x를 별도 결정한다. |
 | `-Xjsr305=strict`로 널 가능성 경계를 명확히 함 | 기존 Java 코드의 암묵적 null 허용이 컴파일 오류로 드러나 전환 PR이 커질 수 있다. | 오류가 난 지점만 명시적 nullable/`@Nullable`로 고친다. 프로젝트 전체에서 `-Xjsr305`를 끄지 않는다. |
@@ -121,7 +123,7 @@ Kotlin 공식 [Gradle 호환성 표](https://kotlinlang.org/docs/gradle-configur
 
 아직 구현 전이므로 **검증 계획**이다. `step-0`에서 아래를 확인하고 결과를 PR과 결과 보고서에 남긴다.
 
-1. **클린 빌드**: `JAVA_HOME=/usr/lib/jvm/java-21-openjdk env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED ./gradlew --no-daemon clean build`가 통과한다. 기준선과 동일하게 135개 스위트·1,048개 테스트가 통과해야 한다.
+1. **클린 빌드**: JDK 21 환경에서 `env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED ./gradlew --no-daemon clean build`가 통과한다. 135개 스위트·1,048건은 10/20 기준선이며, 기존 테스트와 새 경계 테스트를 포함한 해당 커밋의 전체 실행/실패/스킵 수를 기록한다.
 2. **태스크**: `compileJava`, `compileKotlin`, `test`, `bootJar`가 모두 실행된다.
 3. **의존성 정합**: `./gradlew dependencyInsight --dependency kotlin-stdlib --configuration runtimeClasspath`와 `kotlin-reflect`로 1.9.25가 선택되는지 확인한다. `jackson-module-kotlin`은 2.17.2인지 확인한다.
 4. **Gradle 경고**: `--warning-mode all` 출력에서 KGP 1.9.25와 Gradle 8.10.2의 비호환 경고를 수집한다. 경고가 있어도 빌드·테스트가 통과하면 기록 후 유지하고, 실패하면 fallback 결정을 연다.

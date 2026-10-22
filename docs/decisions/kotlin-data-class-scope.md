@@ -12,6 +12,8 @@ related: [kotlin-plugin-version.md, kotlin-lombok-boundary.md, kotlin-jpa-entity
 > **상태:** 채택 (2026-10-20). 아직 DTO를 Kotlin으로 바꾸기 전이므로 **구현 전 채택**이며, `kotlin-migration/step-0`·`step-1`의 `SlotWindow`와 이후 DTO 전환 PR의 양방향 컴파일·JSON 테스트로 확정한다.
 > 기준: `dev` `d1a15eca3228c8b1b1f9260fc7a686860d2b1e44`, record 선언 93개, `@Service` 58개, `@Component` 28개, `@Entity` 22개 + `@MappedSuperclass` 1개.
 
+> 2026-10-22 설명 정정: 현재 3차 저장소의 Java 호출부를 계속 확인하며, 테스트 수는 과거 기준선과 새 실행 결과를 구분한다. 채택일과 data class 적용 범위는 유지한다.
+
 ## 한 줄 요약
 
 Kotlin `data class`는 **요청/응답 DTO, 도메인 이벤트 페이로드, 순수 불변 값 객체**에만 쓰고, Java가 `name()` record 접근자로 호출하는 타입은 **`@JvmRecord`를 붙이거나 호출부를 같은 PR에서 전환**하며, Spring Bean·JPA 엔티티·`@ConfigurationProperties`에는 기본적으로 쓰지 않는다.
@@ -132,7 +134,7 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 6. **검증 애노테이션**: `@NotBlank`, `@Email`, `@Size` 등이 생성자 파라미터·필드·getter 중 어디에 적용되는지 확인한다. 필요하면 `@field:`/`@get:`/`@param:` use-site target을 명시한다.
 7. **Spring Bean 금지 확인**: Kotlin 소스에서 `@Service`/`@Component`가 붙은 `data class`가 0개인지 grep 또는 ArchUnit으로 확인한다.
 8. **`@ConfigurationProperties` 파일럿**: `TossPaymentsProperties`를 Kotlin으로 옮길 때 `ApplicationContextRunner` 또는 `@SpringBootTest`로 바인딩·기본값·검증을 확인한다. `SpaceImageProperties`는 mutable 기본값을 유지하며 일반 class로 둔다.
-9. **전체 회귀**: `./gradlew --no-daemon clean build`로 135개 스위트·1,048개 테스트가 통과해야 한다.
+9. **전체 회귀**: `./gradlew --no-daemon clean build`로 기존 테스트와 새 DTO 경계 테스트가 모두 통과해야 한다. 135개 스위트·1,048건은 10/20 기준선이며, 전환 커밋의 실제 실행 수와 실패/스킵을 기록한다.
 
 ## 6. 한계와 재검토 조건
 
@@ -141,8 +143,8 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 - **Kotlin 2.x에서 `@JvmRecord` 동작·안정성이 바뀔 때**: 1.9.25 기준 결정을 그대로 적용하지 않고, 바이트코드·Java 호출부를 다시 검증한다.
 - **Jackson/직렬화 프레임워크가 바뀔 때**: data class의 기본값·null 처리·필드 이름 전략을 다시 확인한다.
 - **`@ConfigurationProperties` 파일럿이 실패할 때**: data class 예외를 허용하지 않고 일반 class + 생성자 바인딩으로 유지한다.
-- **`copy`로 인한 불변식 위반이 발견될 때**: 해당 타입을 일반 class로 바꾸거나 `copy`를 `private`/미사용으로 제한한다.
-- **3차 신규 저장소에서 Java 호출부가 없을 때**: `@JvmRecord` 브리지 없이 DTO·VO에 data class를 바로 사용할 수 있다. 단, 엔티티·Spring Bean 금지 원칙은 유지한다.
+- **`copy`로 인한 불변식 위반이 발견될 때**: 해당 타입을 명시적 생성자·팩터리가 있는 일반 class로 바꿔 복제 경로에서도 불변식을 지키게 한다.
+- **해당 타입의 Java record 호출부를 모두 전환했을 때**: 필요한 바이트코드/JSON 호환성을 확인한 뒤 일반 data class로 단순화할 수 있다. 현재 3차 저장소에도 Java 호출부가 남아 있으므로 저장소 이름을 이유로 `@JvmRecord` 검토를 생략하지 않는다.
 
 ## 면접·발표용 정리 (구현 후)
 

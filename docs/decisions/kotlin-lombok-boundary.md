@@ -12,6 +12,8 @@ related: [kotlin-plugin-version.md, kotlin-jpa-entity-open.md, kotlin-data-class
 > **상태:** 채택 (2026-10-20). 아직 혼용 빌드 PR을 만들기 전이므로 **구현 전 채택**이며, `kotlin-migration/step-0`·`step-1`의 컴파일·테스트로 확정한다.
 > 기준: `dev` `d1a15eca3228c8b1b1f9260fc7a686860d2b1e44`, Java 소스 293개, Lombok import 88개, record 선언 93개.
 
+> 2026-10-22 설명 정정: 현재 3차 저장소에도 미전환 Java 호출 경계가 있음을 명시했다. Lombok 플러그인 미도입 결정과 채택일은 유지한다.
+
 ## 한 줄 요약
 
 Kotlin Lombok 컴파일러 플러그인을 쓰지 않고, **Kotlin으로 바꾸는 파일과 Kotlin이 직접 호출하는 Java 경계만 명시적 멤버로 delombok**하며, 아직 전환하지 않은 Java 내부는 해당 파일을 전환할 때까지 Lombok을 유지한다.
@@ -97,7 +99,7 @@ Lombok은 Java 컴파일 시점에 getter·생성자·builder를 생성한다. K
 2. **`step-1` 순수 정책 3개**: `ReservationTimePolicy`, `DoorAccessTimePolicy`, `SpaceOperatingHoursPolicy`를 전환한다. 기존 테스트 `ReservationTimePolicyTest`(14개), `DoorAccessTimePolicyTest`(9개), `SpaceOperatingHoursPolicyTest`(5개)가 그대로 통과해야 한다.
 3. **record 경계**: `SpaceOperatingHoursPolicy`의 nested `SlotWindow`는 Java `SpaceSlotAvailabilityService`가 `window.start()`/`window.end()`로 호출한다. 정책을 Kotlin으로 바꾸면 `@JvmRecord`를 붙이거나 호출부를 같은 PR에서 `getStart()`/`getEnd()`로 바꾼다. 자세한 기준은 [data class 범위 결정](kotlin-data-class-scope.md)을 따른다.
 4. **양방향 컴파일**: Kotlin이 Java의 명시적 멤버를 호출하는 코드와 Java가 Kotlin의 `@JvmStatic`/정적 팩토리를 호출하는 코드가 모두 `compileJava`·`compileKotlin`을 통과하는지 확인한다.
-5. **전체 회귀**: `./gradlew --no-daemon clean build`로 135개 스위트·1,048개 테스트가 통과해야 한다. Lombok 경계 변경이 런타임 동작을 바꾸지 않았다는 근거는 기존 테스트와 새 경계 테스트다.
+5. **전체 회귀**: `./gradlew --no-daemon clean build`로 기존 테스트와 새 경계 테스트가 모두 통과해야 한다. 135개 스위트·1,048건은 10/20 기준선이고, 실제 실행 수와 실패/스킵은 전환 커밋마다 새로 기록한다.
 6. **잔여 Lombok 확인**: Kotlin 파일에 `import lombok`이나 Lombok 애노테이션이 0개인지 확인한다. Java 파일의 Lombok import 수는 전환·delombok한 파일만큼 줄어야 하며, 미전환 파일은 그대로여야 한다.
 7. **시그니처 확인**: 필요한 경우 `javap -p`로 변환된 클래스의 생성자/getter/builder/정적 팩토리가 의도한 접근 제어자와 시그니처로 존재하는지 확인한다.
 8. **Spring 컨텍스트**: `@RequiredArgsConstructor` 서비스를 Kotlin 테스트에서 직접 생성하는 경우, 명시적 생성자 추가 후 `@SpringBootTest` 또는 단위 테스트가 통과하는지 확인한다.
@@ -111,7 +113,7 @@ Kotlin Lombok 플러그인을 도입하지 않으므로 “플러그인 설정 �
 - **Lombok을 프로젝트에서 완전히 제거할 때**: 이 결정은 “전환 경계 delombok”에서 “Lombok 없음”으로 자연스럽게 대체된다. 마지막 Java 파일 전환 후 `import lombok` 0개를 확인한다.
 - **Kotlin 2.x/K2로 올릴 때**: Kotlin Lombok 플러그인의 지원 상태와 FreeFair 플러그인 호환성을 다시 확인한다. 1.9.25 기준 결정을 그대로 2.x에 적용하지 않는다.
 - **고빈도 Java 클래스(예: 엔티티)를 많은 Kotlin 파일이 호출할 때**: 경계 delombok이 아니라 해당 클래스를 Kotlin으로 먼저 전환하는 편이 나은지 비교한다. JPA 엔티티는 [JPA 엔티티 open 결정](kotlin-jpa-entity-open.md)의 제약을 함께 따른다.
-- **3차 신규 저장소에서 전체 Kotlin 전환을 시작할 때**: Java 호환 경계가 없으므로 이 결정의 “경계 delombok”은 적용되지 않는다. 처음부터 Kotlin 관용구로 작성하고 Lombok을 도입하지 않는다.
+- **현재 3차 저장소에서 전환할 때**: Java 기준선을 복사한 저장소이므로 미전환 Java의 Lombok 호출 경계가 남아 있다. 해당 파일이 Kotlin으로 바뀌거나 명시적 Java API로 정리될 때까지 이 결정을 적용한다. 저장소를 새로 만들었다는 이유로 호환 경계가 사라지지는 않는다.
 
 ## 면접·발표용 정리 (구현 후)
 

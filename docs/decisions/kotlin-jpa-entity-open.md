@@ -12,6 +12,8 @@ related: [kotlin-plugin-version.md, kotlin-lombok-boundary.md, kotlin-data-class
 > **상태:** 채택 (2026-10-20). 아직 Kotlin 엔티티를 만들기 전이므로 **구현 전 채택**이며, `kotlin-migration/step-4`·`step-5`의 Hibernate 통합 테스트로 확정한다.
 > 기준: `dev` `d1a15eca3228c8b1b1f9260fc7a686860d2b1e44`, `@Entity` 22개, `@MappedSuperclass` 1개(`BaseTimeEntity`), `@Embeddable` 0개.
 
+> 2026-10-22 코드 대조: `Space.version`의 수동 증가·비교와 기존 엔티티 동등성 보존을 명확히 했다. 일반 클래스·no-arg·JPA allOpen 구성과 채택일은 유지한다.
+
 ## 한 줄 요약
 
 Kotlin JPA 엔티티는 `kotlin-jpa`의 합성 no-arg 생성자와 JPA 애노테이션 `allOpen`으로 Hibernate가 요구하는 **비-final 클래스·메서드·기본 생성자**를 만족시키고, `@Entity`/`@MappedSuperclass`에는 값 동등성·`copy`·`toString`이 프록시·생명주기와 충돌하는 **`data class`를 쓰지 않는다.**
@@ -76,7 +78,7 @@ allOpen {
 | `copy` | 같은 ID를 가진 새 인스턴스를 만들어 detached 중복 엔티티가 된다. `@MapsId` 공유 PK(`LocalCredential`)나 `@GeneratedValue` ID에서 특히 위험하다. |
 | `componentN` | 내부 필드를 구조 분해로 노출한다. 엔티티의 캡슐화·불변식 유지에 도움이 되지 않는다. |
 | `val` 프로퍼티 | Hibernate가 상태를 변경해야 하는 필드에 `val`을 쓰면 JPA 생명주기와 맞지 않는다. `@MapsId`, `@GeneratedValue`, `@Version`/수동 버전 필드는 mutable이어야 한다. |
-| 상속 | `data class`는 `final`이고 다른 클래스를 상속할 수 없다. `BaseTimeEntity` 같은 `@MappedSuperclass` 상속과 충돌한다. |
+| 상속·프록시 | [Kotlin data class 규칙](https://kotlinlang.org/docs/data-classes.html)상 다른 클래스를 상속할 수 있지만, 자동 값 비교는 주 생성자 프로퍼티를 기준으로 한다. 엔티티의 프록시·기존 동등성 보존을 위해 일반 클래스를 사용한다. |
 
 5. **명시적 비즈니스 생성자·팩토리를 유지한다.** 합성 no-arg 생성자는 리플렉션 전용이며 Kotlin/Java에서 직접 호출할 수 없다. 따라서 엔티티는 `private`/`protected` 생성자와 정적 팩토리(`create`, `of`)로 불변식을 검증하고, Hibernate는 합성 no-arg로 인스턴스만 만든다. `data class`의 주 생성자 노출과 `copy`는 이 설계를 약화한다.
 
@@ -85,7 +87,7 @@ allOpen {
 - `@Entity`/`@MappedSuperclass` 클래스는 `open class`로 선언하거나 `allOpen`에 맡긴다. 개별 `open`을 수동으로 붙이는 방식은 기본값으로 채택하지 않는다.
 - 필드는 `var`를 사용하되, 외부에는 `private set` 또는 변경 메서드만 공개한다.
 - 기본 생성자는 `protected`로 두고, 비즈니스 생성자는 필수 값과 불변식을 검증한다. `kotlin-jpa`의 합성 no-arg는 이 생성자와 별개다.
-- `equals`/`hashCode`는 명시적으로 정의한다. ID가 null이 아닐 때만 ID 기반으로 비교하거나, 엔티티 정체성 비교가 필요한 곳은 명시적 ID 비교를 쓴다. Lombok `@EqualsAndHashCode`에 해당하는 자동 생성을 기대하지 않는다.
+- `equals`/`hashCode`는 기존 엔티티의 동등성 규칙을 유지한다. ID가 같다는 이유만으로 기존 객체 정체성 비교를 바꾸거나 자동 값 비교를 추가하지 않는다. 동등성 변경이 필요하면 별도 검증·설계 변경으로 다룬다.
 - `toString`에는 연관관계를 넣지 않는다. 로그에는 ID와 스칼라 필드만 남긴다.
 - API 응답에는 엔티티를 직접 노출하지 않고 DTO로 변환한다. DTO는 [data class 범위 결정](kotlin-data-class-scope.md)을 따른다.
 - `@Embeddable`은 값 객체이므로 `data class`가 어울릴 수 있지만, no-arg·필드 접근·프록시·변경 감지 요구를 확인한 뒤 별도 파일럿에서 허용한다. 현재는 0개다.
@@ -120,17 +122,17 @@ allOpen {
 3. **Hibernate 생명주기**: MySQL 8.4/Testcontainers와 Flyway V1~V26 스키마에서 `persist` → `flush` → `clear` → `find`를 수행하고, `@GeneratedValue(IDENTITY)` ID가 persist 후 할당되는지 확인한다.
 4. **지연 로딩 프록시**: `AuthSession`/`RefreshToken`/`LocalCredential`의 `@ManyToOne(LAZY)`·`@OneToOne(LAZY)`를 트랜잭션 안에서 접근해 초기화되는지, 트랜잭션 밖에서는 `LazyInitializationException`이 발생하는지 확인한다. 프록시 `equals`가 비대칭이 되지 않는지도 확인한다.
 5. **공유 PK**: `LocalCredential`을 `@MapsId`로 저장하고, `memberId`와 `member`의 PK가 일치하는지, `copy` 없이 변경 메서드로 비밀번호를 바꾸는지 확인한다.
-6. **감사·버전**: `BaseTimeEntity`의 `createdAt`/`updatedAt`이 `Clock` 기반으로 기록되는지, `Space.version`이 결제 확인 경로에서 증가·비교되는지 확인한다.
+6. **감사·버전**: `BaseTimeEntity`의 `createdAt`/`updatedAt`이 `Clock` 기반으로 기록되는지 확인한다. `Space.version`은 가격 변경 시 직접 증가하고 예약 결제 경로에서 비교하는 int 값이다. 기본값 0, 수동 증가·비교와 공간의 기존 비관적 잠금을 유지한다. 현재 JPA `@Version`은 사용하지 않는다.
 7. **`@Transactional` 프록시**: `@Transactional`이 붙은 Kotlin 서비스의 메서드가 final이 아니어서 트랜잭션 롤백이 동작하는지 확인한다.
 8. **정적 검사**: Kotlin 소스에서 `@Entity`/`@MappedSuperclass`가 붙은 `data class`가 0개인지 grep 또는 ArchUnit 규칙으로 확인한다.
-9. **전체 회귀**: `./gradlew --no-daemon clean build`로 135개 스위트·1,048개 테스트가 통과해야 한다. 엔티티 전환은 `step-4`부터 시작하고, 첫 PR은 엔티티가 아닌 순수 정책 클래스다.
+9. **전체 회귀**: `./gradlew --no-daemon clean build`로 기존 테스트와 새 영속성 테스트가 모두 통과해야 한다. 135개 스위트·1,048건은 10/20 기준선이며 전환 커밋의 실제 실행 수와 실패/스킵을 새로 기록한다. 엔티티 전환은 `step-4`부터 시작하고 첫 PR은 순수 정책 클래스다.
 
 ## 6. 한계와 재검토 조건
 
 - **Kotlin 2.3.20+에서 `kotlin-jpa`가 all-open preset을 제공할 때**: 공식 문서/릴리스 노트를 확인하고, 그때는 수동 `allOpen` JPA 설정을 제거할 수 있는지 재검토한다. 1.9.25의 결정을 그대로 2.x에 적용하지 않는다.
 - **Hibernate 7/Spring Boot 4로 올릴 때**: 프록시·no-arg·`@Transactional` 요구가 바뀌는지 확인하고, `allOpen` 대상과 엔티티 작성 규칙을 갱신한다.
 - **`@Embeddable`을 실제로 도입할 때**: 값 객체가 no-arg·필드 접근·변경 감지와 충돌하지 않는지 파일럿 테스트 후 `data class` 허용 여부를 별도 결정한다.
-- **엔티티 수가 크게 줄거나 Kotlin 전용 저장소로 이동할 때**: 수동 `open`/생성자 규칙이 더 단순한지 비교한다. 3차 신규 저장소에서는 처음부터 Kotlin 엔티티 규칙을 적용한다.
+- **엔티티 수가 크게 줄거나 전환을 마쳤을 때**: 수동 `open`/생성자 규칙이 더 단순한지 비교한다. 현재 3차 저장소에서는 Java 기준선을 단계별로 옮기므로 기존 매핑·생성자·호출 경계를 확인한다.
 - **컴파일러 플러그인이 K2/Kotlin 2.x에서 동작하지 않거나 빌드 시간이 문제가 될 때**: 수동 `open` + `protected constructor` fallback을 검토한다. 단, 누락 시 런타임 실패 위험이 있으므로 정적 검사·통합 테스트를 함께 둔다.
 - **`@Access(AccessType.PROPERTY)`로 전환할 때**: 필드 접근과 getter 접근의 프록시/변경 감지 차이를 확인하고, `allOpen` 대상 메서드를 재검토한다.
 

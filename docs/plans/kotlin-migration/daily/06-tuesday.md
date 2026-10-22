@@ -43,7 +43,7 @@
 ## 구현할 때 참고
 
 - 정확한 파일은 [기존 팀원별 상세 계획의 step-5](../team-guide.md)를 봅니다. 예약·PG·인증은 작은 PR로 나눕니다. 함께 바꿔야 빌드되는 엔티티·저장소·Java 호출부는 같은 묶음으로 다룹니다.
-- 공간: `Space`·Repository·서비스, `@Version` 초기값 0과 낙관적 락. 출입: `DoorAccessToken`, `DoorAccessLog`·Repository·서비스, 비활성 기록 `REQUIRES_NEW`.
+- 공간: `Space`·Repository·서비스, `version: Int = 0`의 수동 증가·결제 시 비교와 기존 비관적 잠금을 유지합니다. 현재 없는 JPA `@Version`은 추가하지 않습니다. 출입: `DoorAccessToken`, `DoorAccessLog`·Repository·서비스, 비활성 기록 `REQUIRES_NEW`.
 - 크레딧: `CreditTransaction`·Repository·서비스, 잔액 조건부 UPDATE 영향 행과 금액 상한/부호. 예약/PG: `Reservation`, `ReservationSlot`, `ChargeOrder`·Repository·서비스/배치, 공간/예약/회원 잠금 순서·슬롯 UNIQUE·TOP_UP 1회·PG 호출과 DB 확정의 별도 빈.
 - 인증/회원: `Member`, `LocalCredential`, `AuthSession`, `RefreshToken`, 인증 증표/guard·Repository·서비스. MapsId/LAZY·증표 MANDATORY·재사용 시 세션 폐기·동반 롤백을 확인합니다.
 - 기존 동등성·null·숫자 범위·주입 `Clock`·트랜잭션 설정을 유지합니다. 직접 건 잠금뿐 아니라 관련 FK/UPDATE의 순서도 확인합니다.

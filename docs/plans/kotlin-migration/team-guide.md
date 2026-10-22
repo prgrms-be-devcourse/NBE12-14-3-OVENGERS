@@ -27,7 +27,7 @@
 
 | 담당자 | 주요 담당 패키지 (파일 수) | `global` 공통 분담 (제안) | 합계 (운영 / 테스트) | 핵심 난이도·검증 포인트 |
 | --- | --- | --- | --- | --- |
-| **김재철**<br>(`@Lemnoideae`) | • `space` (29)<br>• `audit` (9)<br>• `stats` (22) | • `global/common` (4: `BaseTimeEntity`, `ApiResponse`, `PageResponse`, `ResponseStatus`)<br>• `global/config` & `error` 일부 (11) | **75개** / 테스트 39개 | `Space` 낙관적 락(`@Version`), `@AssertTrue`, 멀티파트 5MB 업로드, `AuditLog` `MANDATORY`, `stats` JDBC 집계 쿼리·스케줄러 |
+| **김재철**<br>(`@Lemnoideae`) | • `space` (29)<br>• `audit` (9)<br>• `stats` (22) | • `global/common` (4: `BaseTimeEntity`, `ApiResponse`, `PageResponse`, `ResponseStatus`)<br>• `global/config` & `error` 일부 (11) | **75개** / 테스트 39개 | `Space.version`의 수동 증가·결제 시 비교와 공간 비관적 잠금, `@AssertTrue`, 멀티파트 5MB 업로드, `AuditLog` `MANDATORY`, `stats` JDBC 집계 쿼리·스케줄러 |
 | **박창현**<br>(`@pch112233456-a11y`) | • `access` (19) | • `global/security` (6: `AuthPrincipal`, `CurrentMember*`, `CustomAuthenticationFilter`, `JwtProvider`, `JwtUtil`) | **25개** / 테스트 9개 | 체크인/재입장 시간 경계(`DoorAccessTimePolicy`), `InactiveMemberAccessLogService` (`REQUIRES_NEW`), 보안 필터 체인 |
 | **백한비**<br>(`@jkidse14`) | • `credit` 원장·잔액·만료·지급 (22)<br>• `reservation` 상태 이력 (`ReservationStatusHistory*` 4) | • `global/idempotency` (4: `IdempotencyKey*`, `IdempotencyService`) | **30개** / 테스트 14개 | `CreditBalanceRepository` 조건부 차감/증가 쿼리, `CreditTransaction` 원장 불변식, `IdempotencyKey` 해시·응답 캐싱 |
 | **이태호**<br>(`@anton061311`) | • `reservation` 본체 (36)<br>• `credit` PG 충전·복구·웹훅 (20)<br>• `waitlist` (9) · `outbox` (7) · `notification` (11) | • `step-0` `build.gradle` + `ReservationRefundPolicy` 파일럿, `SlotKeyApplication` (1) | **84개** / 테스트 59개 | 예약 2단계 HOLD·비관적 락 순서, PG 트랜잭션 빈 분리·웹훅·복구, Outbox 저장/Kafka 발행·`processed_event` 멱등 소비 |
@@ -61,7 +61,7 @@
    - `audit` 엔티티/레포/서비스: `AuditLog`, `AuditLogRepository`, `AuditLogService`, `AuditLogQueryService`
    - `stats` 엔티티/레포/서비스: `SpaceRankingSnapshot`, `SpaceRankingAggregate`, `SpaceRankingAggregationRepository`, `SpaceRankingSnapshotRepository`, `ReservationStatusCountRepository`, `SpaceRankingQueryService`, `SpaceRankingConfirmService`, `SpaceRankingBackfillService`, `SpaceRankingScheduler`, `ReservationStatusCountService`
 4. **`step-5` (`Space` 핵심 엔티티·서비스)**
-   - `Space` 엔티티 (`@Version var version: Long = 0L` 기본값 0 보존 필수), `SpaceRepository`
+   - `Space` 엔티티 (`var version: Int = 0`; 기존 수동 증가·비교와 기본값 0 유지), `SpaceRepository`. 현재 Java 코드에 JPA `@Version`은 없으며 언어 전환에서 새로 추가하지 않는다.
    - `SpaceQueryService`, `SpaceSlotAvailabilityService`, `DefaultOccupiedSlotProvider`, `AdminSpaceService`, `AdminSpaceImageUpdateService`, `SpaceImageService`, `ImageUpdateResult`
 
 #### B. 도메인별 주의사항 (체크리스트)
@@ -93,7 +93,7 @@ cd backend
    - `access/controller`: `DoorAccessController`
    - `global/security`: `CustomAuthenticationFilter` (비활성 회원 차단 및 에러 응답 JSON 포맷 유지)
 4. **`step-5` (`access` 엔티티·서비스)**
-   - `access/entity`: `DoorAccessToken`, `DoorAccessLog` (`data class` 금지, 일반 `class` + `id` 동등성)
+   - `access/entity`: `DoorAccessToken`, `DoorAccessLog` (`data class` 금지, 일반 `class`로 기존 동등성 유지)
    - `access/repository`: `DoorAccessTokenRepository`, `DoorAccessLogRepository`
    - `access/service`: `DoorAccessLogService`, `InactiveMemberAccessLogService` (`REQUIRES_NEW` 유지!), `DoorAccessTokenService`, `DoorAccessVerificationService`
 
@@ -131,7 +131,7 @@ cd backend
 
 #### B. 도메인별 주의사항 (체크리스트)
 - [ ] **`CreditBalanceRepository`**: DB 조건부 업데이트(`balance >= :amount` 등)의 반환값(영향 행 수 `int`)과 `clearAutomatically`/`flushAutomatically` 설정을 정확히 유지한다.
-- [ ] **금액 오버플로 및 부호 불변식**: `long` 주문 금액에서 `int` 크레딧 잔액으로 변환할 때 상한 검사(`Math.toIntExact` 등)와 원장(`CreditTransaction`) 기록 후 `SUM(amount) == member.creditBalance` 불변식이 깨지지 않아야 한다 (`CreditBalanceConcurrencyIntegrationTest`, `CreditTransactionRepositoryTest`).
+- [ ] **금액 오버플로 및 부호 불변식**: `long` 주문 금액에서 `int` 크레딧 잔액으로 변환할 때 상한 검사(`Math.toIntExact` 등)를 유지한다. 초기 잔액/지급 내역을 포함한 원장 합계와 `Member.balance`, 각 행의 `balanceAfter`가 맞아야 한다 (`CreditBalanceConcurrencyIntegrationTest`, `CreditTransactionRepositoryTest`).
 - [ ] **`IdempotencyService`**: 동일 `Idempotency-Key` 재요청 시 캐싱된 응답을 반환하고 다른 요청 본문과 키가 재사용될 때 충돌을 감지하는 로직을 유지한다.
 
 #### C. 필수 검증 명령
