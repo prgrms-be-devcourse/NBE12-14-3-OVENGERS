@@ -8,6 +8,26 @@
 
 ---
 
+## 0-KT2. 목요일 전환 타입 non-null 후속 변경 (2026-10-22, 로컬)
+
+> 사용자의 nullable 제거 요청을 반영한 코드 `3c65285`, 브랜치 `feat/kotlin-thursday-policies`, PR #26. 초기 boxed Long·null 입력 보존 계약은 [non-null 결정](../decisions/kotlin-thursday-non-null-contract.md)으로 변경했다. 외부 PG 누락 값의 결과 모름 처리와 HTTP Bean Validation 경계는 유지했다.
+
+| 실행 | 결과 |
+| --- | --- |
+| 변경 전 Java null 계약 테스트 | 4개 모두 실패 (예상된 RED) |
+| 변경 후 선택 테스트 | 8 스위트·107개 통과, 실패/오류/스킵 0 |
+| 전체 `env -u SPRING_MAIL_USERNAME -u SPRING_MAIL_PASSWORD -u VERIFICATION_MAIL_FROM -u SLOTKEY_KAFKA_ENABLED ./gradlew --no-daemon clean build` | **종료 0, 9분 27초**, ktlint 위반 0 |
+| 전체 테스트 | **140 스위트·1,085개 통과, 실패/오류/스킵 0** |
+| 테스트 수 검사 | 종료 0, `tests=1085 baseline=1085 skipped=0 failures=0 errors=0` |
+| XML 시각 | 2026-10-22 16:42:39~16:51:36 KST |
+
+- 기존 Kotlin null 테스트 4개를 Java non-null 계약 테스트 4개로 대체하고, PG 코드 누락·명시적 null·null 본문 테스트 3개를 더했다. 테스트 하한은 1,082 → 1,085다.
+- 실제 MySQL JPQL 생성자 조회, Java 결제 소유권 비교, PG 비정상 JSON과 Outbox 실패 경로를 포함한다. Kotlin 운영·테스트 소스에서 물음표와 이중 느낌표는 모두 0건이다.
+- 환경은 앞선 macOS/JDK 21/Gradle 8.10.2/Docker MySQL Testcontainers와 같다. 로그 `/tmp/slotkey-non-null-full.log`, XML `/tmp/slotkey-non-null-full-xml/`는 임시 파일이다.
+- 구현자 **자기검증**이다. 독립 전체 검증·새 CI 결과·실제 외부 서비스·운영 배포는 별도다. 변경 파일·가정·리뷰 체크리스트는 [step-2 보고](../lab/notes/kotlin-thursday-policies/step-2.md)에 있다.
+
+---
+
 ## 0-KT1-PR. 최신 dev 반영 후 목요일 전환 PR 검증 (2026-10-22, 로컬)
 
 > 코드 `1190d04`(`feat/kotlin-thursday-policies`), 기반 `origin/dev` `2186ca1`. 아래 초기 실행 이후 dev에 머지된 #21의 ktlint 수정과 #24까지의 테스트 보강을 반영했다. 초기 clean build 실패를 이 최종 결과와 구분한다.

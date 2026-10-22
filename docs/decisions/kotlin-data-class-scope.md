@@ -124,6 +124,10 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 | --- | --- | --- |
 | 담당자 간 충돌 없는 병렬 전환 | Kotlin다운 null 안전성 일부 포기, `@JvmRecord` 제약(상속·추가 상태 불가) | 전환 완료 후 정리 작업으로 재검토 |
 
+### 2-6. 2026-10-22 PR #26 후속 요청: 내부 예약 프로젝션의 non-null 식별자
+
+사용자가 이번 PR의 nullable 선언을 모두 제거하도록 요청했다. `ReservationTargetInfo`는 `Long?` 대신 `Long`을 사용하며 생성자·접근자는 primitive long으로 바뀐다. 실제 JPQL 조회와 Java 소유권 비교 호출부를 함께 검증한다. 이 변경은 내부 프로젝션에 한정하며, 2-5의 HTTP 요청 DTO null/검증 규칙은 유지한다. 선택 이유·대안·검증은 [목요일 non-null 계약](kotlin-thursday-non-null-contract.md)에 기록한다. 아래 최초 전환의 boxed Long 검증은 변경 전 이력이다.
+
 ## 3. 기각한 대안과 이유
 
 | 대안 | 장점 | 기각한 이유 |
