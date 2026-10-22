@@ -8,6 +8,13 @@
 
 Kotlin Gradle 플러그인은 **`1.9.25` 하나로 고정**한다(Spring Boot 3.3.4 BOM·Java 21 toolchain 정합). 선택 근거·기각 대안·재검토 조건은 [Kotlin 플러그인 버전 결정](../../decisions/kotlin-plugin-version.md)을 따른다. 이 문서에서 미래 버전을 다시 추정하지 않는다.
 
+## 2026-10-22 합의: `step-0` 앞뒤 순서
+
+1. **ktlint PR** (`step-0`보다 먼저): 기본 규칙, 위반 시 빌드 실패, Kotlin 파일 0개일 때 머지. [결정](../../decisions/kotlin-ktlint.md).
+2. **기준선 측정 + CI 테스트 수 검사 PR**: [01](01-test-baseline.md) 참조.
+3. **`step-0`** (아래): 이 PR에서 Lombok 붙은 Java를 Kotlin이 부르면 컴파일이 깨지는지 가장 먼저 확인한다. 확인하지 못한 가정이다.
+4. **엔티티 delombok PR**: 10/23(금) 전. [Lombok 경계 2-4](../../decisions/kotlin-lombok-boundary.md).
+
 ## `kotlin-migration/step-0-mixed-build` 범위
 
 10/22(목) 첫 PR은 혼용 빌드와 순수 환불 정책 1개를 시범 전환한다. 이후 작업도 현재 3차 저장소에서 진행한다.

@@ -90,6 +90,7 @@ allOpen {
 - `equals`/`hashCode`는 기존 엔티티의 동등성 규칙을 유지한다. ID가 같다는 이유만으로 기존 객체 정체성 비교를 바꾸거나 자동 값 비교를 추가하지 않는다. 동등성 변경이 필요하면 별도 검증·설계 변경으로 다룬다.
 - `toString`에는 연관관계를 넣지 않는다. 로그에는 ID와 스칼라 필드만 남긴다.
 - API 응답에는 엔티티를 직접 노출하지 않고 DTO로 변환한다. DTO는 [data class 범위 결정](kotlin-data-class-scope.md)을 따른다.
+- *(2026-10-22 추가 합의)* **`builder()`와 정적 생성 메서드(`Reservation.builder()`, `Member.create(...)` 등)는 호출 방식을 유지한다.** `companion object` 안에 같은 이름의 함수를 만들고 `@JvmStatic`을 붙인다. Lombok `@Builder`는 쓸 수 없으므로 직접 만든 builder나 팩토리 함수로 대체한다. 서비스·테스트 호출부는 최대한 바꾸지 않고, 상태 초기값·필수값 검증은 이 생성 경로 한곳에 둔다.
 - `@Embeddable`은 값 객체이므로 `data class`가 어울릴 수 있지만, no-arg·필드 접근·프록시·변경 감지 요구를 확인한 뒤 별도 파일럿에서 허용한다. 현재는 0개다.
 
 ## 3. 기각한 대안과 이유

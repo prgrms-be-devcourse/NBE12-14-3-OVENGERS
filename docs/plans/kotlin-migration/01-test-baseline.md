@@ -41,6 +41,12 @@
 
 클래스는 모두 `backend/src/test/java/com/ovengers/slotkey/` 아래에 있다. 추가·보강이 필요한지는 [02](02-money-and-concurrency.md)·[03](03-api-contract.md)·[06](06-jpa-and-proxies.md)의 계약별로 판정하고, 이미 존재하는 테스트를 신규 작성 수에 넣지 않는다.
 
+## 2026-10-22 합의: 새 기준선과 테스트 수 자동 검사
+
+- 10/20 `d1a15ec`의 1,048건은 `adca3ae`에서 Kotlin 플러그인이 들어오기 전 값이다. 현재 `dev` 커밋에서 **CI의 `clean build`로 새 기준선을 측정**해 [테스트 결과](../../testing/test-results.md)에 커밋·날짜·테스트 수·스킵을 기록한다. 로컬 실행은 디버깅 보조이며 기준선은 CI 값을 쓴다.
+- [`backend-ci.yml`](../../../.github/workflows/backend-ci.yml)에 `backend/build/test-results/test/*.xml`의 `tests` 합계가 기준선 이상이고 `skipped`가 0인지 검사하는 단계를 추가한다. 기준선 측정 PR에 함께 넣는다. 근거: [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md).
+- 테스트도 운영 코드와 같은 PR에서 Kotlin으로 옮기되 판정(assert) 줄은 바꾸지 않는다.
+
 ## P0 보강 시점
 
 - **순수 정책·유틸 시범 전환은 P0 추가 보강 없이 시작할 수 있다.** `ReservationRefundPolicy`는 `ReservationCancelServiceTest`·`ReservationCancelConcurrencyTest`가 행위를 간접 고정하고 있으며, 첫 전환 PR에서 경계값을 직접 고정하는 `ReservationRefundPolicyTest`를 추가한다. `ReservationTimePolicyTest`(14), `DoorAccessTimePolicyTest`(9), `SpaceOperatingHoursPolicyTest`(5)는 이미 있다.

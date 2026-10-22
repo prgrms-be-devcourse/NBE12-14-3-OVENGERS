@@ -91,7 +91,7 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 - **기존 클래스에 `@JvmRecord`를 붙이는 것은 binary-compatible하지 않다.** 접근자 이름 규칙이 `getName()`에서 `name()`으로 바뀐다. 재컴파일하면 컴파일 오류, 이미 컴파일된 Java 바이너리에는 `NoSuchMethodError` 위험이 있다.
 - **`@JvmRecord` 클래스는 `final`이어야 한다.** `@Component`/`@Entity`처럼 all-open 대상 애노테이션을 함께 붙이면 all-open이 `final`을 깨뜨려 컴파일 오류가 날 수 있다. record 값 객체에는 Spring/JPA 애노테이션을 붙이지 않는다.
 
-따라서 `@JvmRecord`는 “모든 DTO의 기본값”이 아니라 **Java record 접근자 경계를 유지해야 하는 타입에만 붙이는 호환 브리지**다.
+따라서 `@JvmRecord`는 **Java record 접근자 경계를 유지하는 호환 브리지**다. *(2026-10-22 변경: 기존에는 "경계가 있는 타입에만"이었으나, 병렬 작업 일정을 위해 DTO·이벤트 전체로 넓혔다. [2-5](#2-5-2026-10-22-추가-합의)를 따른다.)*
 
 ### 2-4. 왜 이 범위인가
 
@@ -100,6 +100,29 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 3. **`@JvmRecord`를 남용하지 않는다.** 추가 상태·상속·mutable 프로퍼티가 필요한 타입에는 쓸 수 없고, binary-compatible하지 않다. JSON/Kotlin 호출만 있는 DTO에는 일반 data class로 충분하다.
 4. **Spring Bean과 설정은 값 객체가 아니다.** `@Service` 58개, `@Component` 28개는 컨테이너가 생명주기를 관리한다. `data class`의 `copy`는 새 인스턴스를 만들 뿐 빈 등록·프록시·트랜잭션 경계를 복제하지 않는다. `kotlin-spring`으로 open할 수는 있지만, 값 동등성은 여전히 부적절하다.
 5. **`@ConfigurationProperties`는 별도 검증 대상이다.** `TossPaymentsProperties`처럼 Java record + 생성자 바인딩이 이미 동작하는 사례가 있지만, Kotlin data class로 바꿀 때 기본값·중첩·검증·메타데이터가 그대로 동작하는지는 별개다. `SpaceImageProperties`처럼 mutable 기본값이 있는 설정은 일반 class가 자연스럽다.
+
+### 2-5. 2026-10-22 추가 합의
+
+5명이 같은 기간(10/22~10/27)에 병렬로 옮기는 일정이어서, 다른 담당자의 Java 호출부를 건드리지 않는 방식으로 아래 두 가지를 정했다. 사용자 확인: 2026-10-22 grill 세션.
+
+1. **요청/응답 DTO와 이벤트 페이로드는 모두 `@JvmRecord data class`로 옮긴다.**
+   - 이유: 일반 `data class`는 `name()`이 `getName()`으로 바뀌어 Java 호출부가 깨진다. 호출부를 같은 PR에서 고치는 방식은 DTO가 여러 담당자의 파일에 흩어져 있어 충돌이 잦다.
+   - 예외: 상속·추가 backing field·mutable 프로퍼티가 필요한 타입은 일반 class(2-3의 제약).
+   - Java 호출부가 모두 사라진 뒤 `@JvmRecord`를 유지할지 떼어낼지는 전환 완료 후에 정한다(6번 재검토 조건).
+   - 기존 2-2 표의 "`@JvmRecord` 또는 호출부 동시 전환" 중 **`@JvmRecord`를 기본으로 고정**한다.
+2. **요청 DTO는 Java가 `null`을 받던 필드를 null 가능 타입(`String?`)으로 유지하고 `@field:NotBlank` 등 검증을 그대로 둔다.**
+   - 이유: 필드를 `String`(null 불가)으로 바꾸면 Jackson이 Bean Validation보다 먼저 다른 예외를 던져 오류 코드·메시지가 바뀐다. 이번 전환은 HTTP 계약을 바꾸지 않는 것이 목표다.
+   - null 불가 타입으로의 개선은 전환이 끝난 뒤 별도 작업으로 한다.
+   - 검증: 필드 누락·`null`·빈 문자열 요청의 응답이 전환 전후 같은지 골든 파일 테스트로 확인한다([03 API 계약](../plans/kotlin-migration/03-api-contract.md)).
+
+| 기각한 대안 | 기각한 이유 |
+| --- | --- |
+| 호출부 동시 전환(일반 `data class`) | DTO가 여러 담당자 파일에 흩어져 있어 병렬 작업 중 충돌이 잦다. |
+| 요청 DTO를 null 불가 타입으로 | 누락·null 요청의 오류 응답이 바뀌어 프론트 계약이 깨질 수 있다. |
+
+| 얻는 것 | 잃는 것 | 완화책 |
+| --- | --- | --- |
+| 담당자 간 충돌 없는 병렬 전환 | Kotlin다운 null 안전성 일부 포기, `@JvmRecord` 제약(상속·추가 상태 불가) | 전환 완료 후 정리 작업으로 재검토 |
 
 ## 3. 기각한 대안과 이유
 
