@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +81,64 @@ class ReservationCancelConcurrencyTest extends ReservationIntegrationTestSupport
                     .containsExactly(ErrorCode.RESERVATION_STATE_CONFLICT);
             assertRefundedExactlyOnce(reservationId, balanceBefore);
         }
+    }
+
+    @Test
+    @DisplayName("부분 환불을 동시에 요청해도 환불과 위약금 원장이 각각 한 번만 기록된다")
+    void cancel_partialRefundConcurrently_recordsRefundAndPenaltyOnce() {
+        // 예약 시작 30분 전 상황 준비
+        LocalDateTime startTime = now().plusMinutes(30);
+
+        Long reservationId = createReservation(
+                memberId,
+                spaceId,
+                ReservationStatus.CONFIRMED,
+                startTime,
+                startTime.plusHours(1)
+        );
+
+        // 같은 예약에 대한 취소 요청 두 건을 동시에 실행
+        List<Runnable> tasks = List.of(
+                () -> reservationCancelService.cancel(memberId, reservationId),
+                () -> reservationCancelService.cancel(memberId, reservationId)
+        );
+
+        List<Throwable> results = runConcurrently(tasks);
+
+        assertThat(successCount(results)).isEqualTo(1);
+        assertThat(failures(results)).containsExactly(ErrorCode.RESERVATION_STATE_CONFLICT);
+        assertThat(statusOf(reservationId)).isEqualTo("CANCELLED");
+        assertThat(balanceOf(memberId)).isEqualTo(INITIAL_BALANCE + TOTAL_AMOUNT / 2);
+        assertThat(countLedger(reservationId, "REFUND")).isEqualTo(1);
+        assertThat(sumLedger(reservationId, "REFUND")).isEqualTo(TOTAL_AMOUNT);
+        assertThat(countLedger(reservationId, "PENALTY")).isEqualTo(1);
+        assertThat(sumLedger(reservationId, "PENALTY")).isEqualTo(-TOTAL_AMOUNT / 2);
+
+        // 각 원장에 저장된 처리 후 잔액 검증
+        Integer refundBalanceAfter = jdbcTemplate.queryForObject(
+                """
+                SELECT balance_after
+                FROM credit_transaction
+                WHERE reservation_id = ? AND type = 'REFUND'
+                """,
+                Integer.class,
+                reservationId
+        );
+
+        Integer penaltyBalanceAfter = jdbcTemplate.queryForObject(
+                """
+                SELECT balance_after
+                FROM credit_transaction
+                WHERE reservation_id = ? AND type = 'PENALTY'
+                """,
+                Integer.class,
+                reservationId
+        );
+
+        assertThat(refundBalanceAfter).isEqualTo(INITIAL_BALANCE + TOTAL_AMOUNT);
+        assertThat(penaltyBalanceAfter).isEqualTo(INITIAL_BALANCE + TOTAL_AMOUNT / 2);
+        assertThat(countSlots(reservationId)).isZero();
+        assertThat(countHistory(reservationId, "CANCELLED")).isEqualTo(1);
     }
 
     /** CANCELLED이고, 잔액이 정확히 총액만큼 늘었으며, 환불 원장 1건·위약금 없음·슬롯 전부 반환·취소 이력 1건이다. */

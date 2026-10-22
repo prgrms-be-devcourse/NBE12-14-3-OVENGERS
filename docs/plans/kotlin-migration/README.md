@@ -10,6 +10,20 @@
 - 1,048건 통과는 10/20의 실행 기록입니다. 이번 문서 점검은 소스·설정 대조이며 새 빌드/테스트 실행 결과가 아닙니다. 혼용 빌드와 P0 보강은 아직 필요한 계획으로 남깁니다.
 - CI의 `build`와 운영 `deploy`를 구분합니다. 배포는 `DEPLOY_ENABLED == 'true'`인 `dev` 푸시에만 실행되며, 전환 계획상 `step-6` 통과 후 별도로 활성화합니다. 로컬/검증 환경의 JAR 기동은 전환 중에도 확인합니다.
 
+## 착수 전 선행 작업 (2026-10-22 합의)
+
+Kotlin 전환 PR(`step-1` 이후)은 아래 작업이 끝난 뒤에 시작합니다. 각각 작은 PR로 나눕니다. 합의 근거와 기각한 대안은 링크한 결정 문서에 있습니다.
+
+| 순서 | 선행 작업 | 근거 |
+| --- | --- | --- |
+| 1 | **ktlint 도입.** 기본 규칙, 위반 시 `build` 실패. Kotlin 파일이 0개일 때 먼저 넣습니다. | [ktlint 결정](../../decisions/kotlin-ktlint.md) |
+| 2 | **새 기준선 측정 + CI 테스트 수 검사 단계.** 현재 `dev`에서 CI로 `clean build`를 돌려 기록하고, 테스트 수가 기준선 이상·스킵 0인지 자동 검사합니다. | [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md), [01](01-test-baseline.md) |
+| 3 | **`step-0`**: 혼용 빌드 + `ReservationRefundPolicy` 시범 전환. Lombok 붙은 Java를 Kotlin이 부르면 컴파일이 깨지는지 여기서 가장 먼저 확인합니다. | [04](04-mixed-build.md) |
+| 4 | **엔티티 22개(+`BaseTimeEntity`) delombok PR.** 기능 변경 없이 공개 시그니처만 소스에 적습니다. 10/23(금) 전 머지. | [Lombok 경계 2-4](../../decisions/kotlin-lombok-boundary.md) |
+| 5 | **골든 파일 테스트.** 옮기기 전 Java의 주요 API 응답을 저장합니다. | [03](03-api-contract.md) |
+
+DB·금전·인증 코드는 해당 P0 테스트가 머지된 뒤에만 옮깁니다. 정책·Enum 같은 쉬운 코드는 2~3번 이후 바로 옮길 수 있습니다. 배포(`DEPLOY_ENABLED`)는 가장 마지막에 켭니다.
+
 ## 어디부터 읽으면 되나요?
 
 | 알고 싶은 내용 | 읽을 문서 |
@@ -62,4 +76,6 @@
 - [Kotlin 플러그인 버전](../../decisions/kotlin-plugin-version.md)
 - [Lombok 처리 범위](../../decisions/kotlin-lombok-boundary.md)
 - [JPA 엔티티 open](../../decisions/kotlin-jpa-entity-open.md)
-- [data class 적용 범위](../../decisions/kotlin-data-class-scope.md)
+- [data class 적용 범위](../../decisions/kotlin-data-class-scope.md) — 2026-10-22: DTO·이벤트는 `@JvmRecord`, 요청 DTO는 null 가능 타입 유지
+- [ktlint 도입](../../decisions/kotlin-ktlint.md) — 2026-10-22
+- [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md) — 2026-10-22: 테스트 수 하한, 골든 파일, 테스트 동시 전환

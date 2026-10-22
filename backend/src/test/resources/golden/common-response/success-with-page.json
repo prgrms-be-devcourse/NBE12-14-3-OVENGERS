@@ -1,0 +1,21 @@
+{
+  "status": "SUCCESS",
+  "code": "OK",
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "content": [
+      {
+        "id": 11,
+        "name": "공간 A"
+      },
+      {
+        "id": 12,
+        "name": "공간 B"
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "totalElements": 45,
+    "totalPages": 3
+  }
+}

@@ -60,6 +60,18 @@
 
 일반 HTTP·외부 웹훅·PG JSON·저장된 메시지를 [03](03-api-contract.md)의 서로 다른 계약으로 확인한다. 메시지/DB 스키마 변경이 필요하면 언어 전환과 분리하고, 되돌린 Java가 새 저장 데이터를 읽지 못하는 변경을 같은 PR에 섞지 않는다.
 
+## 2026-10-22 합의 사항 요약
+
+| 항목 | 합의 | 근거 |
+| --- | --- | --- |
+| DTO·이벤트 | `@JvmRecord data class`로 통일. 요청 DTO는 null 가능 타입과 `@field:` 검증 유지. | [data class 결정 2-5](../../decisions/kotlin-data-class-scope.md) |
+| 엔티티 | 일반 `class`. `builder()`·정적 생성 메서드는 `companion object`의 `@JvmStatic`으로 호출 방식 유지. 전환 전에 22개 delombok. | [JPA 결정](../../decisions/kotlin-jpa-entity-open.md), [Lombok 경계 2-4](../../decisions/kotlin-lombok-boundary.md) |
+| 테스트 | 운영 코드와 같은 PR에서 Kotlin으로 옮기되 판정 줄은 바꾸지 않는다. 테스트 수는 기준선 이상, 스킵 0. | [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md) |
+| 코드 스타일 | ktlint 기본 규칙, 빌드 실패. | [ktlint 결정](../../decisions/kotlin-ktlint.md) |
+| 리뷰 | 기존 `dev` 규칙(승인 2명, 관리자 포함) 유지. | `dev` 브랜치 보호 설정 |
+| 배포 | `DEPLOY_ENABLED`는 가장 마지막에 켠다. | [04](04-mixed-build.md) |
+| 일정 | 별도 컷 라인은 두지 않고 일정에 맞춘다. 테스트를 줄이거나 생략해 맞추지 않는다. | 사용자 확인 |
+
 ## 파일 단위 작업 절차
 
 1. 한 PR의 범위를 **하나의 정책 또는 한 도메인의 밀접한 파일 묶음**으로 적고, 해당 Java 호출부·테스트·DTO를 찾는다. 같은 클래스의 `.java`와 `.kt`를 동시에 남기지 않는다.

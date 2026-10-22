@@ -208,6 +208,23 @@ class TossPaymentsPgClientTest {
         server.verify();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"message\":\"missing code\"}", "{\"code\":null}", "null"})
+    @DisplayName("PG 에러 코드가 누락되면 어댑터가 결과 모름으로 처리한다")
+    void confirm_missingErrorCode_isIndeterminate(String responseBody) {
+        server.expect(requestTo(BASE_URL + "/v1/payments/confirm"))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(responseBody));
+
+        PgConfirmationResult result = client.confirm(request());
+
+        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
+        assertThat(result.unknownReason()).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+        assertThat(result.errorCode()).isNull();
+        server.verify();
+    }
+
     @Test
     @DisplayName("승인 200 응답이 DONE이 아니면 결과 모름으로 분류한다")
     void confirm_nonDoneResponse_isIndeterminate() {

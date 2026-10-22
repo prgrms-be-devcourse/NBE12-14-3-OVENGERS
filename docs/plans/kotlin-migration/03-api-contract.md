@@ -34,6 +34,15 @@
 - [`TossPaymentsPgClient`](../../../backend/src/main/java/com/ovengers/slotkey/credit/pg/TossPaymentsPgClient.java)의 승인 요청/응답·조회 응답 및 오류 분류를 `TossPaymentsPgClientTest`로 확인한다. Jackson Kotlin 모듈 추가는 공유 ObjectMapper에도 영향을 줄 수 있으므로 Kotlin으로 옮기지 않은 Java HTTP/PG/이벤트 경로도 재실행한다.
 - 검증 위치를 Bean Validation만으로 한정하지 않는다. 생성자 null/타입 오류·raw JSON 검사·서비스 거절이 최종 HTTP 상태/오류 코드에 동일하게 매핑되는지 확인한다. 웹훅의 본문 승인값은 충전 확정 근거가 아니며 [02](02-money-and-concurrency.md)의 PG 재조회 규칙을 유지한다.
 
+## 2026-10-22 합의: 골든 파일 테스트
+
+전환 전후 JSON이 같다는 증거를 눈 비교가 아니라 테스트로 남긴다. **Java 코드 상태에서 먼저** 주요 API 응답을 파일로 저장하고, 전환 후 같은 파일과 비교한다.
+
+- 대상: 로그인, 충전, 예약(HOLD), 결제, 출입, 문의, 오류 응답. 필드 누락·`null`·날짜·숫자 형식을 포함한다.
+- 동적 ID·시각은 입력을 고정하거나 형식·의미로 검증해 전체 문자열 비교의 취약함을 피한다.
+- 요청 DTO는 Java가 `null`을 받던 필드를 null 가능 타입으로 유지하고 `@field:` 검증을 그대로 둔다. 필드 누락·`null`·빈 문자열 요청의 오류 응답이 같은지 이 테스트로 확인한다([data class 결정 2-5](../../decisions/kotlin-data-class-scope.md)).
+- 근거와 기각한 대안: [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md).
+
 ## 실행 순서
 
 1. 위 계약 표를 바탕으로 컨트롤러·`docs/api/api-spec.md`·`frontend/src/types/api.ts`의 **엔드포인트·권한·요청 DTO·응답/상태·소비자·테스트** 대응표를 만든다. 웹훅/이벤트처럼 프론트 소비자가 없는 계약도 포함한다. 명세와 코드가 다르면 현재 구현을 확인해 차이를 기록한다.

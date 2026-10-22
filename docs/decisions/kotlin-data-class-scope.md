@@ -91,7 +91,7 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 - **기존 클래스에 `@JvmRecord`를 붙이는 것은 binary-compatible하지 않다.** 접근자 이름 규칙이 `getName()`에서 `name()`으로 바뀐다. 재컴파일하면 컴파일 오류, 이미 컴파일된 Java 바이너리에는 `NoSuchMethodError` 위험이 있다.
 - **`@JvmRecord` 클래스는 `final`이어야 한다.** `@Component`/`@Entity`처럼 all-open 대상 애노테이션을 함께 붙이면 all-open이 `final`을 깨뜨려 컴파일 오류가 날 수 있다. record 값 객체에는 Spring/JPA 애노테이션을 붙이지 않는다.
 
-따라서 `@JvmRecord`는 “모든 DTO의 기본값”이 아니라 **Java record 접근자 경계를 유지해야 하는 타입에만 붙이는 호환 브리지**다.
+따라서 `@JvmRecord`는 **Java record 접근자 경계를 유지하는 호환 브리지**다. *(2026-10-22 변경: 기존에는 "경계가 있는 타입에만"이었으나, 병렬 작업 일정을 위해 DTO·이벤트 전체로 넓혔다. [2-5](#2-5-2026-10-22-추가-합의)를 따른다.)*
 
 ### 2-4. 왜 이 범위인가
 
@@ -100,6 +100,33 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 3. **`@JvmRecord`를 남용하지 않는다.** 추가 상태·상속·mutable 프로퍼티가 필요한 타입에는 쓸 수 없고, binary-compatible하지 않다. JSON/Kotlin 호출만 있는 DTO에는 일반 data class로 충분하다.
 4. **Spring Bean과 설정은 값 객체가 아니다.** `@Service` 58개, `@Component` 28개는 컨테이너가 생명주기를 관리한다. `data class`의 `copy`는 새 인스턴스를 만들 뿐 빈 등록·프록시·트랜잭션 경계를 복제하지 않는다. `kotlin-spring`으로 open할 수는 있지만, 값 동등성은 여전히 부적절하다.
 5. **`@ConfigurationProperties`는 별도 검증 대상이다.** `TossPaymentsProperties`처럼 Java record + 생성자 바인딩이 이미 동작하는 사례가 있지만, Kotlin data class로 바꿀 때 기본값·중첩·검증·메타데이터가 그대로 동작하는지는 별개다. `SpaceImageProperties`처럼 mutable 기본값이 있는 설정은 일반 class가 자연스럽다.
+
+### 2-5. 2026-10-22 추가 합의
+
+5명이 같은 기간(10/22~10/27)에 병렬로 옮기는 일정이어서, 다른 담당자의 Java 호출부를 건드리지 않는 방식으로 아래 두 가지를 정했다. 사용자 확인: 2026-10-22 grill 세션.
+
+1. **요청/응답 DTO와 이벤트 페이로드는 모두 `@JvmRecord data class`로 옮긴다.**
+   - 이유: 일반 `data class`는 `name()`이 `getName()`으로 바뀌어 Java 호출부가 깨진다. 호출부를 같은 PR에서 고치는 방식은 DTO가 여러 담당자의 파일에 흩어져 있어 충돌이 잦다.
+   - 예외: 상속·추가 backing field·mutable 프로퍼티가 필요한 타입은 일반 class(2-3의 제약).
+   - Java 호출부가 모두 사라진 뒤 `@JvmRecord`를 유지할지 떼어낼지는 전환 완료 후에 정한다(6번 재검토 조건).
+   - 기존 2-2 표의 "`@JvmRecord` 또는 호출부 동시 전환" 중 **`@JvmRecord`를 기본으로 고정**한다.
+2. **요청 DTO는 Java가 `null`을 받던 필드를 null 가능 타입(`String?`)으로 유지하고 `@field:NotBlank` 등 검증을 그대로 둔다.**
+   - 이유: 필드를 `String`(null 불가)으로 바꾸면 Jackson이 Bean Validation보다 먼저 다른 예외를 던져 오류 코드·메시지가 바뀐다. 이번 전환은 HTTP 계약을 바꾸지 않는 것이 목표다.
+   - null 불가 타입으로의 개선은 전환이 끝난 뒤 별도 작업으로 한다.
+   - 검증: 필드 누락·`null`·빈 문자열 요청의 응답이 전환 전후 같은지 골든 파일 테스트로 확인한다([03 API 계약](../plans/kotlin-migration/03-api-contract.md)).
+
+| 기각한 대안 | 기각한 이유 |
+| --- | --- |
+| 호출부 동시 전환(일반 `data class`) | DTO가 여러 담당자 파일에 흩어져 있어 병렬 작업 중 충돌이 잦다. |
+| 요청 DTO를 null 불가 타입으로 | 누락·null 요청의 오류 응답이 바뀌어 프론트 계약이 깨질 수 있다. |
+
+| 얻는 것 | 잃는 것 | 완화책 |
+| --- | --- | --- |
+| 담당자 간 충돌 없는 병렬 전환 | Kotlin다운 null 안전성 일부 포기, `@JvmRecord` 제약(상속·추가 상태 불가) | 전환 완료 후 정리 작업으로 재검토 |
+
+### 2-6. 2026-10-22 PR #26 후속 요청: 내부 예약 프로젝션의 non-null 식별자
+
+사용자가 이번 PR의 nullable 선언을 모두 제거하도록 요청했다. `ReservationTargetInfo`는 `Long?` 대신 `Long`을 사용하며 생성자·접근자는 primitive long으로 바뀐다. 실제 JPQL 조회와 Java 소유권 비교 호출부를 함께 검증한다. 이 변경은 내부 프로젝션에 한정하며, 2-5의 HTTP 요청 DTO null/검증 규칙은 유지한다. 선택 이유·대안·검증은 [목요일 non-null 계약](kotlin-thursday-non-null-contract.md)에 기록한다. 아래 최초 전환의 boxed Long 검증은 변경 전 이력이다.
 
 ## 3. 기각한 대안과 이유
 
@@ -124,7 +151,7 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 
 ## 5. 검증
 
-아직 DTO를 Kotlin으로 바꾸기 전이므로 **검증 계획**이다.
+아래 1~9는 전체 전환의 **검증 계획**이며, 실제 실행한 타입의 결과를 이어서 기록한다.
 
 1. **`SlotWindow` 경계(`step-1`)**: `SpaceOperatingHoursPolicy`를 Kotlin으로 바꾸고 nested `SlotWindow`를 `@JvmRecord data class`로 선언한다. Java `SpaceSlotAvailabilityService`의 `window.start()`/`window.end()`가 그대로 컴파일되는지 확인한다. `SpaceOperatingHoursPolicyTest` 5개와 `SpaceSlotAvailabilityServiceTest`의 관련 케이스가 통과해야 한다.
 2. **Java record 접근자**: `LoginRequest`를 전환할 때 `AuthController`의 `request.email()`/`request.password()`, `IssuedRefreshToken`을 전환할 때 `AuthService`의 `.sessionId()`/`.rawToken()`이 컴파일되는지 확인한다. `@JvmRecord`를 붙이거나 호출부를 같은 PR에서 바꾼다.
@@ -135,6 +162,16 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 7. **Spring Bean 금지 확인**: Kotlin 소스에서 `@Service`/`@Component`가 붙은 `data class`가 0개인지 grep 또는 ArchUnit으로 확인한다.
 8. **`@ConfigurationProperties` 파일럿**: `TossPaymentsProperties`를 Kotlin으로 옮길 때 `ApplicationContextRunner` 또는 `@SpringBootTest`로 바인딩·기본값·검증을 확인한다. `SpaceImageProperties`는 mutable 기본값을 유지하며 일반 class로 둔다.
 9. **전체 회귀**: `./gradlew --no-daemon clean build`로 기존 테스트와 새 DTO 경계 테스트가 모두 통과해야 한다. 135개 스위트·1,048건은 10/20 기준선이며, 전환 커밋의 실제 실행 수와 실패/스킵을 기록한다.
+
+### 2026-10-22 `ReservationTargetInfo` 검증 결과
+
+- `feat/kotlin-thursday-policies` 작업 트리에서 내부 JPQL 프로젝션을 `@JvmRecord data class`로 전환했다. `Long?`로 Java 원본의 boxed `Long` 생성자와 null 허용을 보존했다.
+- `javap`으로 `java.lang.Record` 상속, `(java.lang.Long, java.lang.Long)` 생성자와 `spaceId()`/`memberId()` 접근자를 확인했다. 기존 Java 서비스·테스트 호출부가 컴파일됐다.
+- 실제 MySQL의 `ReservationRepository.findTargetInfoById()` 생성자 프로젝션 테스트가 저장한 공간·회원 식별자를 그대로 반환했다. 선택 실행 70개 중 해당 테스트 1개가 통과했다.
+- 진단 문자열은 Java record의 `ReservationTargetInfo[spaceId=..., memberId=...]`에서 Kotlin data class의 `ReservationTargetInfo(spaceId=..., memberId=...)`로 달라진다. 이에 의존하는 호출부는 찾지 못했으며, HTTP 응답·DB 값·이벤트 payload로 쓰지 않는다. 이 형식에 의존하는 관측 도구가 발견되면 재검토한다.
+- 전환 후 전체 컴파일·테스트·bootJar 명령은 1,057개 통과(실패·오류·스킵 0), 종료 0이다. 필터 없는 clean build는 기존 ktlint 26건으로 실패했다. 요청/응답 DTO·이벤트·설정 바인딩 전체의 검증을 완료했다는 뜻은 아니다. 전체 회귀와 검증 한계는 [단계 보고](../lab/notes/kotlin-thursday-policies/step-1.md)에 있다.
+
+- **PR 준비 최종 검증:** dev `2186ca1` 반영 후 코드 `1190d04`의 필터 없는 `clean build`가 종료 0(8분 54초)으로 통과했다. ktlint 위반 0, 139 스위트·1,082개 통과(실패·오류·스킵 0), 테스트 수 검사 통과. 초기 ktlint 26건은 dev #21에서 해소됐다. 자기검증이며 독립 검증·CI는 별도다.
 
 ## 6. 한계와 재검토 조건
 
