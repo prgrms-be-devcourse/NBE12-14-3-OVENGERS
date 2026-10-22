@@ -1,6 +1,6 @@
-package com.ovengers.slotkey.reservation.policy;
+package com.ovengers.slotkey.reservation.policy
 
-import java.time.LocalDateTime;
+import java.time.LocalDateTime
 
 /**
  * 취소 시 환불 등급(§9, 기획서 "예약 취소" 2026-09-15 갱신).
@@ -8,13 +8,9 @@ import java.time.LocalDateTime;
  * 두 등급 모두 크레딧 원장에는 REFUND(+전액)와 PENALTY(-위약금)를 두 줄로 분리해
  * 기록한다 — 전액 환불이면 위약금이 0이므로 PENALTY 줄은 생략한다(서비스 레이어 책임).
  */
-public final class ReservationRefundPolicy {
-
-    private static final int FULL_REFUND_HOURS_BEFORE_START = 1;
-    private static final int PENALTY_PERCENTAGE = 50;
-
-    private ReservationRefundPolicy() {
-    }
+object ReservationRefundPolicy {
+    private const val FULL_REFUND_HOURS_BEFORE_START = 1L
+    private const val PENALTY_PERCENTAGE = 50
 
     /**
      * @param now         취소 처리 시각
@@ -22,11 +18,16 @@ public final class ReservationRefundPolicy {
      * @param totalAmount 예약 총액(전액 환급 기준액, 100원 단위이므로 50% 계산에 반올림 오차가 없다)
      * @return 위약금(0이면 전액 환급 대상)
      */
-    public static int calculatePenaltyAmount(LocalDateTime now, LocalDateTime startTime, int totalAmount) {
-        LocalDateTime fullRefundDeadline = startTime.minusHours(FULL_REFUND_HOURS_BEFORE_START);
+    @JvmStatic
+    fun calculatePenaltyAmount(
+        now: LocalDateTime,
+        startTime: LocalDateTime,
+        totalAmount: Int,
+    ): Int {
+        val fullRefundDeadline = startTime.minusHours(FULL_REFUND_HOURS_BEFORE_START)
         if (!now.isAfter(fullRefundDeadline)) {
-            return 0;
+            return 0
         }
-        return totalAmount * PENALTY_PERCENTAGE / 100;
+        return totalAmount * PENALTY_PERCENTAGE / 100
     }
 }

@@ -3,6 +3,7 @@ package com.ovengers.slotkey.space.entity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,5 +28,16 @@ class SpaceRegionTest {
     @DisplayName("null은 지원하지 않는 지역이다")
     void rejectsNull() {
         assertThat(SpaceRegion.isSupported(null)).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "PANGYO, 판교",
+            "GANGNAM, 강남",
+            "HANAM, 하남"
+    })
+    @DisplayName("지역 Enum은 spaces.location에 저장되는 한글 label과 대응한다")
+    void labelMatchesStoredLocation(SpaceRegion region, String expectedLabel) {
+        assertThat(region.label()).isEqualTo(expectedLabel);
     }
 }
