@@ -1,0 +1,4 @@
+# CI 테스트 수 하한. .github/scripts/check_test_count.py 가 읽는다.
+# 새 테스트를 추가하면 같은 PR에서 이 값을 올린다. 낮추지 않는다(사유는 PR에 적는다).
+# 2026-10-22 로컬 측정: 135 suites, 1048 tests, skipped 0. CI 값으로 확인 후 갱신한다.
+tests=1048
