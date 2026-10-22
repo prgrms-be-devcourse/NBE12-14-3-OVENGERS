@@ -16,6 +16,10 @@ class RankingPeriodTypeTest {
 
         assertThat(RankingPeriodType.DAILY.startOf(date)).isEqualTo(date);
         assertThat(RankingPeriodType.DAILY.endOf(date)).isEqualTo(LocalDate.of(2026, 10, 16));
+        assertThat(RankingPeriodType.DAILY.endOf(LocalDate.of(2028, 2, 28)))
+                .isEqualTo(LocalDate.of(2028, 2, 29));
+        assertThat(RankingPeriodType.DAILY.endOf(LocalDate.of(2028, 2, 29)))
+                .isEqualTo(LocalDate.of(2028, 3, 1));
     }
 
     @Test
@@ -28,6 +32,7 @@ class RankingPeriodTypeTest {
         assertThat(RankingPeriodType.WEEKLY.startOf(LocalDate.of(2026, 10, 18))).isEqualTo(monday);
         assertThat(RankingPeriodType.WEEKLY.startOf(LocalDate.of(2026, 10, 19))).isEqualTo(LocalDate.of(2026, 10, 19));
         assertThat(RankingPeriodType.WEEKLY.endOf(LocalDate.of(2026, 10, 18))).isEqualTo(LocalDate.of(2026, 10, 19));
+        assertThat(RankingPeriodType.WEEKLY.endOf(LocalDate.of(2026, 10, 19))).isEqualTo(LocalDate.of(2026, 10, 26));
     }
 
     @Test
@@ -44,6 +49,7 @@ class RankingPeriodTypeTest {
         assertThat(RankingPeriodType.MONTHLY.startOf(LocalDate.of(2026, 10, 31))).isEqualTo(LocalDate.of(2026, 10, 1));
         assertThat(RankingPeriodType.MONTHLY.endOf(LocalDate.of(2026, 10, 31))).isEqualTo(LocalDate.of(2026, 11, 1));
         assertThat(RankingPeriodType.MONTHLY.endOf(LocalDate.of(2028, 2, 29))).isEqualTo(LocalDate.of(2028, 3, 1));
+        assertThat(RankingPeriodType.MONTHLY.endOf(LocalDate.of(2027, 2, 28))).isEqualTo(LocalDate.of(2027, 3, 1));
         assertThat(RankingPeriodType.MONTHLY.endOf(LocalDate.of(2026, 12, 31))).isEqualTo(LocalDate.of(2027, 1, 1));
     }
 }

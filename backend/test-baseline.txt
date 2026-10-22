@@ -1,4 +1,5 @@
 # CI 테스트 수 하한. .github/scripts/check_test_count.py 가 읽는다.
 # 새 테스트를 추가하면 같은 PR에서 이 값을 올린다. 낮추지 않는다(사유는 PR에 적는다).
 # 2026-10-22: step-0(#8)의 ReservationRefundPolicyTest 5개 반영. 136 suites, 1053 tests, skipped 0.
-tests=1053
+# 2026-10-22: 응답·오류·공간/통계 회귀 19건 추가. 137 suites, 1072 tests, skipped 0.
+tests=1072
