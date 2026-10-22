@@ -1,6 +1,6 @@
 # Slot Key 문서 색인
 
-> 구현 기준: 기능 동결 커밋 `d1a15ec` / 문서 갱신일: 2026-10-21. 현재 API 계약과 과거 설계·실행 기록을 구분하며, 운영 배포·외부 연동의 새 검증을 뜻하지 않습니다.
+> 구현 기준: 기능 동결 커밋 `d1a15ec` / 문서 갱신일: 2026-10-22. 현재 API 계약과 과거 설계·실행 기록을 구분하며, 운영 배포·외부 연동의 새 검증을 뜻하지 않습니다.
 
 목적별로 묶은 문서 지도입니다. 설계 판단이 서로 어긋날 때는
 [`core-domain-decisions.md`](core-domain-decisions.md)를 기준으로 삼습니다.
@@ -13,7 +13,7 @@
 | [`decisions/`](decisions/) | 기능별 의사결정 기록 | [결정 상태표](decisions/README.md) |
 | [`operations/`](operations/) | 배포와 장애 대응 | [배포·CI/CD](operations/deploy-cicd.md) · [트러블슈팅](operations/troubleshooting.md) · [Gmail SMTP 설정](operations/gmail-smtp-setup.md) |
 | [`testing/`](testing/) | 테스트 전략과 실행 결과 | [테스트 전략](testing/test-strategy.md), [테스트 결과](testing/test-results.md), [V3 인증 실험 결과](testing/auth-v3-experiment-results.md) |
-| [`plans/`](plans/) | 진행 예정 계획 시리즈 | [Kotlin 마이그레이션 준비](plans/kotlin-migration/00-kotlin-migration-plan.md) · [인증 고도화](plans/auth/README.md) |
+| [`plans/`](plans/) | 진행 예정 계획 시리즈 | [Kotlin 마이그레이션 문서 안내](plans/kotlin-migration/README.md) · [인증 고도화](plans/auth/README.md) |
 
 ## 루트에 두는 문서
 
@@ -25,8 +25,8 @@
 
 진행 예정 작업은 [`plans/`](plans/) 아래에 시리즈로 둡니다.
 
-- **Kotlin 마이그레이션 준비** — [준비 계획](plans/kotlin-migration/00-kotlin-migration-plan.md) 외 7편.
-  이 저장소에서는 Kotlin으로 옮기지 않고, 3차 프로젝트에서 새 저장소에 적용합니다.
+- **Kotlin 마이그레이션** — [문서 안내](plans/kotlin-migration/README.md)에서 시작합니다.
+  현재 3차 저장소에서 진행할 [목~화 요일별 계획](plans/kotlin-migration/daily/00-overview.md), [팀원별 상세 담당](plans/kotlin-migration/team-guide.md), 기존 기술 계획 00~07을 함께 제공합니다.
 - **인증 고도화 (V1 → V2 DB → V3 Redis)** — 시작점: [인증 문서 지도](plans/auth/README.md), [로드맵](plans/auth/roadmap.md), [V2 계획](plans/auth/v2-plan.md), [V3 Redis 설계와 실험 경과](plans/auth/v3-redis-design.md), [V3 인증 실험 결과](testing/auth-v3-experiment-results.md)(2026-10-21 V2 유지, V3 도입 보류).
   정책은 [인증 정책](decisions/authentication-policy.md), V1 기준점은 [V1 구현 해설](architecture/auth-v1-implementation.md), V2 구현 이력은 [V2 구현 해설](architecture/auth-v2-implementation.md), 보안 테스트는 [인증 보안 테스트](testing/auth-security-tests.md).
   초기 Redis 검토 문서는 [보관 자료](plans/auth/archive/redis-initial-plan/01-redis-adoption-scope.md)로만 남깁니다(현재 계획 아님).
