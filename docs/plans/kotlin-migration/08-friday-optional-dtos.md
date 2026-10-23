@@ -56,7 +56,7 @@
 
 **Files:**
 
-- Task 1의 Java 11개 삭제 + 같은 패키지·이름의 `backend/src/main/kotlin/com/ovengers/slotkey/reservation/dto/` 11개 추가.
+- Task 1의 Java 11개 삭제 + 같은 패키지·이름의 `backend/src/main/java/com/ovengers/slotkey/reservation/dto/`에 Kotlin 11개 추가.
 - 기존 `ReservationController.java`, `AdminReservationController.java`, `ReservationQueryService.java`, `AdminReservationService.java`와 대상 팩토리/생성자/접근자의 직접 Java 소비자. `rg`로 확정한 파일 목록을 보고에 남긴다.
 - `Reservation.java`, `ReservationSlot.java`: 필요한 명시적 Java API가 선행 PR에 없을 때 delombok만 수행한다.
 - 신규 테스트: `backend/src/test/java/com/ovengers/slotkey/reservation/dto/ReservationDtoOptionalContractTest.java`.
