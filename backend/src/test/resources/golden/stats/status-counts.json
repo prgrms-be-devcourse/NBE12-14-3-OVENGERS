@@ -1,0 +1,12 @@
+{
+  "date" : "2026-10-14",
+  "counts" : {
+    "HELD" : 0,
+    "EXPIRED" : 0,
+    "CONFIRMED" : 0,
+    "IN_USE" : 0,
+    "COMPLETED" : 0,
+    "CANCELLED" : 0,
+    "NO_SHOW" : 0
+  }
+}

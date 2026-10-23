@@ -1,0 +1,26 @@
+{
+  "period" : "DAILY",
+  "periodStart" : "2026-10-13",
+  "periodEnd" : "2026-10-14",
+  "metric" : "NET_REVENUE",
+  "status" : "CONFIRMED",
+  "confirmAt" : null,
+  "computedAt" : "2026-10-14T00:01:00",
+  "items" : [ {
+    "rank" : 1,
+    "previousRank" : 2,
+    "location" : "판교",
+    "spaceCount" : 3,
+    "netRevenue" : 125000,
+    "reservationCount" : 10,
+    "slotCount" : 20
+  }, {
+    "rank" : 2,
+    "previousRank" : null,
+    "location" : "강남",
+    "spaceCount" : 2,
+    "netRevenue" : 90000,
+    "reservationCount" : 8,
+    "slotCount" : 16
+  } ]
+}
