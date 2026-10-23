@@ -2,7 +2,8 @@ package com.ovengers.slotkey.space.image;
 
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -35,9 +36,10 @@ import java.util.regex.Pattern;
  * - 최대 해상도: 4096 x 4096
  * - 경로 탈출(Path Traversal), 심볼릭 링크 참조를 엄격히 차단합니다.
  */
-@Slf4j
 @Component
 public class SpaceImageStorage {
+
+    private static final Logger log = LoggerFactory.getLogger(SpaceImageStorage.class);
 
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     public static final int MAX_WIDTH = 4096;

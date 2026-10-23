@@ -9,7 +9,6 @@ import com.ovengers.slotkey.space.dto.response.SpaceSlotAvailabilityResponse;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.service.SpaceQueryService;
 import com.ovengers.slotkey.space.service.SpaceSlotAvailabilityService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,7 +28,6 @@ import java.time.LocalTime;
 @Tag(name = "공간", description = "비회원도 이용할 수 있는 공간 및 슬롯 조회 API")
 @RestController
 @RequestMapping("/api/v1")
-@RequiredArgsConstructor
 public class SpaceController {
 
     private final SpaceQueryService spaceQueryService;
@@ -165,5 +163,12 @@ public class SpaceController {
     ) {
         SpaceSlotAvailabilityResponse response = slotAvailabilityService.getSlotAvailability(spaceId, date);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    public SpaceController(
+            final SpaceQueryService spaceQueryService,
+            final SpaceSlotAvailabilityService slotAvailabilityService) {
+        this.spaceQueryService = spaceQueryService;
+        this.slotAvailabilityService = slotAvailabilityService;
     }
 }

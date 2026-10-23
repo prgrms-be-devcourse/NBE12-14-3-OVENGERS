@@ -10,7 +10,6 @@ import com.ovengers.slotkey.space.dto.response.SpaceDetailResponse;
 import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.space.service.AdminSpaceService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -44,7 +43,6 @@ import org.springdoc.core.annotations.ParameterObject;
 })
 @RestController
 @RequestMapping("/api/v1/admin")
-@RequiredArgsConstructor
 public class AdminSpaceController {
 
     private final AdminSpaceService adminSpaceService;
@@ -248,5 +246,14 @@ public class AdminSpaceController {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal);
         SpaceDetailResponse response = spaceImageService.uploadAndAttachSpaceImage(spaceId, file, authPrincipal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    public AdminSpaceController(
+            final AdminSpaceService adminSpaceService,
+            final SpaceAuthorizationService spaceAuthorizationService,
+            final com.ovengers.slotkey.space.service.SpaceImageService spaceImageService) {
+        this.adminSpaceService = adminSpaceService;
+        this.spaceAuthorizationService = spaceAuthorizationService;
+        this.spaceImageService = spaceImageService;
     }
 }
