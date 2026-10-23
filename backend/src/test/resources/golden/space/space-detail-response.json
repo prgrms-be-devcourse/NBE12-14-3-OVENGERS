@@ -1,0 +1,13 @@
+{
+  "id" : 11,
+  "name" : "판교 A룸",
+  "location" : "판교",
+  "description" : "자연광이 좋은 회의실",
+  "capacity" : 6,
+  "pricePerSlot" : 5000,
+  "imagePath" : "/api/v1/space-images/11111111-1111-1111-1111-111111111111.png",
+  "openingTime" : "09:00",
+  "closingTime" : "18:00",
+  "status" : "ACTIVE",
+  "version" : 3
+}
