@@ -324,7 +324,7 @@ public class AuthController {
     ) {
         memberWithdrawalService.withdraw(
                 principal.memberId(),
-                request.currentPassword
+                request.currentPassword()
         );
 
         ResponseCookie deleteCookie = ResponseCookie
