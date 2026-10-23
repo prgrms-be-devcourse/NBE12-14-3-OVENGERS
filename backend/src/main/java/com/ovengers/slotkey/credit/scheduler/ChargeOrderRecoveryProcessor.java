@@ -65,7 +65,7 @@ public class ChargeOrderRecoveryProcessor {
             if (isApprovedStateConflict(result, exception)) {
                 recoveryTransactionService.recordApprovedStateConflict(
                         chargeOrderId,
-                        result.rawStatus().orElse(null)
+                        result.rawStatus()
                 );
                 return;
             }
@@ -90,7 +90,7 @@ public class ChargeOrderRecoveryProcessor {
             PgPaymentLookupResult result,
             LocalDateTime now
     ) {
-        if (result.rawStatus().isEmpty() || result.rawStatus().orElseThrow().isBlank()) {
+        if (result.rawStatus() == null || result.rawStatus().isBlank()) {
             recoveryTransactionService.markManualReview(
                     target.chargeOrderId(),
                     now,
@@ -100,7 +100,7 @@ public class ChargeOrderRecoveryProcessor {
         }
         recoveryTransactionService.markFailed(
                 target.chargeOrderId(),
-                "PG_STATUS_" + result.rawStatus().orElseThrow(),
+                "PG_STATUS_" + result.rawStatus(),
                 now
         );
     }
@@ -109,11 +109,11 @@ public class ChargeOrderRecoveryProcessor {
             ChargeOrderRecoveryTarget target,
             PgPaymentLookupResult result
     ) {
-        boolean matches = target.paymentKey().equals(result.paymentKey().orElse(null))
-                && target.orderId().equals(result.orderId().orElse(null))
-                && result.totalAmount().filter(amount -> target.amount() == amount).isPresent()
-                && "KRW".equals(result.currency().orElse(null))
-                && result.rawStatus().filter(status -> !status.isBlank()).isPresent();
+        boolean matches = target.paymentKey().equals(result.paymentKey())
+                && target.orderId().equals(result.orderId())
+                && result.totalAmount() != null && target.amount() == result.totalAmount()
+                && "KRW".equals(result.currency())
+                && result.rawStatus() != null && !result.rawStatus().isBlank();
         if (!matches) {
             log.warn(
                     "PG 조회 응답이 로컬 주문과 일치하지 않습니다. orderId={} lookupStatus={}",

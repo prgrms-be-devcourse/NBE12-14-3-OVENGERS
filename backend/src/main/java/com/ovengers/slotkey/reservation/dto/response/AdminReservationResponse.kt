@@ -4,17 +4,16 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.ovengers.slotkey.reservation.entity.Reservation
 import com.ovengers.slotkey.reservation.entity.ReservationStatus
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class AdminReservationResponse(
     val reservationId: Long,
     val memberId: Long,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val memberEmail: Optional<String>,
+    val memberEmail: String?,
     val spaceId: Long,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val spaceName: Optional<String>,
+    val spaceName: String?,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
     val status: ReservationStatus,
@@ -25,8 +24,8 @@ data class AdminReservationResponse(
         @JvmStatic
         fun from(
             reservation: Reservation,
-            memberEmail: Optional<String>,
-            spaceName: Optional<String>,
+            memberEmail: String?,
+            spaceName: String?,
         ): AdminReservationResponse =
             AdminReservationResponse(
                 reservation.id,

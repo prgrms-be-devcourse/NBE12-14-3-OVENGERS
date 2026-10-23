@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.service;
 
-import java.util.Optional;
 
 import com.ovengers.slotkey.member.entity.Member;
 import com.ovengers.slotkey.member.entity.MemberRole;
@@ -152,7 +151,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("무조건 조회: 전체 23건 조회, totalElements=23, totalPages=2, 기본 정렬 id DESC")
     void searchReservations_noCondition_returnsAllWithDefaultSort() {
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty());
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(null, null, null);
         Page<AdminReservationResponse> page0 = adminReservationService.searchReservations(condition, PageRequest.of(0, 20));
 
         assertThat(page0.getTotalElements()).isEqualTo(23);
@@ -175,7 +174,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @DisplayName("date 단독 필터: 이용 시작일 [00:00, 24:00) 범위만 조회되며 경계 시각(00:00 포함, 다음날 00:00 제외)이 정확하다")
     void searchReservations_dateFilter_boundaryCheck() {
         // day2 (2026-09-30): 경계 00:00 1건 + CONFIRMED 4건 + IN_USE 4건 + CANCELLED 3건 = 12건
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.ofNullable(day2), Optional.empty(), Optional.empty());
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(day2, null, null);
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 50));
 
         assertThat(result.getTotalElements()).isEqualTo(12);
@@ -199,7 +198,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @DisplayName("spaceId 단독 필터: 지정된 spaceId의 예약만 반환한다")
     void searchReservations_spaceIdFilter() {
         // spaceId1: day1(5) + day2(1+4+4) = 14건
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.empty(), Optional.ofNullable(spaceId1), Optional.empty());
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(null, spaceId1, null);
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 50));
 
         assertThat(result.getTotalElements()).isEqualTo(14);
@@ -210,7 +209,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @DisplayName("status 단독 필터: 지정된 status의 예약만 반환한다")
     void searchReservations_statusFilter() {
         // CONFIRMED: day1(5) + day2(1+4) + day3(1) = 11건
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.ofNullable(ReservationStatus.CONFIRMED));
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(null, null, ReservationStatus.CONFIRMED);
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 50));
 
         assertThat(result.getTotalElements()).isEqualTo(11);
@@ -222,7 +221,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     void searchReservations_compositeFilter() {
         // day2 AND spaceId1 AND CONFIRMED: 00:00(1) + 4건 = 5건
         AdminReservationSearchCondition condition = new AdminReservationSearchCondition(
-                Optional.ofNullable(day2), Optional.ofNullable(spaceId1), Optional.ofNullable(ReservationStatus.CONFIRMED)
+                day2, spaceId1, ReservationStatus.CONFIRMED
         );
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 50));
 
@@ -238,7 +237,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("존재하지 않는 양수 spaceId로 검색 시 예외 없이 빈 200 페이지(totalElements=0)를 반환한다")
     void searchReservations_nonExistentSpaceId_returnsEmptyPage() {
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.empty(), Optional.ofNullable(999999L), Optional.empty());
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(null, 999999L, null);
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 20));
 
         assertThat(result.getTotalElements()).isEqualTo(0);
@@ -248,7 +247,7 @@ class AdminReservationSearchIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("클라이언트 지정 정렬: sort=id,asc 지정 시 오름차순으로 정렬된다")
     void searchReservations_clientSort_returnsAscendingOrder() {
-        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty());
+        AdminReservationSearchCondition condition = new AdminReservationSearchCondition(null, null, null);
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(
                 condition,
                 PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "id"))

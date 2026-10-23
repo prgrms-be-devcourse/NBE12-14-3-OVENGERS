@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.ovengers.slotkey.credit.entity.ChargeOrder
 import com.ovengers.slotkey.credit.entity.ChargeOrderStatus
 import java.time.LocalDateTime
-import java.util.Optional
 
 /** 내 충전 내역 한 줄. 결제수단과 제공사는 PG 응답에 없을 수 있다. */
 @JvmRecord
@@ -13,9 +12,9 @@ data class ChargeOrderHistoryResponse(
     val amount: Long,
     val status: ChargeOrderStatus,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val paymentMethod: Optional<String>,
+    val paymentMethod: String?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val paymentProvider: Optional<String>,
+    val paymentProvider: String?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {
@@ -26,8 +25,8 @@ data class ChargeOrderHistoryResponse(
                 order.orderId,
                 order.amount,
                 order.status,
-                Optional.ofNullable(order.paymentMethod),
-                Optional.ofNullable(order.paymentProvider),
+                order.paymentMethod,
+                order.paymentProvider,
                 order.createdAt,
                 order.updatedAt,
             )

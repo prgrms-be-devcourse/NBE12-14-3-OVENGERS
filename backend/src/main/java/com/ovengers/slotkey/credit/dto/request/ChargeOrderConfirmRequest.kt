@@ -1,16 +1,18 @@
 package com.ovengers.slotkey.credit.dto.request
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
-import jakarta.validation.valueextraction.Unwrapping
-import java.util.Optional
 
 @JvmRecord
 data class ChargeOrderConfirmRequest(
-    @field:NotBlank(message = "paymentKey는 필수입니다.", payload = [Unwrapping.Unwrap::class])
-    val paymentKey: Optional<String>,
-    @field:NotBlank(message = "orderId는 필수입니다.", payload = [Unwrapping.Unwrap::class])
-    val orderId: Optional<String>,
-    @field:NotNull(message = "충전 금액은 필수입니다.", payload = [Unwrapping.Unwrap::class])
-    val amount: Optional<Long>,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotBlank(message = "paymentKey는 필수입니다.")
+    val paymentKey: String?,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotBlank(message = "orderId는 필수입니다.")
+    val orderId: String?,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotNull(message = "충전 금액은 필수입니다.")
+    val amount: Long?,
 )

@@ -47,9 +47,9 @@ public class PgWebhookEventStore {
                 event.transmissionId(),
                 event.eventType(),
                 event.orderId(),
-                event.paymentKey().orElse(null),
-                event.reportedStatus().orElse(null),
-                event.retriedCount().orElse(null),
+                event.paymentKey(),
+                event.reportedStatus(),
+                event.retriedCount(),
                 RECEIVED,
                 LocalDateTime.now(clock)
         ) == 1;

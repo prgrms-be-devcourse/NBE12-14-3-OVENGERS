@@ -1,11 +1,11 @@
 package com.ovengers.slotkey.credit.dto.request
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
-import jakarta.validation.valueextraction.Unwrapping
-import java.util.Optional
 
 @JvmRecord
 data class ChargeOrderCreateRequest(
-    @field:NotNull(message = "충전 금액은 필수입니다.", payload = [Unwrapping.Unwrap::class])
-    val amount: Optional<Long>,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotNull(message = "충전 금액은 필수입니다.")
+    val amount: Long?,
 )

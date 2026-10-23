@@ -9,21 +9,20 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JsonTest
-class ReservationDtoOptionalContractTest {
+class ReservationDtoNullableContractTest {
     @Autowired private ObjectMapper objectMapper;
 
     @ParameterizedTest
     @ValueSource(strings = {"{}", "{\"spaceVersion\":null}"})
-    void missingVersionIsRepresentedWithoutNullAndStillFailsRequiredValidation(String json) throws Exception {
+    void missingVersionIsNullableAndStillFailsRequiredValidation(String json) throws Exception {
         ReservationPayRequest request = objectMapper.readValue(json, ReservationPayRequest.class);
-        Object value = request.getClass().getMethod("spaceVersion").invoke(request);
-        assertThat(value).isInstanceOf(Optional.class);
-        assertThat((Optional<?>) value).isEmpty();
+
+        assertThat(ReservationPayRequest.class.getRecordComponents()[0].getType()).isEqualTo(Integer.class);
+        assertThat(request.spaceVersion()).isNull();
+
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             var violations = factory.getValidator().validate(request);
             assertThat(violations).hasSize(1);

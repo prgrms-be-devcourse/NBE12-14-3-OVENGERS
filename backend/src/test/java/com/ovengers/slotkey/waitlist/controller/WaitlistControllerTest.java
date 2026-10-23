@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -105,7 +104,7 @@ class WaitlistControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new WaitlistApplyRequest(
-                                        Optional.of(3L), Optional.of(START_TIME), Optional.of(END_TIME)))))
+                                        3L, START_TIME, END_TIME))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(11L))
@@ -135,7 +134,7 @@ class WaitlistControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new WaitlistApplyRequest(
-                                        Optional.of(3L), Optional.of(START_TIME), Optional.of(END_TIME)))))
+                                        3L, START_TIME, END_TIME))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 

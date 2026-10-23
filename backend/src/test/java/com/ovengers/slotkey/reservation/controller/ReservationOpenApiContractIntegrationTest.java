@@ -19,7 +19,7 @@ class ReservationOpenApiContractIntegrationTest extends IntegrationTestSupport {
     @Autowired private ObjectMapper objectMapper;
 
     @Test
-    void reservationSchemasDescribeValuesAndRequiredFieldsRatherThanOptionalWrappers() throws Exception {
+    void reservationSchemasDescribeValuesAndRequiredFields() throws Exception {
         JsonNode schemas = document().path("components").path("schemas");
         JsonNode create = schemas.path("ReservationCreateRequest");
         assertThat(create.path("properties").path("spaceId").path("type").asText()).isEqualTo("integer");

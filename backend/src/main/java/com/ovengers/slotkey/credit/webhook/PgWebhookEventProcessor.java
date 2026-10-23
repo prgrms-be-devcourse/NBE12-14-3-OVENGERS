@@ -154,17 +154,17 @@ public class PgWebhookEventProcessor {
         if (current == ChargeOrderStatus.PAID) {
             return PgWebhookEventResult.ALREADY_PAID;
         }
-        recoveryTransactionService.recordApprovedStateConflict(order.getId(), lookup.rawStatus().orElse(null));
+        recoveryTransactionService.recordApprovedStateConflict(order.getId(), lookup.rawStatus());
         return PgWebhookEventResult.STATE_CONFLICT;
     }
 
     /** 4단계 ChargeOrderRecoveryProcessor와 같은 대조 규칙(pg-charge.md 5단계 결정 5). */
     private boolean matches(ChargeOrder order, PgPaymentLookupResult lookup) {
-        return order.getPaymentKey().equals(lookup.paymentKey().orElse(null))
-                && order.getOrderId().equals(lookup.orderId().orElse(null))
-                && lookup.totalAmount().filter(amount -> order.getAmount() == amount).isPresent()
-                && "KRW".equals(lookup.currency().orElse(null))
-                && lookup.rawStatus().filter(status -> !status.isBlank()).isPresent();
+        return order.getPaymentKey().equals(lookup.paymentKey())
+                && order.getOrderId().equals(lookup.orderId())
+                && lookup.totalAmount() != null && order.getAmount() == lookup.totalAmount()
+                && "KRW".equals(lookup.currency())
+                && lookup.rawStatus() != null && !lookup.rawStatus().isBlank();
     }
 
     private void logCompleteError(ChargeOrder order, RuntimeException exception) {

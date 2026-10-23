@@ -2,7 +2,6 @@ package com.ovengers.slotkey.notification.dto.response
 
 import com.ovengers.slotkey.notification.entity.Notification
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class NotificationResponse(
@@ -19,7 +18,7 @@ data class NotificationResponse(
                 notification.id,
                 notification.waitlistEntryId,
                 notification.message,
-                Optional.ofNullable(notification.readAt).isPresent,
+                notification.readAt != null,
                 notification.createdAt,
             )
     }

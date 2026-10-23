@@ -110,7 +110,7 @@ public class ReservationController {
     ) {
         ReservationResponse response = reservationHoldService.createHold(
                 principal.memberId(),
-                request.spaceId().orElseThrow(),
+                request.spaceId(),
                 request.toStartDateTime(),
                 request.toEndDateTime()
         );
@@ -176,7 +176,7 @@ public class ReservationController {
             @RequestHeader("Idempotency-Key") String idempotencyKey
     ) {
         ReservationResponse response = reservationPaymentConfirmService.confirm(
-                principal.memberId(), reservationId, request.spaceVersion().orElseThrow(), idempotencyKey
+                principal.memberId(), reservationId, request.spaceVersion(), idempotencyKey
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -272,7 +272,7 @@ public class ReservationController {
             @Valid @RequestBody ReservationExtendRequest request
     ) {
         ReservationResponse response = reservationExtendService.extend(
-                principal.memberId(), reservationId, request.expectedEndTime().orElseThrow(), request.newEndTime().orElseThrow()
+                principal.memberId(), reservationId, request.expectedEndTime(), request.newEndTime()
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }

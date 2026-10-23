@@ -11,6 +11,8 @@ import com.ovengers.slotkey.global.idempotency.IdempotencyService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,10 +91,14 @@ public class ChargeOrderConfirmService {
             return approved;
         }
         if (result.type() == PgConfirmationResult.Type.DECLINED) {
-            transactionService.completeDeclined(orderId, result.errorCode().orElseThrow());
+            String errorCode = Objects.requireNonNull(
+                    result.errorCode(),
+                    "PG 거절 결과에는 오류 코드가 필요합니다."
+            );
+            transactionService.completeDeclined(orderId, errorCode);
             throw new BusinessException(ErrorCode.PAYMENT_DECLINED);
         }
-        if (result.unknownReason().orElse(null) == PgConfirmationResult.UnknownReason.ALREADY_PROCESSED) {
+        if (result.unknownReason() == PgConfirmationResult.UnknownReason.ALREADY_PROCESSED) {
             PgPaymentLookupResult lookup = pgClient.findByPaymentKey(paymentKey);
             if (lookup.status() == PgPaymentLookupResult.Status.APPROVED) {
                 return completeApprovedOrKeepConfirming(
@@ -108,7 +114,7 @@ public class ChargeOrderConfirmService {
                     lookup.status()
             );
         }
-        if (result.unknownReason().orElse(null) == PgConfirmationResult.UnknownReason.MERCHANT_ERROR) {
+        if (result.unknownReason() == PgConfirmationResult.UnknownReason.MERCHANT_ERROR) {
             throw new BusinessException(ErrorCode.PG_CONFIRMATION_ERROR);
         }
         return transactionService.prepare(
@@ -123,14 +129,14 @@ public class ChargeOrderConfirmService {
 
     /** 표시용 결제수단 기록. 실패해도 이미 확정된 충전 결과를 바꾸지 않는다. */
     private void recordPaymentMethodQuietly(String orderId, PgConfirmationResult result) {
-        if (result.paymentMethod().isEmpty()) {
+        if (result.paymentMethod() == null) {
             return;
         }
         try {
             transactionService.recordPaymentMethod(
                     orderId,
-                    result.paymentMethod().orElseThrow(),
-                    result.paymentProvider().orElse(null));
+                    result.paymentMethod(),
+                    result.paymentProvider());
         } catch (RuntimeException exception) {
             log.warn(
                     "결제수단 기록에 실패했습니다. orderId={} exceptionClass={}",

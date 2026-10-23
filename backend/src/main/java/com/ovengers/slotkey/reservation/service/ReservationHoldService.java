@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.service;
 
-import java.util.Optional;
 
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
@@ -89,6 +88,6 @@ public class ReservationHoldService {
                 ReservationStatusHistory.of(reservation.getId(), memberId, null, ReservationStatus.HELD, null, now)
         );
 
-        return ReservationResponse.from(reservation, Optional.ofNullable(space.getVersion()));
+        return ReservationResponse.from(reservation, space.getVersion());
     }
 }

@@ -1,16 +1,18 @@
 package com.ovengers.slotkey.waitlist.dto.request
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
-import jakarta.validation.valueextraction.Unwrapping
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class WaitlistApplyRequest(
-    @field:NotNull(payload = [Unwrapping.Unwrap::class])
-    val spaceId: Optional<Long>,
-    @field:NotNull(payload = [Unwrapping.Unwrap::class])
-    val startTime: Optional<LocalDateTime>,
-    @field:NotNull(payload = [Unwrapping.Unwrap::class])
-    val endTime: Optional<LocalDateTime>,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotNull
+    val spaceId: Long?,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotNull
+    val startTime: LocalDateTime?,
+    @get:Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotNull
+    val endTime: LocalDateTime?,
 )

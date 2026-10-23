@@ -4,17 +4,16 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.ovengers.slotkey.reservation.entity.Reservation
 import com.ovengers.slotkey.reservation.entity.ReservationStatus
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class AdminReservationDetailResponse(
     val reservationId: Long,
     val memberId: Long,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val memberEmail: Optional<String>,
+    val memberEmail: String?,
     val spaceId: Long,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val spaceName: Optional<String>,
+    val spaceName: String?,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
     val status: ReservationStatus,
@@ -22,11 +21,11 @@ data class AdminReservationDetailResponse(
     val pricePerSlotSnapshot: Int,
     val createdAt: LocalDateTime,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val cancelledAt: Optional<LocalDateTime>,
+    val cancelledAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedInAt: Optional<LocalDateTime>,
+    val checkedInAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedOutAt: Optional<LocalDateTime>,
+    val checkedOutAt: LocalDateTime?,
     val statusHistory: List<ReservationStatusHistoryResponse>,
     val accessLogs: List<DoorAccessLogResponse>,
 ) {
@@ -34,8 +33,8 @@ data class AdminReservationDetailResponse(
         @JvmStatic
         fun from(
             reservation: Reservation,
-            memberEmail: Optional<String>,
-            spaceName: Optional<String>,
+            memberEmail: String?,
+            spaceName: String?,
             statusHistory: List<ReservationStatusHistoryResponse>,
             accessLogs: List<DoorAccessLogResponse>,
         ): AdminReservationDetailResponse =
@@ -51,9 +50,9 @@ data class AdminReservationDetailResponse(
                 reservation.totalAmount,
                 reservation.pricePerSlotSnapshot,
                 reservation.createdAt,
-                Optional.ofNullable(reservation.cancelledAt),
-                Optional.ofNullable(reservation.checkedInAt),
-                Optional.ofNullable(reservation.checkedOutAt),
+                reservation.cancelledAt,
+                reservation.checkedInAt,
+                reservation.checkedOutAt,
                 statusHistory,
                 accessLogs,
             )

@@ -151,8 +151,8 @@ class ReservationCancelServiceTest {
 
         verify(creditService).refund(MEMBER_ID, RESERVATION_ID, TOTAL_AMOUNT);
         verify(creditService, never()).penalize(any(), any(), anyInt());
-        assertThat(response.refundAmount().orElseThrow()).isEqualTo(TOTAL_AMOUNT);
-        assertThat(response.penaltyAmount().orElseThrow()).isEqualTo(0);
+        assertThat(response.refundAmount()).isEqualTo(TOTAL_AMOUNT);
+        assertThat(response.penaltyAmount()).isEqualTo(0);
     }
 
     @Test
@@ -175,8 +175,8 @@ class ReservationCancelServiceTest {
 
         verify(creditService).refund(MEMBER_ID, RESERVATION_ID, TOTAL_AMOUNT);
         verify(creditService).penalize(MEMBER_ID, RESERVATION_ID, TOTAL_AMOUNT / 2);
-        assertThat(response.refundAmount().orElseThrow()).isEqualTo(TOTAL_AMOUNT / 2);
-        assertThat(response.penaltyAmount().orElseThrow()).isEqualTo(TOTAL_AMOUNT / 2);
+        assertThat(response.refundAmount()).isEqualTo(TOTAL_AMOUNT / 2);
+        assertThat(response.penaltyAmount()).isEqualTo(TOTAL_AMOUNT / 2);
     }
 
     @Test
@@ -274,8 +274,8 @@ class ReservationCancelServiceTest {
         ReservationResponse response = cancelService.cancel(MEMBER_ID, RESERVATION_ID);
 
         assertThat(response.status()).isEqualTo("CANCELLED");
-        assertThat(response.refundAmount().orElseThrow()).isZero();
-        assertThat(response.penaltyAmount().orElseThrow()).isZero();
+        assertThat(response.refundAmount()).isZero();
+        assertThat(response.penaltyAmount()).isZero();
         verify(reservationSlotRepository).deleteByReservationId(RESERVATION_ID);
         verify(reservationStatusHistoryRepository).save(any());
         verify(slotReleasedRecorder).record(RESERVATION_ID, 5L, SlotReleasedRecorder.Reason.CANCELLED);

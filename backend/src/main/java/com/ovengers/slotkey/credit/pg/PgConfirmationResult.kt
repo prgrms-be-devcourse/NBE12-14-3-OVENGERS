@@ -1,21 +1,20 @@
 package com.ovengers.slotkey.credit.pg
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import java.util.Optional
 
 @JvmRecord
 data class PgConfirmationResult(
     val type: Type,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val paymentKey: Optional<String>,
+    val paymentKey: String?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val errorCode: Optional<String>,
+    val errorCode: String?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val unknownReason: Optional<UnknownReason>,
+    val unknownReason: UnknownReason?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val paymentMethod: Optional<String>,
+    val paymentMethod: String?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val paymentProvider: Optional<String>,
+    val paymentProvider: String?,
 ) {
     enum class Type { APPROVED, DECLINED, UNKNOWN }
 
@@ -23,19 +22,19 @@ data class PgConfirmationResult(
 
     companion object {
         @JvmStatic
-        fun approved(paymentKey: String): PgConfirmationResult = approved(Optional.of(paymentKey), Optional.empty(), Optional.empty())
+        fun approved(paymentKey: String): PgConfirmationResult = approved(paymentKey, null, null)
 
         @JvmStatic
         fun approved(
-            paymentKey: Optional<String>,
-            paymentMethod: Optional<String>,
-            paymentProvider: Optional<String>,
+            paymentKey: String?,
+            paymentMethod: String?,
+            paymentProvider: String?,
         ): PgConfirmationResult =
             PgConfirmationResult(
                 Type.APPROVED,
                 paymentKey,
-                Optional.empty(),
-                Optional.empty(),
+                null,
+                null,
                 paymentMethod,
                 paymentProvider,
             )
@@ -44,31 +43,25 @@ data class PgConfirmationResult(
         fun declined(errorCode: String): PgConfirmationResult =
             PgConfirmationResult(
                 Type.DECLINED,
-                Optional.empty(),
-                Optional.of(errorCode),
-                Optional.empty(),
-                Optional.empty(),
-                Optional.empty(),
+                null,
+                errorCode,
+                null,
+                null,
+                null,
             )
 
         @JvmStatic
         fun unknown(
-            errorCode: String,
-            reason: UnknownReason,
-        ): PgConfirmationResult = unknown(Optional.of(errorCode), reason)
-
-        @JvmStatic
-        fun unknown(
-            errorCode: Optional<String>,
+            errorCode: String?,
             reason: UnknownReason,
         ): PgConfirmationResult =
             PgConfirmationResult(
                 Type.UNKNOWN,
-                Optional.empty(),
+                null,
                 errorCode,
-                Optional.of(reason),
-                Optional.empty(),
-                Optional.empty(),
+                reason,
+                null,
+                null,
             )
     }
 }

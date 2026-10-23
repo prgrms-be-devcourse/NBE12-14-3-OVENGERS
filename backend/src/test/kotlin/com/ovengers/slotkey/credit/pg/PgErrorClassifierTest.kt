@@ -16,7 +16,7 @@ class PgErrorClassifierTest {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @ParameterizedTest
@@ -27,7 +27,7 @@ class PgErrorClassifierTest {
         val result = PgErrorClassifier.classify(500, errorCode)
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @ParameterizedTest
@@ -57,7 +57,7 @@ class PgErrorClassifierTest {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.DECLINED)
-        assertThat(result.errorCode).contains(errorCode)
+        assertThat(result.errorCode).isEqualTo(errorCode)
     }
 
     @ParameterizedTest
@@ -77,7 +77,7 @@ class PgErrorClassifierTest {
         val result = PgErrorClassifier.classify(400, errorCode)
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.MERCHANT_ERROR)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.MERCHANT_ERROR)
     }
 
     @ParameterizedTest
@@ -87,7 +87,7 @@ class PgErrorClassifierTest {
         val result = PgErrorClassifier.classify(500, errorCode)
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @Test
@@ -100,7 +100,7 @@ class PgErrorClassifierTest {
             )
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED)
     }
 
     @Test
@@ -113,6 +113,6 @@ class PgErrorClassifierTest {
             )
 
         assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason).contains(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 }

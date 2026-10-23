@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.service;
 
-import java.util.Optional;
 
 import com.ovengers.slotkey.access.entity.DoorAccessLog;
 import com.ovengers.slotkey.access.service.DoorAccessLogService;
@@ -79,22 +78,22 @@ public class AdminReservationService {
 
         AdminReservationSearchCondition cond = condition != null
                 ? condition
-                : new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty());
+                : new AdminReservationSearchCondition(null, null, null);
 
-        LocalDate date = cond.date().orElse(null);
+        LocalDate date = cond.date();
         LocalDateTime startTimeInclusive = date != null ? date.atStartOfDay() : null;
         LocalDateTime startTimeExclusive = date != null ? date.plusDays(1).atStartOfDay() : null;
 
         return reservationRepository.searchReservations(
-                cond.spaceId().orElse(null),
-                cond.status().orElse(null),
+                cond.spaceId(),
+                cond.status(),
                 startTimeInclusive,
                 startTimeExclusive,
                 effectivePageable
         ).map(reservation -> AdminReservationResponse.from(
                 reservation,
-                Optional.ofNullable(findMemberEmail(reservation.getMemberId())),
-                Optional.ofNullable(findSpaceName(reservation.getSpaceId()))
+                findMemberEmail(reservation.getMemberId()),
+                findSpaceName(reservation.getSpaceId())
         ));
     }
 
@@ -103,7 +102,7 @@ public class AdminReservationService {
      */
     @Transactional(readOnly = true)
     public Page<AdminReservationResponse> findAllReservations(Pageable pageable) {
-        return searchReservations(new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty()), pageable);
+        return searchReservations(new AdminReservationSearchCondition(null, null, null), pageable);
     }
 
     /**
@@ -130,8 +129,8 @@ public class AdminReservationService {
 
         return AdminReservationDetailResponse.from(
                 reservation,
-                Optional.ofNullable(findMemberEmail(reservation.getMemberId())),
-                Optional.ofNullable(findSpaceName(reservation.getSpaceId())),
+                findMemberEmail(reservation.getMemberId()),
+                findSpaceName(reservation.getSpaceId()),
                 historyResponses,
                 accessLogs
         );
@@ -229,8 +228,8 @@ public class AdminReservationService {
 
         return AdminReservationResponse.from(
                 cancelled,
-                Optional.ofNullable(findMemberEmail(cancelled.getMemberId())),
-                Optional.ofNullable(findSpaceName(cancelled.getSpaceId()))
+                findMemberEmail(cancelled.getMemberId()),
+                findSpaceName(cancelled.getSpaceId())
         );
     }
 
