@@ -76,9 +76,25 @@
 - [ ] 관련 decision 검증 결과와 `docs/lab/notes/kotlin-friday-dtos/step-3.md`를 갱신한다. 새 테스트 목적·모든 명령/결과·기준 커밋·가정·미확인·리뷰 체크리스트를 포함한다. 독립 전체 검증·CI는 별도 상태로 둔다.
 - [ ] 사용자에게 코드/문서 커밋 대상 목록을 보여준다. 확인 후에만 각각 커밋한다. PR 생성 권한이 생기면 Java 기준·최종 소스 커밋·날짜·명령·종료 코드·테스트 수를 기록한다. 다음 묶음은 사용자 지시를 기다린다.
 
+## Task 3: 충전·PG·웹훅·대기열·알림 16개 전환
+
+**실행 상태:** 구현·전체 자기검증·별도 읽기 전용 리뷰 완료. 예약 PR #42의 두 커밋 위에 쌓였으며, 첫 PR 머지 뒤 `dev` 기준으로 정리한다. 사용자 확인 후 커밋한다.
+
+**Files:** `credit/dto` 5개, `credit/pg` 4개, `credit/webhook` 2개, `waitlist/dto` 2개, `notification/dto/response` 3개의 Java 삭제와 같은 패키지 Kotlin 추가. Controller·Service·Store·Scheduler·Repository는 타입 연결에 필요한 값 감싸기·꺼내기만 수정한다.
+
+**Interfaces:** 필드 분류는 결정 문서 §2-4를 그대로 소비한다. 요청의 검증 전 필수값과 PG/웹훅/충전 내역의 실제 부재는 non-null Optional, 나머지는 일반 non-null 타입이다. PG 결과의 상태 판정과 `paymentObjectReceived` 의미를 유지한다.
+
+- [x] 기존 충전·PG·웹훅·대기열·알림 테스트를 Java 원본에서 통과시키고 JSON·검증·팩토리 경계의 골든을 고정한다.
+- [x] Optional record component, 요청 누락/null/빈 값, Long 범위, PG 상태별 부재와 웹훅 null을 원하는 API로 먼저 작성해 RED를 확인한다.
+- [x] 16개 타입을 `@JvmRecord data class`, 일반 Kotlin interface, `enum class`로 전환하고 직접 Java/Kotlin 소비자만 맞춘다.
+- [x] 골든·HTTP·PG 승인/조회·recovery·webhook·대기열·알림 테스트를 GREEN으로 만든다. 전역 Jackson·Validation·Springdoc 설정은 변경하지 않는다.
+- [x] 대상 Kotlin의 `?`, `!!`, Lombok과 범위 밖 클래스 변경이 0건인지 확인한다.
+- [x] JDK 21·Docker에서 전체 `clean build`, 테스트 수 하한·스킵 0, 프론트 테스트·타입 검사를 실행한다.
+- [x] 결정 문서 검증 결과와 `docs/lab/notes/kotlin-friday-dtos/step-4.md`를 갱신하고 별도 전체 리뷰를 수행한다.
+
 ## 후속 묶음의 경계
 
-이 문서의 상세 실행 범위는 첫 예약 묶음까지다. 다음 묶음은 사용자가 진행을 지시할 때 현재 소스·결과를 기준으로 상세화한다.
+예약 이후 범위는 Task 3으로 구체화했다. 아래 표는 검증 경계를 요약한다.
 
 | 순서 | 범위 | 추가로 반드시 검증할 경계 |
 | --- | --- | --- |
