@@ -128,10 +128,6 @@ Java가 Kotlin 타입을 호출하는 방식을 먼저 확인하고, 다음 중 
 
 사용자가 이번 PR의 nullable 선언을 모두 제거하도록 요청했다. `ReservationTargetInfo`는 `Long?` 대신 `Long`을 사용하며 생성자·접근자는 primitive long으로 바뀐다. 실제 JPQL 조회와 Java 소유권 비교 호출부를 함께 검증한다. 이 변경은 내부 프로젝션에 한정하며, 2-5의 HTTP 요청 DTO null/검증 규칙은 유지한다. 선택 이유·대안·검증은 [목요일 non-null 계약](kotlin-thursday-non-null-contract.md)에 기록한다. 아래 최초 전환의 boxed Long 검증은 변경 전 이력이다.
 
-### 2-7. 2026-10-23 후속 요청: 이태호 예약 DTO의 Optional 예외
-
-사용자가 금요일 담당 전환에서 nullable 없이 값 부재를 표현하도록 별도 설계와 구현을 요청했다. 첫 예약 DTO 11개는 `@JvmRecord data class`를 유지하고, 선택값과 검증 전 입력을 non-null `Optional<T>`로 표현한다. HTTP 필수 여부·기존 JSON null·검증 응답은 유지한다. §2-5의 요청 nullable 유지 방침에 대한 **이 담당 묶음의 예외**이며 다른 담당자의 DTO로 확대하지 않는다. 선택 이유·대안·검증·한계는 [Optional 결정](kotlin-friday-absence-without-nullable.md)에 둔다.
-
 ## 3. 기각한 대안과 이유
 
 | 대안 | 장점 | 기각한 이유 |
