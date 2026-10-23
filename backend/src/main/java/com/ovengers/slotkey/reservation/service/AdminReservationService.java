@@ -1,5 +1,6 @@
 package com.ovengers.slotkey.reservation.service;
 
+
 import com.ovengers.slotkey.access.entity.DoorAccessLog;
 import com.ovengers.slotkey.access.service.DoorAccessLogService;
 import com.ovengers.slotkey.access.service.DoorAccessTokenService;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ovengers.slotkey.credit.service.CreditService;   // AuditLogService import 아래
 import java.time.Clock;                                       // java.time.LocalDateTime import 위
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,8 +80,9 @@ public class AdminReservationService {
                 ? condition
                 : new AdminReservationSearchCondition(null, null, null);
 
-        LocalDateTime startTimeInclusive = cond.date() != null ? cond.date().atStartOfDay() : null;
-        LocalDateTime startTimeExclusive = cond.date() != null ? cond.date().plusDays(1).atStartOfDay() : null;
+        LocalDate date = cond.date();
+        LocalDateTime startTimeInclusive = date != null ? date.atStartOfDay() : null;
+        LocalDateTime startTimeExclusive = date != null ? date.plusDays(1).atStartOfDay() : null;
 
         return reservationRepository.searchReservations(
                 cond.spaceId(),

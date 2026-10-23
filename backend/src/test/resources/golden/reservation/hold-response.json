@@ -1,0 +1,17 @@
+{
+  "reservationId": 10,
+  "spaceId": 20,
+  "startTime": "2026-10-25T10:00:00",
+  "endTime": "2026-10-25T11:00:00",
+  "status": "HELD",
+  "pricePerSlotSnapshot": 1000,
+  "totalAmount": 2000,
+  "holdExpiresAt": "2026-10-23T09:10:00",
+  "checkedInAt": null,
+  "checkedOutAt": null,
+  "cancelledAt": null,
+  "spaceVersion": 0,
+  "refundAmount": null,
+  "penaltyAmount": null,
+  "createdAt": "2026-10-23T09:00:00"
+}

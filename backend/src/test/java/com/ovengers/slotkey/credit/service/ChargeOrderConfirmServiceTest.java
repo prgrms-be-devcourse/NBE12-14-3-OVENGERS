@@ -20,7 +20,6 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.sql.SQLException;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,7 +66,7 @@ class ChargeOrderConfirmServiceTest {
                 7L,
                 ChargeOrderConfirmTransactionService.REQUEST_PATH,
                 ChargeOrderConfirmResponse.class
-        )).willReturn(Optional.of(stored));
+        )).willReturn(stored);
 
         ChargeOrderConfirmService service = new ChargeOrderConfirmService(
                 transactionService,
@@ -252,7 +251,8 @@ class ChargeOrderConfirmServiceTest {
     void confirm_approved_recordsPaymentMethod() {
         ChargeOrderConfirmResponse paid = new ChargeOrderConfirmResponse("chg_order", 1_000L, ChargeOrderStatus.PAID);
         ChargeOrderConfirmService service = approvedFlow(
-                PgConfirmationResult.approved("payment-key", "간편결제", "토스페이"), paid);
+                PgConfirmationResult.approved(
+                        "payment-key", "간편결제", "토스페이"), paid);
 
         ChargeOrderConfirmResponse response = service.confirm(7L, "payment-key", "chg_order", 1_000L, "client-key");
 
@@ -265,7 +265,8 @@ class ChargeOrderConfirmServiceTest {
     void confirm_paymentMethodRecordFailure_doesNotAffectCharge() {
         ChargeOrderConfirmResponse paid = new ChargeOrderConfirmResponse("chg_order", 1_000L, ChargeOrderStatus.PAID);
         ChargeOrderConfirmService service = approvedFlow(
-                PgConfirmationResult.approved("payment-key", "카드", null), paid);
+                PgConfirmationResult.approved(
+                        "payment-key", "카드", null), paid);
         willThrow(new IllegalStateException("db down"))
                 .given(transactionService).recordPaymentMethod("chg_order", "카드", null);
 
@@ -284,6 +285,38 @@ class ChargeOrderConfirmServiceTest {
 
         verify(transactionService, never()).recordPaymentMethod(
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("PG 거절 결과에 오류 코드가 없으면 주문 상태를 변경하지 않고 즉시 실패한다")
+    void confirm_declinedWithoutErrorCode_failsFastWithoutStateChange() {
+        PgConfirmRequest pgRequest = new PgConfirmRequest("payment-key", "chg_order", 1_000L, "pg-key");
+        given(transactionService.prepare(7L, "payment-key", "chg_order", 1_000L, "client-key"))
+                .willReturn(ChargeOrderPreparation.callPg(pgRequest));
+        given(pgClient.confirm(pgRequest)).willReturn(new PgConfirmationResult(
+                PgConfirmationResult.Type.DECLINED,
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+        ChargeOrderConfirmService service = new ChargeOrderConfirmService(
+                transactionService,
+                pgClient,
+                idempotencyService
+        );
+
+        assertThatThrownBy(() -> service.confirm(
+                7L,
+                "payment-key",
+                "chg_order",
+                1_000L,
+                "client-key"
+        ))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("PG 거절 결과에는 오류 코드가 필요합니다.");
+        verify(transactionService, never()).completeDeclined("chg_order", null);
     }
 
     @Test

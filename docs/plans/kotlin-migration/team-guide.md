@@ -83,7 +83,7 @@ cd backend
 #### A. 단계별 전환 순서 및 대상 파일
 1. **`step-1` (순수 정책·Enum·지원 유틸)**
    - `access/entity` (Enum): `AccessDenyReason`, `AccessResult`
-   - `access/policy`: `DoorAccessTimePolicy` (최초 체크인 `[startAt, startAt + 15m]`, 재입장 `(checkedInAt, endAt)` 경계 및 `Optional<AccessDenyReason>` 또는 nullable 반환 호환 유지)
+   - `access/policy`: `DoorAccessTimePolicy` (최초 체크인 `[startAt, startAt + 15m]`, 재입장 `(checkedInAt, endAt)` 경계 및 nullable `AccessDenyReason?` 반환 유지)
    - `access/support`: `AccessTokenGenerator`, `AccessTokenHasher`
 2. **`step-2` (DTO·인가·보안 Principal)**
    - `access/dto`: `DoorAccessVerifyRequest` (`@field:NotBlank`), `DoorAccessTokenResponse`, `DoorAccessVerifyResponse`, `DoorAccessLogResponse`

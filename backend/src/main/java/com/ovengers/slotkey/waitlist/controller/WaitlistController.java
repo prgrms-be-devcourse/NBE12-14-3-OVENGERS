@@ -41,7 +41,10 @@ public class WaitlistController {
             @CurrentMember AuthPrincipal principal,
             @Valid @RequestBody WaitlistApplyRequest request) {
         WaitlistEntryResponse response = waitlistService.apply(
-                principal.memberId(), request.spaceId(), request.startTime(), request.endTime());
+                principal.memberId(),
+                request.spaceId(),
+                request.startTime(),
+                request.endTime());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 

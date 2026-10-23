@@ -234,6 +234,7 @@ class ReservationExtendServiceTest {
                                 .endTime(newEndTime)
                                 .totalAmount(15000)
                                 .pricePerSlotSnapshot(2500)
+                                .createdAt(now.minusDays(1))
                                 .build();
 
                 given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));

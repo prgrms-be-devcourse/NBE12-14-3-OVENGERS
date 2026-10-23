@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class ChargeOrderRecoveryTransactionService {
@@ -33,17 +32,17 @@ public class ChargeOrderRecoveryTransactionService {
     }
 
     @Transactional
-    public Optional<ChargeOrderRecoveryTarget> prepare(Long chargeOrderId, LocalDateTime now) {
+    public ChargeOrderRecoveryTarget prepare(Long chargeOrderId, LocalDateTime now) {
         ChargeOrder order = chargeOrderRepository.findByIdForUpdate(chargeOrderId)
                 .orElse(null);
         if (order == null
                 || order.getStatus() != ChargeOrderStatus.CONFIRMING
                 || order.getRecoveryExhaustedAt() != null) {
-            return Optional.empty();
+            return null;
         }
         if (!order.getUpdatedAt().isAfter(now.minusHours(24))) {
             markManualReview(order, now, "RECOVERY_WINDOW_EXCEEDED");
-            return Optional.empty();
+            return null;
         }
         if (order.getPaymentKey() == null
                 || order.getPaymentKey().isBlank()
@@ -51,18 +50,18 @@ public class ChargeOrderRecoveryTransactionService {
                 || order.getClientIdempotencyKey().isBlank()
                 || order.getRecoveryNextAttemptAt() == null) {
             markManualReview(order, now, "RECOVERY_INVARIANT_VIOLATION");
-            return Optional.empty();
+            return null;
         }
         if (order.getRecoveryNextAttemptAt().isAfter(now)) {
-            return Optional.empty();
+            return null;
         }
-        return Optional.of(new ChargeOrderRecoveryTarget(
+        return new ChargeOrderRecoveryTarget(
                 order.getId(),
                 order.getOrderId(),
                 order.getPaymentKey(),
                 order.getClientIdempotencyKey(),
                 order.getAmount()
-        ));
+        );
     }
 
     @Transactional

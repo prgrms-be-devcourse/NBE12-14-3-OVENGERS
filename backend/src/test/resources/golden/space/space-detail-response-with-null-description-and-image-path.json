@@ -1,0 +1,13 @@
+{
+  "id" : 11,
+  "name" : "판교 B룸",
+  "location" : "판교",
+  "description" : null,
+  "capacity" : 6,
+  "pricePerSlot" : 5000,
+  "imagePath" : null,
+  "openingTime" : "09:00",
+  "closingTime" : "18:00",
+  "status" : "ACTIVE",
+  "version" : 3
+}

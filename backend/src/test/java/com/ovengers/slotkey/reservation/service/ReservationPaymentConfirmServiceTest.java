@@ -133,7 +133,7 @@ class ReservationPaymentConfirmServiceTest {
     void confirm_cachedKey_returnsCachedResponseWithoutCharging() {
         ReservationResponse cached = ReservationResponse.from(confirmedReservation());
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.of(cached));
+                .willReturn(cached);
 
         ReservationResponse response = confirmService.confirm(MEMBER_ID, RESERVATION_ID, 0, "key-1");
 
@@ -146,7 +146,7 @@ class ReservationPaymentConfirmServiceTest {
     @DisplayName("본인이 아닌 예약을 확인 요청하면 공간 버전이 정확하더라도 FORBIDDEN_NOT_OWNER 예외가 발생하고 Space 잠금을 요청하지 않는다")
     void confirm_notOwner_correctVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", OTHER_MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.empty());
+                .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));
@@ -162,7 +162,7 @@ class ReservationPaymentConfirmServiceTest {
 @DisplayName("본인이 아닌 예약을 확인 요청하면 잘못된 공간 버전을 보내더라도 FORBIDDEN_NOT_OWNER가 발생하고 Space 잠금을 요청하지 않는다")
 void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", OTHER_MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                        .willReturn(Optional.empty());
+                        .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));
@@ -178,7 +178,7 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
     @DisplayName("결제 대기 중 공간 가격 버전이 바뀌었으면 SPACE_VERSION_MISMATCH 예외가 발생한다")
     void confirm_spaceVersionMismatch_throwsException() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.empty());
+                .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));
@@ -195,7 +195,7 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
     @DisplayName("크레딧 잔액이 부족하면 예외가 전파되고 예약 상태 전이는 시도하지 않는다")
     void confirm_insufficientBalance_propagatesExceptionWithoutTransition() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.empty());
+                .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));
@@ -217,7 +217,7 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
     @DisplayName("결제 확인 시점에 HOLD가 이미 만료되었으면 RESERVATION_STATE_CONFLICT 예외가 발생한다")
     void confirm_holdExpired_throwsException() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.empty());
+                .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));
@@ -242,7 +242,7 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         Reservation held = heldReservation(MEMBER_ID);
         Reservation confirmed = confirmedReservation();
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
-                .willReturn(Optional.empty());
+                .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
                         .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
                                         MEMBER_ID)));

@@ -1,0 +1,13 @@
+{
+  "spaceId" : 11,
+  "date" : "2026-10-14",
+  "slots" : [ {
+    "slotStart" : "2026-10-14T09:00:00",
+    "slotEnd" : "2026-10-14T09:30:00",
+    "isAvailable" : false
+  }, {
+    "slotStart" : "2026-10-14T09:30:00",
+    "slotEnd" : "2026-10-14T10:00:00",
+    "isAvailable" : true
+  } ]
+}

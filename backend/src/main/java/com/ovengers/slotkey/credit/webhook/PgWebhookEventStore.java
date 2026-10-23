@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 웹훅 수신 기록(pg_webhook_event). 수신 경로에서는 이 기록 한 줄만 쓰고 주문·원장·잔액은 건드리지 않는다.
@@ -65,8 +64,8 @@ public class PgWebhookEventStore {
         );
     }
 
-    /** 아직 처리하지 않은 행의 주문번호. 이미 DONE이거나 없으면 비어 있다. */
-    public Optional<String> findReceivedOrderId(Long eventId) {
+    /** 아직 처리하지 않은 행의 주문번호. 이미 DONE이거나 없으면 null이다. */
+    public String findReceivedOrderId(Long eventId) {
         return jdbcTemplate.queryForList(
                         "SELECT order_id FROM pg_webhook_event WHERE id = ? AND status = ?",
                         String.class,
@@ -74,7 +73,8 @@ public class PgWebhookEventStore {
                         RECEIVED
                 )
                 .stream()
-                .findFirst();
+                .findFirst()
+                .orElse(null);
     }
 
     /** RECEIVED인 행만 DONE으로 바꾼다. 겹친 처리에서 먼저 기록한 결과를 덮어쓰지 않는다. */

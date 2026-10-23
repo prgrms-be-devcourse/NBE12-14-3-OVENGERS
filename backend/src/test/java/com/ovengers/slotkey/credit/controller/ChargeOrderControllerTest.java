@@ -295,7 +295,8 @@ class ChargeOrderControllerTest {
         given(chargeOrderService.getMyHistory(org.mockito.ArgumentMatchers.eq(7L), org.mockito.ArgumentMatchers.any()))
                 .willReturn(new PageImpl<>(List.of(
                         new com.ovengers.slotkey.credit.dto.response.ChargeOrderHistoryResponse(
-                                "chg_1", 5_000L, ChargeOrderStatus.PAID, "간편결제", "토스페이",
+                                "chg_1", 5_000L, ChargeOrderStatus.PAID,
+                                "간편결제", "토스페이",
                                 LocalDateTime.of(2026, 10, 13, 9, 0), LocalDateTime.of(2026, 10, 13, 9, 1))),
                         PageRequest.of(0, 10), 1));
 

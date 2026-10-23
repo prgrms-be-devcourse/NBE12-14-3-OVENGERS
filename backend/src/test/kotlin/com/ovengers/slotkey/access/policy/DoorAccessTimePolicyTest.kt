@@ -52,7 +52,7 @@ class DoorAccessTimePolicyTest {
                 null,
             )
 
-        assertThat(result).contains(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
+        assertThat(result).isEqualTo(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
     }
 
     @Test
@@ -68,7 +68,7 @@ class DoorAccessTimePolicyTest {
                 null,
             )
 
-        assertThat(result).isEmpty
+        assertThat(result).isNull()
     }
 
     @Test
@@ -84,7 +84,7 @@ class DoorAccessTimePolicyTest {
                 null,
             )
 
-        assertThat(result).contains(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
+        assertThat(result).isEqualTo(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
     }
 
     @Test
@@ -102,7 +102,7 @@ class DoorAccessTimePolicyTest {
                 checkedInAt,
             )
 
-        assertThat(result).isEmpty
+        assertThat(result).isNull()
     }
 
     @Test
@@ -118,7 +118,7 @@ class DoorAccessTimePolicyTest {
                 checkedInAt,
             )
 
-        assertThat(result).contains(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
+        assertThat(result).isEqualTo(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
     }
 
     @Test
@@ -136,7 +136,7 @@ class DoorAccessTimePolicyTest {
                 checkedInAt,
             )
 
-        assertThat(result).contains(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
+        assertThat(result).isEqualTo(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
     }
 
     @Test
@@ -152,6 +152,6 @@ class DoorAccessTimePolicyTest {
                 checkedInAt,
             )
 
-        assertThat(result).contains(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
+        assertThat(result).isEqualTo(AccessDenyReason.OUTSIDE_ALLOWED_TIME)
     }
 }

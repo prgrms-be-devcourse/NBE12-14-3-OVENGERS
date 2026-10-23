@@ -43,6 +43,7 @@
 - 대상: 로그인, 충전, 예약(HOLD), 결제, 출입, 문의, 오류 응답. 필드 누락·`null`·날짜·숫자 형식을 포함한다.
 - 동적 ID·시각은 입력을 고정하거나 형식·의미로 검증해 전체 문자열 비교의 취약함을 피한다.
 - 요청 DTO는 Java가 `null`을 받던 필드를 null 가능 타입으로 유지하고 `@field:` 검증을 그대로 둔다. 필드 누락·`null`·빈 문자열 요청의 오류 응답이 같은지 이 테스트로 확인한다([data class 결정 2-5](../../decisions/kotlin-data-class-scope.md)).
+
 - 근거와 기각한 대안: [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md).
 
 ## 실행 순서

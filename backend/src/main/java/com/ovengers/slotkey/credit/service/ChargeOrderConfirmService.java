@@ -11,6 +11,8 @@ import com.ovengers.slotkey.global.idempotency.IdempotencyService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,14 +68,16 @@ public class ChargeOrderConfirmService {
         }
         if (!preparation.shouldCallPg()) {
             if (preparation.currentResponse().status() == ChargeOrderStatus.PAID) {
-                return idempotencyService.find(
-                                idempotencyKey,
-                                memberId,
-                                ChargeOrderConfirmTransactionService.REQUEST_PATH,
-                                ChargeOrderConfirmResponse.class
-                        )
-                        .filter(stored -> orderId.equals(stored.orderId()))
-                        .orElse(preparation.currentResponse());
+                ChargeOrderConfirmResponse stored = idempotencyService.find(
+                        idempotencyKey,
+                        memberId,
+                        ChargeOrderConfirmTransactionService.REQUEST_PATH,
+                        ChargeOrderConfirmResponse.class
+                );
+                if (stored != null && orderId.equals(stored.orderId())) {
+                    return stored;
+                }
+                return preparation.currentResponse();
             }
             return preparation.currentResponse();
         }
@@ -89,7 +93,11 @@ public class ChargeOrderConfirmService {
             return approved;
         }
         if (result.type() == PgConfirmationResult.Type.DECLINED) {
-            transactionService.completeDeclined(orderId, result.errorCode());
+            String errorCode = Objects.requireNonNull(
+                    result.errorCode(),
+                    "PG 거절 결과에는 오류 코드가 필요합니다."
+            );
+            transactionService.completeDeclined(orderId, errorCode);
             throw new BusinessException(ErrorCode.PAYMENT_DECLINED);
         }
         if (result.unknownReason() == PgConfirmationResult.UnknownReason.ALREADY_PROCESSED) {
@@ -127,7 +135,10 @@ public class ChargeOrderConfirmService {
             return;
         }
         try {
-            transactionService.recordPaymentMethod(orderId, result.paymentMethod(), result.paymentProvider());
+            transactionService.recordPaymentMethod(
+                    orderId,
+                    result.paymentMethod(),
+                    result.paymentProvider());
         } catch (RuntimeException exception) {
             log.warn(
                     "결제수단 기록에 실패했습니다. orderId={} exceptionClass={}",
