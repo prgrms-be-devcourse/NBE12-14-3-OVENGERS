@@ -3,10 +3,6 @@ package com.ovengers.slotkey.reservation.entity;
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -17,10 +13,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "reservation")
-@Builder
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Reservation {
 
     @Id
@@ -166,5 +158,213 @@ public class Reservation {
                 || this.status == ReservationStatus.EXPIRED
                 || this.status == ReservationStatus.NO_SHOW
                 || this.status == ReservationStatus.CANCELLED;
+    }
+
+    // Lombok이 생성하던 공개 API를 같은 시그니처로 명시한다.
+    public static class ReservationBuilder {
+        private Long id;
+        private Long memberId;
+        private Long spaceId;
+        private LocalDateTime startTime;
+        private LocalDateTime endTime;
+        private ReservationStatus status;
+        private Integer pricePerSlotSnapshot;
+        private Integer totalAmount;
+        private LocalDateTime holdExpiresAt;
+        private LocalDateTime checkedInAt;
+        private LocalDateTime checkedOutAt;
+        private LocalDateTime cancelledAt;
+        private LocalDateTime createdAt;
+
+        ReservationBuilder() {
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder id(final Long id) {
+            this.id = id;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder memberId(final Long memberId) {
+            this.memberId = memberId;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder spaceId(final Long spaceId) {
+            this.spaceId = spaceId;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder startTime(final LocalDateTime startTime) {
+            this.startTime = startTime;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder endTime(final LocalDateTime endTime) {
+            this.endTime = endTime;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder status(final ReservationStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder pricePerSlotSnapshot(final Integer pricePerSlotSnapshot) {
+            this.pricePerSlotSnapshot = pricePerSlotSnapshot;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder totalAmount(final Integer totalAmount) {
+            this.totalAmount = totalAmount;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder holdExpiresAt(final LocalDateTime holdExpiresAt) {
+            this.holdExpiresAt = holdExpiresAt;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder checkedInAt(final LocalDateTime checkedInAt) {
+            this.checkedInAt = checkedInAt;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder checkedOutAt(final LocalDateTime checkedOutAt) {
+            this.checkedOutAt = checkedOutAt;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder cancelledAt(final LocalDateTime cancelledAt) {
+            this.cancelledAt = cancelledAt;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public Reservation.ReservationBuilder createdAt(final LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Reservation build() {
+            return new Reservation(this.id, this.memberId, this.spaceId, this.startTime, this.endTime, this.status, this.pricePerSlotSnapshot, this.totalAmount, this.holdExpiresAt, this.checkedInAt, this.checkedOutAt, this.cancelledAt, this.createdAt);
+        }
+
+        @Override
+        public String toString() {
+            return "Reservation.ReservationBuilder(id=" + this.id + ", memberId=" + this.memberId + ", spaceId=" + this.spaceId + ", startTime=" + this.startTime + ", endTime=" + this.endTime + ", status=" + this.status + ", pricePerSlotSnapshot=" + this.pricePerSlotSnapshot + ", totalAmount=" + this.totalAmount + ", holdExpiresAt=" + this.holdExpiresAt + ", checkedInAt=" + this.checkedInAt + ", checkedOutAt=" + this.checkedOutAt + ", cancelledAt=" + this.cancelledAt + ", createdAt=" + this.createdAt + ")";
+        }
+    }
+
+    public static Reservation.ReservationBuilder builder() {
+        return new Reservation.ReservationBuilder();
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public Long getMemberId() {
+        return this.memberId;
+    }
+
+    public Long getSpaceId() {
+        return this.spaceId;
+    }
+
+    public LocalDateTime getStartTime() {
+        return this.startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return this.endTime;
+    }
+
+    public ReservationStatus getStatus() {
+        return this.status;
+    }
+
+    public Integer getPricePerSlotSnapshot() {
+        return this.pricePerSlotSnapshot;
+    }
+
+    public Integer getTotalAmount() {
+        return this.totalAmount;
+    }
+
+    public LocalDateTime getHoldExpiresAt() {
+        return this.holdExpiresAt;
+    }
+
+    public LocalDateTime getCheckedInAt() {
+        return this.checkedInAt;
+    }
+
+    public LocalDateTime getCheckedOutAt() {
+        return this.checkedOutAt;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return this.cancelledAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return this.createdAt;
+    }
+
+    public Reservation() {
+    }
+
+    public Reservation(final Long id, final Long memberId, final Long spaceId, final LocalDateTime startTime, final LocalDateTime endTime, final ReservationStatus status, final Integer pricePerSlotSnapshot, final Integer totalAmount, final LocalDateTime holdExpiresAt, final LocalDateTime checkedInAt, final LocalDateTime checkedOutAt, final LocalDateTime cancelledAt, final LocalDateTime createdAt) {
+        this.id = id;
+        this.memberId = memberId;
+        this.spaceId = spaceId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.pricePerSlotSnapshot = pricePerSlotSnapshot;
+        this.totalAmount = totalAmount;
+        this.holdExpiresAt = holdExpiresAt;
+        this.checkedInAt = checkedInAt;
+        this.checkedOutAt = checkedOutAt;
+        this.cancelledAt = cancelledAt;
+        this.createdAt = createdAt;
     }
 }

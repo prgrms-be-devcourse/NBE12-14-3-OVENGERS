@@ -221,7 +221,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     void getMyReservations_unconditional_returns23ItemsAcross3Pages() {
         String[] blankKeywords = { null, "", "   " };
         for (String kw : blankKeywords) {
-            ReservationSearchCondition condition = new ReservationSearchCondition(null, kw);
+            ReservationSearchCondition condition = new ReservationSearchCondition(Optional.empty(), Optional.ofNullable(kw));
 
             // Page 0 (size=10): A23 ~ A14
             Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
@@ -269,7 +269,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @DisplayName("동일 startTime인 A11과 A12의 id DESC 정렬 단언 (A12.id > A11.id이므로 A12가 A11보다 먼저 반환됨)")
     void getMyReservations_tieBreakingByIdDesc() {
         Page<ReservationListResponse> p1 = reservationQueryService.getMyReservations(
-                memberA.getId(), new ReservationSearchCondition(null, null), PageRequest.of(1, 10));
+                memberA.getId(), new ReservationSearchCondition(Optional.empty(), Optional.empty()), PageRequest.of(1, 10));
 
         List<Long> returnedIds = p1.getContent().stream().map(ReservationListResponse::reservationId).toList();
         int idxA12 = returnedIds.indexOf(resA.get("A12").getId());
@@ -285,7 +285,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     void getMyReservations_keywordPangyo_returns19Items() {
         String[] keywords = { "판교", "  판교  " };
         for (String kw : keywords) {
-            ReservationSearchCondition condition = new ReservationSearchCondition(null, kw);
+            ReservationSearchCondition condition = new ReservationSearchCondition(Optional.empty(), Optional.ofNullable(kw));
 
             Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
                     memberA.getId(), condition, PageRequest.of(0, 10));
@@ -316,7 +316,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("status=CONFIRMED: 총 14건 2페이지 반환 (A23, A22, A12~A01)")
     void getMyReservations_statusConfirmed_returns14Items() {
-        ReservationSearchCondition condition = new ReservationSearchCondition(ReservationStatus.CONFIRMED, null);
+        ReservationSearchCondition condition = new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.CONFIRMED), Optional.empty());
 
         Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
                 memberA.getId(), condition, PageRequest.of(0, 10));
@@ -338,7 +338,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("keyword=판교 + status=CONFIRMED: 총 14건 2페이지 반환 (A23, A22, A12~A01)")
     void getMyReservations_keywordPangyoAndStatusConfirmed_returns14Items() {
-        ReservationSearchCondition condition = new ReservationSearchCondition(ReservationStatus.CONFIRMED, "판교");
+        ReservationSearchCondition condition = new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.CONFIRMED), Optional.ofNullable("판교"));
 
         Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
                 memberA.getId(), condition, PageRequest.of(0, 10));
@@ -362,7 +362,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("keyword=판교 + status=CANCELLED: 총 5건 1페이지 반환 (A17~A13, S4의 A21은 제외)")
     void getMyReservations_keywordPangyoAndStatusCancelled_returns5Items() {
-        ReservationSearchCondition condition = new ReservationSearchCondition(ReservationStatus.CANCELLED, "판교");
+        ReservationSearchCondition condition = new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.CANCELLED), Optional.ofNullable("판교"));
 
         Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
                 memberA.getId(), condition, PageRequest.of(0, 10));
@@ -377,7 +377,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("keyword=라운지 + status=IN_USE: 총 3건 1페이지 반환 (A20~A18)")
     void getMyReservations_keywordLoungeAndStatusInUse_returns3Items() {
-        ReservationSearchCondition condition = new ReservationSearchCondition(ReservationStatus.IN_USE, "라운지");
+        ReservationSearchCondition condition = new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.IN_USE), Optional.ofNullable("라운지"));
 
         Page<ReservationListResponse> p0 = reservationQueryService.getMyReservations(
                 memberA.getId(), condition, PageRequest.of(0, 10));
@@ -392,14 +392,14 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("keyword=라운지 + status=CONFIRMED 또는 keyword=미등록: 0건 빈 목록 반환")
     void getMyReservations_noMatch_returnsEmptyPage() {
-        ReservationSearchCondition c1 = new ReservationSearchCondition(ReservationStatus.CONFIRMED, "라운지");
+        ReservationSearchCondition c1 = new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.CONFIRMED), Optional.ofNullable("라운지"));
         Page<ReservationListResponse> p1 = reservationQueryService.getMyReservations(
                 memberA.getId(), c1, PageRequest.of(0, 10));
         assertThat(p1.getTotalElements()).isEqualTo(0);
         assertThat(p1.getTotalPages()).isEqualTo(0);
         assertThat(p1.getContent()).isEmpty();
 
-        ReservationSearchCondition c2 = new ReservationSearchCondition(null, "미등록");
+        ReservationSearchCondition c2 = new ReservationSearchCondition(Optional.empty(), Optional.ofNullable("미등록"));
         Page<ReservationListResponse> p2 = reservationQueryService.getMyReservations(
                 memberA.getId(), c2, PageRequest.of(0, 10));
         assertThat(p2.getTotalElements()).isEqualTo(0);
@@ -411,7 +411,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     @DisplayName("범위 밖 page=3 요청 시 content=[]이지만 totalElements=23, totalPages=3은 보존됨")
     void getMyReservations_outOfBoundsPage_preservesTotals() {
         Page<ReservationListResponse> p3 = reservationQueryService.getMyReservations(
-                memberA.getId(), new ReservationSearchCondition(null, null), PageRequest.of(3, 10));
+                memberA.getId(), new ReservationSearchCondition(Optional.empty(), Optional.empty()), PageRequest.of(3, 10));
         assertThat(p3.getTotalElements()).isEqualTo(23);
         assertThat(p3.getTotalPages()).isEqualTo(3);
         assertThat(p3.getContent()).isEmpty();
@@ -423,7 +423,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
         // 클라이언트가 sort=startTime: ASC를 요청해도 무시되고 DESC로 조회됨
         Page<ReservationListResponse> p = reservationQueryService.getMyReservations(
                 memberA.getId(),
-                new ReservationSearchCondition(null, null),
+                new ReservationSearchCondition(Optional.empty(), Optional.empty()),
                 PageRequest.of(0, 101, Sort.by(Sort.Direction.ASC, "startTime"))
         );
         assertThat(p.getSize()).isEqualTo(100);
@@ -444,18 +444,18 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
 
         // keyword=분당 검색 -> S1의 17건(A17~A01) 반환
         Page<ReservationListResponse> pBundang = reservationQueryService.getMyReservations(
-                memberA.getId(), new ReservationSearchCondition(null, "분당"), PageRequest.of(0, 20));
+                memberA.getId(), new ReservationSearchCondition(Optional.empty(), Optional.ofNullable("분당")), PageRequest.of(0, 20));
         assertThat(pBundang.getTotalElements()).isEqualTo(17);
         assertThat(pBundang.getContent().get(0).spaceName()).isEqualTo("분당 회의실");
 
         // keyword=판교 검색 -> S3의 2건(A23, A22)만 반환
         Page<ReservationListResponse> pPangyo = reservationQueryService.getMyReservations(
-                memberA.getId(), new ReservationSearchCondition(null, "판교"), PageRequest.of(0, 20));
+                memberA.getId(), new ReservationSearchCondition(Optional.empty(), Optional.ofNullable("판교")), PageRequest.of(0, 20));
         assertThat(pPangyo.getTotalElements()).isEqualTo(2);
 
         // keyword=판교 회의실 (이전 이름) 검색 -> 0건
         Page<ReservationListResponse> pOld = reservationQueryService.getMyReservations(
-                memberA.getId(), new ReservationSearchCondition(null, "판교 회의실"), PageRequest.of(0, 20));
+                memberA.getId(), new ReservationSearchCondition(Optional.empty(), Optional.ofNullable("판교 회의실")), PageRequest.of(0, 20));
         assertThat(pOld.getTotalElements()).isEqualTo(0);
     }
 
@@ -464,7 +464,7 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
     void getMyReservations_dtoFieldsMatchContract() {
         Page<ReservationListResponse> page = reservationQueryService.getMyReservations(
                 memberA.getId(),
-                new ReservationSearchCondition(ReservationStatus.IN_USE, "라운지"),
+                new ReservationSearchCondition(Optional.ofNullable(ReservationStatus.IN_USE), Optional.ofNullable("라운지")),
                 PageRequest.of(0, 10)
         );
 
@@ -475,8 +475,8 @@ class ReservationQueryServiceIntegrationTest extends IntegrationTestSupport {
         assertThat(dto.reservationId()).isEqualTo(expectedEntity.getId());
         assertThat(dto.spaceId()).isEqualTo(spaceS2.getId());
         assertThat(dto.spaceName()).isEqualTo("강남 라운지");
-        assertThat(dto.spaceLocation()).isEqualTo("서울시 강남구");
-        assertThat(dto.spaceImagePath()).isEqualTo("/images/gangnam-lounge.jpg");
+        assertThat(dto.spaceLocation().orElse(null)).isEqualTo("서울시 강남구");
+        assertThat(dto.spaceImagePath().orElse(null)).isEqualTo("/images/gangnam-lounge.jpg");
         assertThat(dto.status()).isEqualTo("IN_USE");
         assertThat(dto.date()).isEqualTo(LocalDate.of(2026, 10, 3));
         assertThat(dto.startTime()).isEqualTo(expectedEntity.getStartTime());

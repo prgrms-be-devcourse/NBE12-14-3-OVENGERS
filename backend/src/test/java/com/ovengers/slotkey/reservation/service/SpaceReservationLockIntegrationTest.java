@@ -341,7 +341,7 @@ class SpaceReservationLockIntegrationTest extends IntegrationTestSupport {
         LocalDateTime start = LocalDateTime.now(clock).plusDays(1).withHour(14).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime end = start.plusHours(1);
         ReservationResponse hold = reservationHoldService.createHold(memberId, spaceId, start, end);
-        assertThat(hold.spaceVersion()).isEqualTo(0);
+        assertThat(hold.spaceVersion().orElseThrow()).isEqualTo(0);
 
         CountDownLatch adminPriceLockLatch = new CountDownLatch(1);
         CountDownLatch payAttemptStartedLatch = new CountDownLatch(1);

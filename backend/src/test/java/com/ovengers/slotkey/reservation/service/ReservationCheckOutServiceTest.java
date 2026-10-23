@@ -200,7 +200,7 @@ public class ReservationCheckOutServiceTest {
 
         assertThat(response.status()).isEqualTo("COMPLETED");
 
-        assertThat(response.checkedOutAt()).isEqualTo(NOW);
+        assertThat(response.checkedOutAt()).contains(NOW);
     }
 
     private Reservation createReservation(

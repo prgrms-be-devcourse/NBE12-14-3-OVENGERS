@@ -1,8 +1,9 @@
 package com.ovengers.slotkey.reservation.controller;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ovengers.slotkey.global.error.GlobalExceptionHandler;
 import com.ovengers.slotkey.reservation.dto.request.AdminReservationSearchCondition;
 import com.ovengers.slotkey.reservation.dto.response.AdminReservationResponse;
@@ -55,7 +56,7 @@ class AdminReservationControllerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.findAndRegisterModules();
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         mockMvc = MockMvcBuilders.standaloneSetup(adminReservationController)
@@ -72,9 +73,9 @@ class AdminReservationControllerTest {
         AdminReservationResponse item = new AdminReservationResponse(
                 100L,
                 1L,
-                "user@example.com",
+                Optional.ofNullable("user@example.com"),
                 10L,
-                "대회의실 A",
+                Optional.ofNullable("대회의실 A"),
                 LocalDateTime.of(2026, 9, 30, 10, 0),
                 LocalDateTime.of(2026, 9, 30, 12, 0),
                 ReservationStatus.CONFIRMED,
@@ -140,9 +141,9 @@ class AdminReservationControllerTest {
         verify(adminReservationService).searchReservations(conditionCaptor.capture(), pageableCaptor.capture());
 
         AdminReservationSearchCondition captured = conditionCaptor.getValue();
-        assertThat(captured.date()).isEqualTo(LocalDate.of(2026, 9, 30));
-        assertThat(captured.spaceId()).isEqualTo(5L);
-        assertThat(captured.status()).isEqualTo(ReservationStatus.CONFIRMED);
+        assertThat(captured.date().orElse(null)).isEqualTo(LocalDate.of(2026, 9, 30));
+        assertThat(captured.spaceId().orElse(null)).isEqualTo(5L);
+        assertThat(captured.status().orElse(null)).isEqualTo(ReservationStatus.CONFIRMED);
 
         assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);

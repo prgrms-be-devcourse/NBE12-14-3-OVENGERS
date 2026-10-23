@@ -1,5 +1,7 @@
 package com.ovengers.slotkey.reservation.service;
 
+import java.util.Optional;
+
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.reservation.dto.request.ReservationSearchCondition;
@@ -55,15 +57,16 @@ public class ReservationQueryService {
 
         ReservationSearchCondition searchCondition = condition != null
                 ? condition
-                : new ReservationSearchCondition(null, null);
+                : new ReservationSearchCondition(Optional.empty(), Optional.empty());
 
-        String normalizedKeyword = searchCondition.keyword() != null && !searchCondition.keyword().isBlank()
-                ? searchCondition.keyword().trim()
+        String keyword = searchCondition.keyword().orElse(null);
+        String normalizedKeyword = keyword != null && !keyword.isBlank()
+                ? keyword.trim()
                 : null;
 
         Page<Reservation> reservations = reservationRepository.searchMemberReservations(
                 memberId,
-                searchCondition.status(),
+                searchCondition.status().orElse(null),
                 normalizedKeyword,
                 pageRequest
         );
@@ -72,7 +75,7 @@ public class ReservationQueryService {
         // map을 사용하므로 기존 페이지의 전체 건수도 유지된다.
         if (reservations.isEmpty()) {
             return reservations.map(
-                    reservation -> ReservationListResponse.from(reservation, null)
+                    reservation -> ReservationListResponse.from(reservation, Optional.empty())
             );
         }
 
@@ -91,7 +94,7 @@ public class ReservationQueryService {
         return reservations.map(reservation ->
                 ReservationListResponse.from(
                         reservation,
-                        spacesById.get(reservation.getSpaceId())
+                        Optional.ofNullable(spacesById.get(reservation.getSpaceId()))
                 )
         );
     }

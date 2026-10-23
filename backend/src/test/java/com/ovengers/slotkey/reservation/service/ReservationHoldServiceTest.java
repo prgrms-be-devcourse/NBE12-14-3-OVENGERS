@@ -179,7 +179,7 @@ class ReservationHoldServiceTest {
 
         assertThat(response.reservationId()).isEqualTo(1L);
         assertThat(response.status()).isEqualTo("HELD");
-        assertThat(response.spaceVersion()).isEqualTo(0);
+        assertThat(response.spaceVersion().orElseThrow()).isEqualTo(0);
 
         InOrder inOrder = inOrder(memberRepository, reservationRepository, reservationSlotService, reservationStatusHistoryRepository);
         inOrder.verify(memberRepository).findByIdForUpdate(100L);

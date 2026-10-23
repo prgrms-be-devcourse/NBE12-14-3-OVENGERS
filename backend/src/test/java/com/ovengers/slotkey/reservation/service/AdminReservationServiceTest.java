@@ -338,7 +338,7 @@ class AdminReservationServiceTest {
 
         // when
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(
-                new AdminReservationSearchCondition(null, null, null),
+                new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty()),
                 PageRequest.of(0, 20)
         );
 
@@ -346,8 +346,8 @@ class AdminReservationServiceTest {
         assertThat(result.getContent()).hasSize(1);
         AdminReservationResponse item = result.getContent().get(0);
         assertThat(item.reservationId()).isEqualTo(RESERVATION_ID);
-        assertThat(item.memberEmail()).isEqualTo("user@slotkey.test");
-        assertThat(item.spaceName()).isEqualTo("공간1");
+        assertThat(item.memberEmail().orElse(null)).isEqualTo("user@slotkey.test");
+        assertThat(item.spaceName().orElse(null)).isEqualTo("공간1");
 
         org.mockito.ArgumentCaptor<Pageable> pageableCaptor = org.mockito.ArgumentCaptor.forClass(Pageable.class);
         verify(reservationRepository).searchReservations(eq(null), eq(null), eq(null), eq(null), pageableCaptor.capture());
@@ -375,7 +375,7 @@ class AdminReservationServiceTest {
 
         // when
         AdminReservationSearchCondition condition = new AdminReservationSearchCondition(
-                searchDate, SPACE_ID, ReservationStatus.CONFIRMED
+                Optional.ofNullable(searchDate), Optional.ofNullable(SPACE_ID), Optional.ofNullable(ReservationStatus.CONFIRMED)
         );
         Page<AdminReservationResponse> result = adminReservationService.searchReservations(condition, PageRequest.of(0, 10));
 
@@ -402,7 +402,7 @@ class AdminReservationServiceTest {
         Pageable clientPageable = PageRequest.of(1, 10, Sort.by(Sort.Direction.ASC, "startTime"));
 
         // when
-        adminReservationService.searchReservations(new AdminReservationSearchCondition(null, null, null), clientPageable);
+        adminReservationService.searchReservations(new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty()), clientPageable);
 
         // then
         Pageable captured = pageableCaptor.getValue();

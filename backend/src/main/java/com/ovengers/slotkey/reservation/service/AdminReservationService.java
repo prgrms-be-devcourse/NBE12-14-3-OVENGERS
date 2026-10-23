@@ -1,5 +1,7 @@
 package com.ovengers.slotkey.reservation.service;
 
+import java.util.Optional;
+
 import com.ovengers.slotkey.access.entity.DoorAccessLog;
 import com.ovengers.slotkey.access.service.DoorAccessLogService;
 import com.ovengers.slotkey.access.service.DoorAccessTokenService;
@@ -34,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ovengers.slotkey.credit.service.CreditService;   // AuditLogService import 아래
 import java.time.Clock;                                       // java.time.LocalDateTime import 위
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -76,21 +79,22 @@ public class AdminReservationService {
 
         AdminReservationSearchCondition cond = condition != null
                 ? condition
-                : new AdminReservationSearchCondition(null, null, null);
+                : new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty());
 
-        LocalDateTime startTimeInclusive = cond.date() != null ? cond.date().atStartOfDay() : null;
-        LocalDateTime startTimeExclusive = cond.date() != null ? cond.date().plusDays(1).atStartOfDay() : null;
+        LocalDate date = cond.date().orElse(null);
+        LocalDateTime startTimeInclusive = date != null ? date.atStartOfDay() : null;
+        LocalDateTime startTimeExclusive = date != null ? date.plusDays(1).atStartOfDay() : null;
 
         return reservationRepository.searchReservations(
-                cond.spaceId(),
-                cond.status(),
+                cond.spaceId().orElse(null),
+                cond.status().orElse(null),
                 startTimeInclusive,
                 startTimeExclusive,
                 effectivePageable
         ).map(reservation -> AdminReservationResponse.from(
                 reservation,
-                findMemberEmail(reservation.getMemberId()),
-                findSpaceName(reservation.getSpaceId())
+                Optional.ofNullable(findMemberEmail(reservation.getMemberId())),
+                Optional.ofNullable(findSpaceName(reservation.getSpaceId()))
         ));
     }
 
@@ -99,7 +103,7 @@ public class AdminReservationService {
      */
     @Transactional(readOnly = true)
     public Page<AdminReservationResponse> findAllReservations(Pageable pageable) {
-        return searchReservations(new AdminReservationSearchCondition(null, null, null), pageable);
+        return searchReservations(new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty()), pageable);
     }
 
     /**
@@ -126,8 +130,8 @@ public class AdminReservationService {
 
         return AdminReservationDetailResponse.from(
                 reservation,
-                findMemberEmail(reservation.getMemberId()),
-                findSpaceName(reservation.getSpaceId()),
+                Optional.ofNullable(findMemberEmail(reservation.getMemberId())),
+                Optional.ofNullable(findSpaceName(reservation.getSpaceId())),
                 historyResponses,
                 accessLogs
         );
@@ -225,8 +229,8 @@ public class AdminReservationService {
 
         return AdminReservationResponse.from(
                 cancelled,
-                findMemberEmail(cancelled.getMemberId()),
-                findSpaceName(cancelled.getSpaceId())
+                Optional.ofNullable(findMemberEmail(cancelled.getMemberId())),
+                Optional.ofNullable(findSpaceName(cancelled.getSpaceId()))
         );
     }
 
