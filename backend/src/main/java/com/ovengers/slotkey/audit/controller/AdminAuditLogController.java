@@ -6,7 +6,6 @@ import com.ovengers.slotkey.audit.service.AuditLogQueryService;
 import com.ovengers.slotkey.global.common.response.ApiResponse;
 import com.ovengers.slotkey.global.common.response.PageResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,6 @@ import org.springdoc.core.annotations.ParameterObject;
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/admin/audit-logs")
-@RequiredArgsConstructor
 public class AdminAuditLogController {
 
     private final AuditLogQueryService auditLogQueryService;
@@ -72,5 +70,9 @@ public class AdminAuditLogController {
         PageResponse<AuditLogResponse> response =
                 PageResponse.from(auditLogQueryService.searchAuditLogs(condition, pageable));
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    public AdminAuditLogController(final AuditLogQueryService auditLogQueryService) {
+        this.auditLogQueryService = auditLogQueryService;
     }
 }

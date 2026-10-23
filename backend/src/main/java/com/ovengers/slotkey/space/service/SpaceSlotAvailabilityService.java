@@ -8,7 +8,6 @@ import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.space.policy.SpaceOperatingHoursPolicy;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SpaceSlotAvailabilityService {
 
@@ -56,5 +54,16 @@ public class SpaceSlotAvailabilityService {
                 .toList();
 
         return SpaceSlotAvailabilityResponse.of(spaceId, date, slotResponses);
+    }
+
+    public SpaceSlotAvailabilityService(
+            final SpaceRepository spaceRepository,
+            final SpaceOperatingHoursPolicy operatingHoursPolicy,
+            final OccupiedSlotProvider occupiedSlotProvider,
+            final Clock clock) {
+        this.spaceRepository = spaceRepository;
+        this.operatingHoursPolicy = operatingHoursPolicy;
+        this.occupiedSlotProvider = occupiedSlotProvider;
+        this.clock = clock;
     }
 }

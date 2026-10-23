@@ -11,7 +11,6 @@ import com.ovengers.slotkey.space.dto.response.SpaceDetailResponse;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Service
-@RequiredArgsConstructor
 public class AdminSpaceService {
 
     private final SpaceRepository spaceRepository;
@@ -111,5 +109,16 @@ public class AdminSpaceService {
                 afterSnapshot);
 
         return afterSnapshot;
+    }
+
+    public AdminSpaceService(
+            final SpaceRepository spaceRepository,
+            final AuditLogService auditLogService,
+            final OccupiedSlotProvider occupiedSlotProvider,
+            final Clock clock) {
+        this.spaceRepository = spaceRepository;
+        this.auditLogService = auditLogService;
+        this.occupiedSlotProvider = occupiedSlotProvider;
+        this.clock = clock;
     }
 }

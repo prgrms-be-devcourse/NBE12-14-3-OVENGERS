@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.global.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
@@ -12,7 +11,6 @@ import java.util.Optional;
 
 @Configuration
 @EnableJpaAuditing(dateTimeProviderRef = "clockDateTimeProvider")
-@RequiredArgsConstructor
 public class JpaAuditingConfig {
 
     private final Clock clock;
@@ -25,5 +23,9 @@ public class JpaAuditingConfig {
     @Bean
     public DateTimeProvider clockDateTimeProvider() {
         return () -> Optional.of(LocalDateTime.now(clock));
+    }
+
+    public JpaAuditingConfig(final Clock clock) {
+        this.clock = clock;
     }
 }

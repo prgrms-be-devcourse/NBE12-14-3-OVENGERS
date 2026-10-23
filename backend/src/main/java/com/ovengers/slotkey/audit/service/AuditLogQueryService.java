@@ -5,7 +5,6 @@ import com.ovengers.slotkey.audit.dto.AuditLogResponse;
 import com.ovengers.slotkey.audit.repository.AuditLogRepository;
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuditLogQueryService {
 
@@ -53,5 +51,9 @@ public class AuditLogQueryService {
                 toExclusive,
                 queryPageable
         ).map(AuditLogResponse::from);
+    }
+
+    public AuditLogQueryService(final AuditLogRepository auditLogRepository) {
+        this.auditLogRepository = auditLogRepository;
     }
 }

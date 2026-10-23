@@ -4,7 +4,7 @@
 
 ## 계약의 기준 파일
 
-- 공통 응답: [`ApiResponse`](../../../backend/src/main/java/com/ovengers/slotkey/global/common/response/ApiResponse.java), [`PageResponse`](../../../backend/src/main/java/com/ovengers/slotkey/global/common/response/PageResponse.java), [`GlobalExceptionHandler`](../../../backend/src/main/java/com/ovengers/slotkey/global/error/GlobalExceptionHandler.java).
+- 공통 응답: [`ApiResponse`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/common/response/ApiResponse.kt), [`PageResponse`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/common/response/PageResponse.kt), [`GlobalExceptionHandler`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/error/GlobalExceptionHandler.kt).
 - 바인딩·검증 예: [`SpaceCreateRequest`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/request/SpaceCreateRequest.java), [`SpaceUpdateRequest`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/request/SpaceUpdateRequest.java), [`AdminAuditLogSearchCondition`](../../../backend/src/main/java/com/ovengers/slotkey/audit/dto/AdminAuditLogSearchCondition.java), [`ReservationSearchCondition`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/dto/request/ReservationSearchCondition.java).
 - 소비자와 명세: [`frontend/src/types/api.ts`](../../../frontend/src/types/api.ts), [`docs/api/api-spec.md`](../../../docs/api/api-spec.md), [`frontend/tests`](../../../frontend/tests).
 
@@ -35,6 +35,8 @@
 - 검증 위치를 Bean Validation만으로 한정하지 않는다. 생성자 null/타입 오류·raw JSON 검사·서비스 거절이 최종 HTTP 상태/오류 코드에 동일하게 매핑되는지 확인한다. 웹훅의 본문 승인값은 충전 확정 근거가 아니며 [02](02-money-and-concurrency.md)의 PG 재조회 규칙을 유지한다.
 
 ## 2026-10-22 합의: 골든 파일 테스트
+
+공통·도메인·HTTP 검증의 역할 분담, 기준 파일 확보·재사용, 전환 후 비교와 불일치 처리는 [Java → Kotlin 골든 테스트 사용 가이드](../../testing/java-kotlin-golden-guide.md)를 따른다.
 
 전환 전후 JSON이 같다는 증거를 눈 비교가 아니라 테스트로 남긴다. **Java 코드 상태에서 먼저** 주요 API 응답을 파일로 저장하고, 전환 후 같은 파일과 비교한다.
 

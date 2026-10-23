@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
@@ -25,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 @Tag(name = "공간 이미지", description = "공간 대표 이미지 서빙 API")
 @RestController
 @RequestMapping("/api/v1/space-images")
-@RequiredArgsConstructor
 public class SpaceImageController {
 
     private final SpaceImageStorage spaceImageStorage;
@@ -80,5 +78,9 @@ public class SpaceImageController {
                 .header("X-Content-Type-Options", "nosniff")
                 .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
                 .body(imageResource.resource());
+    }
+
+    public SpaceImageController(final SpaceImageStorage spaceImageStorage) {
+        this.spaceImageStorage = spaceImageStorage;
     }
 }
