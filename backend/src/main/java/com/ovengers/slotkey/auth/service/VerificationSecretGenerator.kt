@@ -9,14 +9,14 @@ import java.util.Locale
 class VerificationSecretGenerator {
     private val secureRandom = SecureRandom()
 
-    fun generateCode(): String? =
+    fun generateCode(): String =
         String.format(
             Locale.ROOT,
             "%08d",
-            secureRandom.nextInt(100000000),
+            secureRandom.nextInt(100_000_000),
         )
 
-    fun generateGrant(): String? {
+    fun generateGrant(): String {
         val bytes = ByteArray(32)
         secureRandom.nextBytes(bytes)
 

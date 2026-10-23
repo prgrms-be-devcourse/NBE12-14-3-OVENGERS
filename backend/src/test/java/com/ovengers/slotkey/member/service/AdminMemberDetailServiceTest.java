@@ -123,6 +123,8 @@ class AdminMemberDetailServiceTest {
         given(member.getRole()).willReturn(MemberRole.USER);
         given(member.getStatus()).willReturn(MemberStatus.ACTIVE);
         given(member.getBalance()).willReturn(30000);
+        given(member.getCreatedAt())
+                .willReturn(LocalDateTime.of(2026, 9, 18, 12, 0));
 
         given(auditLogRepository
                 .findFirstByTargetTypeAndTargetIdAndActionInOrderByCreatedAtDescIdDesc(
@@ -319,12 +321,17 @@ class AdminMemberDetailServiceTest {
         given(first.getSpaceId()).willReturn(10L);
         given(first.getStatus()).willReturn(ReservationStatus.CONFIRMED);
         given(first.getTotalAmount()).willReturn(5000);
+        given(first.getStartTime()).willReturn(createdAt.plusHours(1));
+        given(first.getEndTime()).willReturn(createdAt.plusHours(2));
         given(first.getCreatedAt()).willReturn(createdAt);
 
         given(second.getId()).willReturn(101L);
         given(second.getSpaceId()).willReturn(10L);
         given(second.getStatus()).willReturn(ReservationStatus.CANCELLED);
         given(second.getTotalAmount()).willReturn(3000);
+        given(second.getStartTime()).willReturn(createdAt.plusDays(1).plusHours(1));
+        given(second.getEndTime()).willReturn(createdAt.plusDays(1).plusHours(2));
+        given(second.getCreatedAt()).willReturn(createdAt.minusDays(1));
 
         given(space.getId()).willReturn(10L);
         given(space.getName()).willReturn("회의실 A");

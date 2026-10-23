@@ -35,6 +35,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -97,13 +98,19 @@ class AdminInquiryControllerTest {
     }
 
     private Inquiry createInquiry(Long id, Long memberId, InquiryStatus status) {
-        return Inquiry.builder()
+        Inquiry inquiry = Inquiry.builder()
                 .id(id)
                 .memberId(memberId)
                 .title("테스트 문의 제목")
                 .content("테스트 문의 내용")
                 .status(status)
                 .build();
+        ReflectionTestUtils.setField(
+                inquiry,
+                "createdAt",
+                LocalDateTime.of(2026, 10, 1, 12, 0)
+        );
+        return inquiry;
     }
 
     @Test
@@ -284,6 +291,11 @@ class AdminInquiryControllerTest {
                 .answeredByMemberId(1L)
                 .answeredAt(LocalDateTime.now())
                 .build();
+        ReflectionTestUtils.setField(
+                answered,
+                "createdAt",
+                LocalDateTime.of(2026, 10, 1, 12, 0)
+        );
         given(adminInquiryService.answer(eq(7L), eq(1L), any(InquiryAnswerRequest.class)))
                 .willReturn(answered);
 
