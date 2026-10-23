@@ -1,8 +1,8 @@
 package com.ovengers.slotkey.reservation.controller;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ovengers.slotkey.global.error.GlobalExceptionHandler;
 import com.ovengers.slotkey.reservation.dto.request.AdminReservationSearchCondition;
 import com.ovengers.slotkey.reservation.dto.response.AdminReservationResponse;
@@ -55,7 +55,7 @@ class AdminReservationControllerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.findAndRegisterModules();
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         mockMvc = MockMvcBuilders.standaloneSetup(adminReservationController)

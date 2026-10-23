@@ -1,0 +1,10 @@
+{
+  "period" : "DAILY",
+  "periodStart" : "2026-10-15",
+  "periodEnd" : "2026-10-16",
+  "metric" : "NET_REVENUE",
+  "status" : "PENDING",
+  "confirmAt" : "2026-10-16T00:00:00",
+  "computedAt" : null,
+  "items" : [ ]
+}

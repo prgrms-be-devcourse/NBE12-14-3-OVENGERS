@@ -151,6 +151,21 @@ class TossPaymentsPgClientTest {
     }
 
     @Test
+    @DisplayName("승인 DONE 응답에 paymentKey가 없어도 기존처럼 승인 결과와 값 부재를 보존한다")
+    void confirm_withoutPaymentKey_stillApprovedWithAbsentKey() {
+        server.expect(requestTo(BASE_URL + "/v1/payments/confirm"))
+                .andRespond(withSuccess("""
+                        {"orderId": "chg_order123", "status": "DONE", "totalAmount": 1000}
+                        """, MediaType.APPLICATION_JSON));
+
+        PgConfirmationResult result = client.confirm(request());
+
+        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.APPROVED);
+        assertThat(result.paymentKey()).isNull();
+        server.verify();
+    }
+
+    @Test
     @DisplayName("4xx 에러 객체는 기존 오류 분류기의 명확한 거절로 연결한다")
     void confirm_userDecline_usesErrorClassifier(CapturedOutput output) {
         server.expect(requestTo(BASE_URL + "/v1/payments/confirm"))
@@ -477,6 +492,33 @@ class TossPaymentsPgClientTest {
         assertThat(result.totalAmount()).isEqualTo(1_000L);
         assertThat(result.currency()).isEqualTo("KRW");
         assertThat(result.rawStatus()).isEqualTo("DONE");
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DONE", "ABORTED", "EXPIRED", "CANCELED"})
+    @DisplayName("조회 Payment에 paymentKey가 없어도 객체 수신 사실과 상태를 보존한다")
+    void findByPaymentKey_withoutPaymentKey_preservesPaymentObject(String status) {
+        server.expect(requestTo(BASE_URL + "/v1/payments/payment-key"))
+                .andRespond(withSuccess("""
+                        {
+                          "orderId": "chg_order123",
+                          "status": "%s",
+                          "totalAmount": 1000,
+                          "currency": "KRW"
+                        }
+                        """.formatted(status), MediaType.APPLICATION_JSON));
+
+        PgPaymentLookupResult result = client.findByPaymentKey("payment-key");
+
+        assertThat(result.status()).isEqualTo(
+                "DONE".equals(status)
+                        ? PgPaymentLookupResult.Status.APPROVED
+                        : PgPaymentLookupResult.Status.FAILED
+        );
+        assertThat(result.paymentObjectReceived()).isTrue();
+        assertThat(result.paymentKey()).isNull();
+        assertThat(result.rawStatus()).isEqualTo(status);
         server.verify();
     }
 

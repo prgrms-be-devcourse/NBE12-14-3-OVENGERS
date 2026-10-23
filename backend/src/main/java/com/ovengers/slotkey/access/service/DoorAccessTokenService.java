@@ -20,7 +20,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -155,12 +154,13 @@ public class DoorAccessTokenService {
         return findByTokenHash(tokenHash);
     }
 
-    // 원문 토큰으로 조회하되, 검증 실패를 정상적인 거절 결과로 처리할 수 있도록 Optional 반환
-    public Optional<DoorAccessToken> findOptionalByRawToken(String rawToken) {
+    // 원문 토큰으로 조회하되, 검증 실패를 정상적인 거절 결과로 처리할 수 있도록 없으면 null 반환
+    public DoorAccessToken findByRawTokenOrNull(String rawToken) {
         String tokenHash =
                 accessTokenHasher.hash(rawToken);
 
-        return doorAccessTokenRepository.findByTokenHash(tokenHash);
+        return doorAccessTokenRepository.findByTokenHash(tokenHash)
+                .orElse(null);
     }
 
     // 특정 예약의 활성 토큰 조회

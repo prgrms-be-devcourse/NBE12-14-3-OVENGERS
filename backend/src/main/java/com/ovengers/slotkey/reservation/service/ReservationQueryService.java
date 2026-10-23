@@ -1,5 +1,6 @@
 package com.ovengers.slotkey.reservation.service;
 
+
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.reservation.dto.request.ReservationSearchCondition;
@@ -57,8 +58,9 @@ public class ReservationQueryService {
                 ? condition
                 : new ReservationSearchCondition(null, null);
 
-        String normalizedKeyword = searchCondition.keyword() != null && !searchCondition.keyword().isBlank()
-                ? searchCondition.keyword().trim()
+        String keyword = searchCondition.keyword();
+        String normalizedKeyword = keyword != null && !keyword.isBlank()
+                ? keyword.trim()
                 : null;
 
         Page<Reservation> reservations = reservationRepository.searchMemberReservations(

@@ -1,0 +1,28 @@
+{
+  "period" : "DAILY",
+  "periodStart" : "2026-10-13",
+  "periodEnd" : "2026-10-14",
+  "metric" : "NET_REVENUE",
+  "status" : "CONFIRMED",
+  "confirmAt" : null,
+  "computedAt" : "2026-10-14T00:01:00",
+  "items" : [ {
+    "rank" : 1,
+    "previousRank" : 2,
+    "spaceId" : 11,
+    "spaceName" : "판교 A룸",
+    "location" : "판교",
+    "spaceStatus" : "ACTIVE",
+    "reservationCount" : 10,
+    "slotCount" : 20
+  }, {
+    "rank" : 2,
+    "previousRank" : null,
+    "spaceId" : 12,
+    "spaceName" : "강남 B룸",
+    "location" : "강남",
+    "spaceStatus" : "INACTIVE",
+    "reservationCount" : 8,
+    "slotCount" : 16
+  } ]
+}

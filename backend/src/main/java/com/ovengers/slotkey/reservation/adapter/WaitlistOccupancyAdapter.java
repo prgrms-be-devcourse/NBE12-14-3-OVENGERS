@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * waitlist 도메인의 ReservationOccupancyProvider 포트 구현체.
@@ -71,8 +70,9 @@ public class WaitlistOccupancyAdapter implements ReservationOccupancyProvider, R
     }
 
     @Override
-    public Optional<ReservationRange> findRange(Long reservationId) {
+    public ReservationRange findRange(Long reservationId) {
         return reservationRepository.findById(reservationId)
-                .map(r -> new ReservationRange(r.getSpaceId(), r.getStartTime(), r.getEndTime()));
+                .map(r -> new ReservationRange(r.getSpaceId(), r.getStartTime(), r.getEndTime()))
+                .orElse(null);
     }
 }

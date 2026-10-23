@@ -1,0 +1,11 @@
+{
+  "id" : 100,
+  "actorMemberId" : 7,
+  "action" : "MODIFY_SPACE",
+  "targetType" : "SPACE",
+  "targetId" : 11,
+  "reason" : "가격 변경",
+  "beforeValue" : "{\"pricePerSlot\":5000}",
+  "afterValue" : "{\"pricePerSlot\":6000}",
+  "createdAt" : "2026-10-14T10:15:30"
+}

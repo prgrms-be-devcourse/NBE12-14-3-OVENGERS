@@ -188,7 +188,7 @@ class ChargeOrderServiceTest {
         assertThat(result.getContent().get(0).orderId()).isEqualTo("chg_paid");
         assertThat(result.getContent().get(0).amount()).isEqualTo(5_000L);
         assertThat(result.getContent().get(0).status()).isEqualTo(ChargeOrderStatus.PAID);
-        assertThat(result.getContent().get(0).paymentMethod()).isEqualTo("간편결제");
-        assertThat(result.getContent().get(0).paymentProvider()).isEqualTo("토스페이");
+        assertThat(result.getContent().get(0).paymentMethod()).contains("간편결제");
+        assertThat(result.getContent().get(0).paymentProvider()).contains("토스페이");
     }
 }
