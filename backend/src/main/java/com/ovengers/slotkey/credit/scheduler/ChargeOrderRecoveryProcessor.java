@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Component
 public class ChargeOrderRecoveryProcessor {
@@ -32,12 +31,11 @@ public class ChargeOrderRecoveryProcessor {
     }
 
     public void recover(Long chargeOrderId, LocalDateTime now) {
-        Optional<ChargeOrderRecoveryTarget> prepared =
+        ChargeOrderRecoveryTarget target =
                 recoveryTransactionService.prepare(chargeOrderId, now);
-        if (prepared.isEmpty()) {
+        if (target == null) {
             return;
         }
-        ChargeOrderRecoveryTarget target = prepared.get();
         PgPaymentLookupResult result = null;
         try {
             result = pgClient.findByPaymentKey(target.paymentKey());

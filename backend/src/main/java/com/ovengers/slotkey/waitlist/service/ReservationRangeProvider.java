@@ -1,7 +1,6 @@
 package com.ovengers.slotkey.waitlist.service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 /**
  * 슬롯 해제 이벤트의 reservationId로 해제된 공간·구간을 묻는 포트. payload에는 구간이 없으므로(outbox-kafka.md)
@@ -9,7 +8,8 @@ import java.util.Optional;
  */
 public interface ReservationRangeProvider {
 
-    Optional<ReservationRange> findRange(Long reservationId);
+    /** 예약 행이 없으면 null. */
+    ReservationRange findRange(Long reservationId);
 
     record ReservationRange(Long spaceId, LocalDateTime startTime, LocalDateTime endTime) {
     }

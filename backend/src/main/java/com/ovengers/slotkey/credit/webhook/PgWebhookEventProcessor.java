@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 
 /**
  * 웹훅 수신 행 한 건을 처리한다(docs/decisions/pg-charge.md 5단계 결정 4).
@@ -50,15 +49,15 @@ public class PgWebhookEventProcessor {
     }
 
     public void process(Long eventId) {
-        Optional<String> orderId = eventStore.findReceivedOrderId(eventId);
-        if (orderId.isEmpty()) {
+        String orderId = eventStore.findReceivedOrderId(eventId);
+        if (orderId == null) {
             return;
         }
-        PgWebhookEventResult result = handle(orderId.get());
+        PgWebhookEventResult result = handle(orderId);
         eventStore.markDone(eventId, result);
         log.info(
                 "웹훅을 처리했습니다. orderId={} result={}",
-                orderId.get(),
+                orderId,
                 result
         );
     }

@@ -113,8 +113,8 @@ class DoorAccessVerificationServiceTest {
     void shouldDenyWhenTokenDoesNotExist() {
         givenRequestContext();
 
-        given(doorAccessTokenService.findOptionalByRawToken(RAW_TOKEN))
-                        .willReturn(Optional.empty());
+        given(doorAccessTokenService.findByRawTokenOrNull(RAW_TOKEN))
+                        .willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -240,7 +240,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.of(AccessDenyReason.OUTSIDE_ALLOWED_TIME));
+        )).willReturn(AccessDenyReason.OUTSIDE_ALLOWED_TIME);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -283,7 +283,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -335,7 +335,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -372,7 +372,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -415,7 +415,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -463,7 +463,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -504,7 +504,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -549,7 +549,7 @@ class DoorAccessVerificationServiceTest {
                 START_AT,
                 END_AT,
                 null
-        )).willReturn(Optional.empty());
+        )).willReturn(null);
 
         DoorAccessVerifyResponse response = service.verify(
                 MEMBER_ID,
@@ -580,8 +580,8 @@ class DoorAccessVerificationServiceTest {
     }
 
     private void givenTokenAndReservation() {
-            given(doorAccessTokenService.findOptionalByRawToken(RAW_TOKEN))
-                            .willReturn(Optional.of(accessToken));
+            given(doorAccessTokenService.findByRawTokenOrNull(RAW_TOKEN))
+                            .willReturn(accessToken);
         given(accessToken.getReservation()).willReturn(reservation);
     }
 

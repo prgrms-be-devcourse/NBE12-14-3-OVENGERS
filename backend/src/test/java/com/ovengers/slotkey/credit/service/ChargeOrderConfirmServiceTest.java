@@ -20,7 +20,6 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.sql.SQLException;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,7 +66,7 @@ class ChargeOrderConfirmServiceTest {
                 7L,
                 ChargeOrderConfirmTransactionService.REQUEST_PATH,
                 ChargeOrderConfirmResponse.class
-        )).willReturn(Optional.of(stored));
+        )).willReturn(stored);
 
         ChargeOrderConfirmService service = new ChargeOrderConfirmService(
                 transactionService,

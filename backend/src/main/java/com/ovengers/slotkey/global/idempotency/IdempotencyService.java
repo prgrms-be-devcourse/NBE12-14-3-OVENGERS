@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 /**
  * Idempotency-Key 재생 서비스(api-명세서.md 1-7, core-domain-decisions.md core-domain-decisions 2-1).
@@ -28,11 +27,12 @@ public class IdempotencyService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
-    /** 이전에 처리된 동일 요청이 있으면 저장된 응답을 역직렬화해 돌려준다. */
+    /** 이전에 처리된 동일 요청이 있으면 저장된 응답을 역직렬화해 돌려주고, 없으면 null을 돌려준다. */
     @Transactional(readOnly = true)
-    public <T> Optional<T> find(String key, Long memberId, String requestPath, Class<T> type) {
+    public <T> T find(String key, Long memberId, String requestPath, Class<T> type) {
         return idempotencyKeyRepository.findByKeyAndMemberIdAndRequestPath(key, memberId, requestPath)
-                .map(record -> readValue(record.getResponseBody(), type));
+                .map(record -> readValue(record.getResponseBody(), type))
+                .orElse(null);
     }
 
     /** 최초 처리 결과를 저장한다. 이후 재요청은 find()로 그대로 재생된다. */

@@ -74,8 +74,7 @@ public class SlotReleasedHandler {
         if (!processedEventStore.markProcessed(CONSUMER, eventId)) {
             return;
         }
-        ReservationRangeProvider.ReservationRange released = reservationRangeProvider.findRange(reservationId)
-                .orElse(null);
+        ReservationRangeProvider.ReservationRange released = reservationRangeProvider.findRange(reservationId);
         if (released == null) {
             log.warn("SlotReleased for unknown reservation: eventId={}, reservationId={}", eventId, reservationId);
             return;

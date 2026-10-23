@@ -68,14 +68,16 @@ public class ChargeOrderConfirmService {
         }
         if (!preparation.shouldCallPg()) {
             if (preparation.currentResponse().status() == ChargeOrderStatus.PAID) {
-                return idempotencyService.find(
-                                idempotencyKey,
-                                memberId,
-                                ChargeOrderConfirmTransactionService.REQUEST_PATH,
-                                ChargeOrderConfirmResponse.class
-                        )
-                        .filter(stored -> orderId.equals(stored.orderId()))
-                        .orElse(preparation.currentResponse());
+                ChargeOrderConfirmResponse stored = idempotencyService.find(
+                        idempotencyKey,
+                        memberId,
+                        ChargeOrderConfirmTransactionService.REQUEST_PATH,
+                        ChargeOrderConfirmResponse.class
+                );
+                if (stored != null && orderId.equals(stored.orderId())) {
+                    return stored;
+                }
+                return preparation.currentResponse();
             }
             return preparation.currentResponse();
         }

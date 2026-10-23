@@ -50,8 +50,8 @@ public class ReservationPaymentConfirmService {
         String requestPath = REQUEST_PATH_TEMPLATE.formatted(reservationId);
 
         var cached = idempotencyService.find(idempotencyKey, memberId, requestPath, ReservationResponse.class);
-        if (cached.isPresent()) {
-            return cached.get();
+        if (cached != null) {
+            return cached;
         }
 
         // 1. 잠금 순서(Space -> Reservation) 준수를 위해 reservationId로부터 spaceId와 memberId를 먼저
