@@ -1,4 +1,4 @@
-package com.ovengers.slotkey.credit.service;
+package com.ovengers.slotkey.credit.service
 
 /**
  * 크레딧 원장(credit_transaction)에 대한 포트. reservation 도메인은 이 인터페이스로만
@@ -9,8 +9,7 @@ package com.ovengers.slotkey.credit.service;
  * 차감은 반드시 조건부 UPDATE(WHERE balance >= amount)로 구현해야 한다(core-domain-decisions 1-5).
  * dirty checking으로 잔액을 갱신하면 갱신 유실(lost update)이 발생한다.
  */
-public interface CreditService {
-
+interface CreditService {
     /**
      * 예약 관련 크레딧을 차감한다(RESERVATION_CHARGE 또는 연장 추가 차감).
      * 잔액이 부족하면 예외를 던지고, 호출부가 있는 트랜잭션 전체가 롤백되어야 한다
@@ -19,7 +18,11 @@ public interface CreditService {
      * @return 차감 후 잔액(balance_after)
      * @throws com.ovengers.slotkey.global.error.BusinessException INSUFFICIENT_BALANCE(422) — 잔액 부족
      */
-    int charge(Long memberId, Long reservationId, int amount);
+    fun charge(
+        memberId: Long?,
+        reservationId: Long?,
+        amount: Int,
+    ): Int
 
     /**
      * 예약 취소에 따른 크레딧 환급을 원장에 기록한다(REFUND, +amount).
@@ -29,7 +32,11 @@ public interface CreditService {
      * @param amount 양수로 전달한다(원장에는 +amount로 기록된다)
      * @return 환급 후 잔액(balance_after)
      */
-    int refund(Long memberId, Long reservationId, int amount);
+    fun refund(
+        memberId: Long?,
+        reservationId: Long?,
+        amount: Int,
+    ): Int
 
     /**
      * 취소 위약금을 원장에 기록한다(PENALTY, -amount). 환불 등급이 100%가 아닌 취소에서만
@@ -38,5 +45,9 @@ public interface CreditService {
      * @param amount 양수로 전달한다(원장에는 -amount로 기록된다)
      * @return 위약금 차감 후 잔액(balance_after)
      */
-    int penalize(Long memberId, Long reservationId, int amount);
+    fun penalize(
+        memberId: Long?,
+        reservationId: Long?,
+        amount: Int,
+    ): Int
 }
