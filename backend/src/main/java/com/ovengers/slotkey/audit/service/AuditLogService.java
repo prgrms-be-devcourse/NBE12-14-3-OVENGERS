@@ -6,16 +6,16 @@ import com.ovengers.slotkey.audit.entity.AuditAction;
 import com.ovengers.slotkey.audit.entity.AuditLog;
 import com.ovengers.slotkey.audit.entity.AuditTargetType;
 import com.ovengers.slotkey.audit.repository.AuditLogRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuditLogService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuditLogService.class);
 
     private final AuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
@@ -69,5 +69,12 @@ public class AuditLogService {
             log.warn("감사 로그 데이터 직렬화 실패. toString() 대체: {}", e.getMessage());
             return object.toString();
         }
+    }
+
+    public AuditLogService(
+            final AuditLogRepository auditLogRepository,
+            final ObjectMapper objectMapper) {
+        this.auditLogRepository = auditLogRepository;
+        this.objectMapper = objectMapper;
     }
 }

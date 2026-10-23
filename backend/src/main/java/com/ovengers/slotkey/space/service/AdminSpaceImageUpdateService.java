@@ -8,7 +8,6 @@ import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.space.dto.response.SpaceDetailResponse;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
  * - Space 엔티티 수정과 MODIFY_SPACE 감사 로그는 동일한 DB 트랜잭션에서 원자적으로 커밋/롤백됩니다.
  */
 @Service
-@RequiredArgsConstructor
 public class AdminSpaceImageUpdateService {
 
     private final SpaceRepository spaceRepository;
@@ -49,5 +47,12 @@ public class AdminSpaceImageUpdateService {
         );
 
         return new ImageUpdateResult(oldImagePath, afterSnapshot);
+    }
+
+    public AdminSpaceImageUpdateService(
+            final SpaceRepository spaceRepository,
+            final AuditLogService auditLogService) {
+        this.spaceRepository = spaceRepository;
+        this.auditLogService = auditLogService;
     }
 }

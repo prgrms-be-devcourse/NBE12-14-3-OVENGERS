@@ -6,8 +6,8 @@ import com.ovengers.slotkey.space.dto.response.SpaceDetailResponse;
 import com.ovengers.slotkey.space.image.SpaceImageStorage;
 import com.ovengers.slotkey.space.image.StoredImage;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,10 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
  *   2. DB 트랜잭션이 완전히 커밋된 이후에만 이전 서버 관리 이미지를 삭제합니다.
  *   3. 기존 샘플 이미지(/images/...)나 외부 URL 경로는 삭제 대상에서 제외합니다.
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SpaceImageService {
+
+    private static final Logger log = LoggerFactory.getLogger(SpaceImageService.class);
 
     private final SpaceImageStorage spaceImageStorage;
     private final AdminSpaceImageUpdateService adminSpaceImageUpdateService;
@@ -71,5 +71,14 @@ public class SpaceImageService {
         }
 
         return updateResult.spaceDetailResponse();
+    }
+
+    public SpaceImageService(
+            final SpaceImageStorage spaceImageStorage,
+            final AdminSpaceImageUpdateService adminSpaceImageUpdateService,
+            final SpaceRepository spaceRepository) {
+        this.spaceImageStorage = spaceImageStorage;
+        this.adminSpaceImageUpdateService = adminSpaceImageUpdateService;
+        this.spaceRepository = spaceRepository;
     }
 }

@@ -6,7 +6,6 @@ import com.ovengers.slotkey.space.dto.request.SpaceSearchCondition;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SpaceQueryService {
 
@@ -121,5 +119,14 @@ public class SpaceQueryService {
     public Space getSpaceDetailById(Long spaceId) {
         return spaceRepository.findById(spaceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SPACE_NOT_FOUND));
+    }
+
+    public SpaceQueryService(
+            final SpaceRepository spaceRepository,
+            final OccupiedSlotProvider occupiedSlotProvider,
+            final Clock clock) {
+        this.spaceRepository = spaceRepository;
+        this.occupiedSlotProvider = occupiedSlotProvider;
+        this.clock = clock;
     }
 }

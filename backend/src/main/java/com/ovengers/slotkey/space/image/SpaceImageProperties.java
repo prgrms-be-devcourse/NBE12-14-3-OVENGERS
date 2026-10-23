@@ -1,7 +1,5 @@
 package com.ovengers.slotkey.space.image;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +12,15 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "app.space-image")
-@Getter
-@Setter
 public class SpaceImageProperties {
 
     private String storageRoot = "./data/space-images";
+
+    public String getStorageRoot() {
+        return storageRoot;
+    }
+
+    public void setStorageRoot(final String storageRoot) {
+        this.storageRoot = storageRoot;
+    }
 }

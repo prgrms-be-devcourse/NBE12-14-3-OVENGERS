@@ -8,7 +8,6 @@ import com.ovengers.slotkey.global.security.CustomAuthenticationFilter;
 import com.ovengers.slotkey.global.security.jwt.JwtProvider;
 import com.ovengers.slotkey.auth.service.AuthSessionService;
 import jakarta.servlet.DispatcherType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,7 +21,6 @@ import java.time.Clock;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
@@ -147,5 +145,18 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    public SecurityConfig(
+            final JwtProvider jwtProvider,
+            final ObjectMapper objectMapper,
+            final AuthSessionService authSessionService,
+            final InactiveMemberAccessLogService inactiveMemberAccessLogService,
+            final Clock clock) {
+        this.jwtProvider = jwtProvider;
+        this.objectMapper = objectMapper;
+        this.authSessionService = authSessionService;
+        this.inactiveMemberAccessLogService = inactiveMemberAccessLogService;
+        this.clock = clock;
     }
 }

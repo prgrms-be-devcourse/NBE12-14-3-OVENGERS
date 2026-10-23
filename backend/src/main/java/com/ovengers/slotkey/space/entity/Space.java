@@ -4,10 +4,6 @@ import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.space.dto.request.SpaceUpdateRequest;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
@@ -16,10 +12,6 @@ import java.time.LocalTime;
 // 정정됐는데 엔티티 매핑은 그대로 남아 있어 실제 스키마와 어긋나 있었다(연결된 채로는 부팅 시 테이블을
 // 찾지 못한다). DDL(V2)과 맞춰 단수로 정정.
 @Table(name = "spaces")
-@Builder
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Space {
 
     @Id
@@ -131,5 +123,165 @@ public class Space {
      */
     public void updateImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public static SpaceBuilder builder() {
+        return new SpaceBuilder();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public Long getPricePerSlot() {
+        return pricePerSlot;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public LocalTime getOpeningTime() {
+        return openingTime;
+    }
+
+    public LocalTime getClosingTime() {
+        return closingTime;
+    }
+
+    public SpaceStatus getStatus() {
+        return status;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public Space() {
+    }
+
+    public Space(Long id, String name, String location, String description, Integer capacity,
+                 Long pricePerSlot, String imagePath, LocalTime openingTime, LocalTime closingTime,
+                 SpaceStatus status, int version) {
+        this.id = id;
+        this.name = name;
+        this.location = location;
+        this.description = description;
+        this.capacity = capacity;
+        this.pricePerSlot = pricePerSlot;
+        this.imagePath = imagePath;
+        this.openingTime = openingTime;
+        this.closingTime = closingTime;
+        this.status = status;
+        this.version = version;
+    }
+
+    public static class SpaceBuilder {
+        private Long id;
+        private String name;
+        private String location;
+        private String description;
+        private Integer capacity;
+        private Long pricePerSlot;
+        private String imagePath;
+        private LocalTime openingTime;
+        private LocalTime closingTime;
+        private SpaceStatus status;
+        private int version;
+
+        SpaceBuilder() {
+        }
+
+        public SpaceBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public SpaceBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public SpaceBuilder location(String location) {
+            this.location = location;
+            return this;
+        }
+
+        public SpaceBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public SpaceBuilder capacity(Integer capacity) {
+            this.capacity = capacity;
+            return this;
+        }
+
+        public SpaceBuilder pricePerSlot(Long pricePerSlot) {
+            this.pricePerSlot = pricePerSlot;
+            return this;
+        }
+
+        public SpaceBuilder imagePath(String imagePath) {
+            this.imagePath = imagePath;
+            return this;
+        }
+
+        public SpaceBuilder openingTime(LocalTime openingTime) {
+            this.openingTime = openingTime;
+            return this;
+        }
+
+        public SpaceBuilder closingTime(LocalTime closingTime) {
+            this.closingTime = closingTime;
+            return this;
+        }
+
+        public SpaceBuilder status(SpaceStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public SpaceBuilder version(int version) {
+            this.version = version;
+            return this;
+        }
+
+        public Space build() {
+            return new Space(id, name, location, description, capacity, pricePerSlot, imagePath,
+                    openingTime, closingTime, status, version);
+        }
+
+        @Override
+        public String toString() {
+            return "Space.SpaceBuilder(id=" + id
+                    + ", name=" + name
+                    + ", location=" + location
+                    + ", description=" + description
+                    + ", capacity=" + capacity
+                    + ", pricePerSlot=" + pricePerSlot
+                    + ", imagePath=" + imagePath
+                    + ", openingTime=" + openingTime
+                    + ", closingTime=" + closingTime
+                    + ", status=" + status
+                    + ", version=" + version
+                    + ")";
+        }
     }
 }
