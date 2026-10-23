@@ -4,7 +4,7 @@
 
 ## 계약의 기준 파일
 
-- 공통 응답: [`ApiResponse`](../../../backend/src/main/java/com/ovengers/slotkey/global/common/response/ApiResponse.java), [`PageResponse`](../../../backend/src/main/java/com/ovengers/slotkey/global/common/response/PageResponse.java), [`GlobalExceptionHandler`](../../../backend/src/main/java/com/ovengers/slotkey/global/error/GlobalExceptionHandler.java).
+- 공통 응답: [`ApiResponse`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/common/response/ApiResponse.kt), [`PageResponse`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/common/response/PageResponse.kt), [`GlobalExceptionHandler`](../../../backend/src/main/kotlin/com/ovengers/slotkey/global/error/GlobalExceptionHandler.kt).
 - 바인딩·검증 예: [`SpaceCreateRequest`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/request/SpaceCreateRequest.java), [`SpaceUpdateRequest`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/request/SpaceUpdateRequest.java), [`AdminAuditLogSearchCondition`](../../../backend/src/main/java/com/ovengers/slotkey/audit/dto/AdminAuditLogSearchCondition.java), [`ReservationSearchCondition`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/dto/request/ReservationSearchCondition.java).
 - 소비자와 명세: [`frontend/src/types/api.ts`](../../../frontend/src/types/api.ts), [`docs/api/api-spec.md`](../../../docs/api/api-spec.md), [`frontend/tests`](../../../frontend/tests).
 
