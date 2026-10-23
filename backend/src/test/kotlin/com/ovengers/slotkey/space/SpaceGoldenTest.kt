@@ -126,10 +126,10 @@ class SpaceGoldenTest {
         assertMatchesGolden(actual, "space-slot-availability-empty.json")
     }
 
-    private fun serialize(value: Any?): JsonNode = objectMapper.readTree(objectMapper.writeValueAsString(value))
+    private fun serialize(value: Any): JsonNode = objectMapper.readTree(objectMapper.writeValueAsString(value))
 
     private fun assertMatchesGolden(
-        value: Any?,
+        value: Any,
         goldenFile: String,
     ) = assertMatchesGolden(serialize(value), goldenFile)
 

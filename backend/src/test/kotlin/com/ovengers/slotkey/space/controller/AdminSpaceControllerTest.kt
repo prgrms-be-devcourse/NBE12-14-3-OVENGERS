@@ -18,7 +18,6 @@ import com.ovengers.slotkey.space.service.AdminSpaceService
 import com.ovengers.slotkey.space.service.SpaceImageService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -163,20 +162,19 @@ class AdminSpaceControllerTest {
             )
 
         val response =
-            SpaceDetailResponse
-                .builder()
-                .id(1L)
-                .name(request.name!!)
-                .location(request.location!!)
-                .description(request.description)
-                .capacity(request.capacity!!)
-                .pricePerSlot(request.pricePerSlot!!)
-                .imagePath(null)
-                .openingTime(request.openingTime!!)
-                .closingTime(request.closingTime!!)
-                .status(SpaceStatus.ACTIVE)
-                .version(0)
-                .build()
+            SpaceDetailResponse(
+                1L,
+                "회의실 1",
+                "강남",
+                request.description,
+                6,
+                5000L,
+                null,
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+                0,
+            )
 
         given(adminSpaceService.createSpace(any(SpaceCreateRequest::class.java), eq(1L))).willReturn(response)
 
@@ -334,20 +332,19 @@ class AdminSpaceControllerTest {
             )
 
         val response =
-            SpaceDetailResponse
-                .builder()
-                .id(spaceId)
-                .name(request.name!!)
-                .location(request.location!!)
-                .description(request.description)
-                .capacity(request.capacity!!)
-                .pricePerSlot(request.pricePerSlot!!)
-                .imagePath(null)
-                .openingTime(request.openingTime!!)
-                .closingTime(request.closingTime!!)
-                .status(request.status!!)
-                .version(1)
-                .build()
+            SpaceDetailResponse(
+                spaceId,
+                "수정된 회의실",
+                "하남",
+                request.description,
+                8,
+                6000L,
+                null,
+                LocalTime.of(10, 0),
+                LocalTime.of(20, 0),
+                SpaceStatus.ACTIVE,
+                1,
+            )
 
         given(
             adminSpaceService.updateSpace(
@@ -515,20 +512,19 @@ class AdminSpaceControllerTest {
                 eq(ADMIN_PRINCIPAL.memberId),
             ),
         ).willReturn(
-            SpaceDetailResponse
-                .builder()
-                .id(1L)
-                .name("이름만 수정")
-                .location("강남")
-                .description(null)
-                .capacity(6)
-                .pricePerSlot(5000L)
-                .imagePath(null)
-                .openingTime(LocalTime.of(9, 0))
-                .closingTime(LocalTime.of(18, 0))
-                .status(SpaceStatus.ACTIVE)
-                .version(0)
-                .build(),
+            SpaceDetailResponse(
+                1L,
+                "이름만 수정",
+                "강남",
+                null,
+                6,
+                5000L,
+                null,
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+                0,
+            ),
         )
 
         mockMvc
@@ -808,45 +804,72 @@ class AdminSpaceControllerTest {
     }
 
     @Test
-    @DisplayName("응답 빌더는 필수값 누락을 명시적으로 거절하고 정상 값을 모두 지정하면 생성한다")
-    fun responseBuilders_requireRequiredValues() {
-        assertThrows(IllegalArgumentException::class.java) { SpaceResponse.builder().build() }
-        assertThrows(IllegalArgumentException::class.java) { SpaceDetailResponse.builder().build() }
-
-        val response =
-            SpaceResponse
+    @DisplayName("SpaceResponse.from과 SpaceDetailResponse.from은 Space 필드를 그대로 매핑한다")
+    fun responseFactories_mapSpaceFields() {
+        val space =
+            Space
                 .builder()
-                .id(1L)
+                .id(11L)
                 .name("회의실")
                 .location("강남")
+                .description("설명")
                 .capacity(6)
                 .pricePerSlot(5000L)
-                .imagePath(null)
-                .openingTime(LocalTime.of(9, 0))
-                .closingTime(LocalTime.of(18, 0))
-                .status(SpaceStatus.ACTIVE)
-                .build()
-        assertThat(response.id).isEqualTo(1L)
-        assertThat(response.imagePath).isNull()
-
-        val detail =
-            SpaceDetailResponse
-                .builder()
-                .id(1L)
-                .name("회의실")
-                .location("강남")
-                .description(null)
-                .capacity(6)
-                .pricePerSlot(5000L)
-                .imagePath(null)
+                .imagePath("/images/space.jpg")
                 .openingTime(LocalTime.of(9, 0))
                 .closingTime(LocalTime.of(18, 0))
                 .status(SpaceStatus.ACTIVE)
                 .version(2)
                 .build()
-        assertThat(detail.version).isEqualTo(2)
-        assertThat(detail.description).isNull()
-        assertThat(detail.imagePath).isNull()
+
+        assertThat(SpaceResponse.from(space)).isEqualTo(
+            SpaceResponse(
+                11L,
+                "회의실",
+                "강남",
+                6,
+                5000L,
+                "/images/space.jpg",
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+            ),
+        )
+        assertThat(SpaceDetailResponse.from(space)).isEqualTo(
+            SpaceDetailResponse(
+                11L,
+                "회의실",
+                "강남",
+                "설명",
+                6,
+                5000L,
+                "/images/space.jpg",
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+                2,
+            ),
+        )
+
+        val spaceWithoutOptionalFields =
+            Space
+                .builder()
+                .id(12L)
+                .name("회의실 2")
+                .location("판교")
+                .description(null)
+                .capacity(4)
+                .pricePerSlot(4000L)
+                .imagePath(null)
+                .openingTime(LocalTime.of(10, 0))
+                .closingTime(LocalTime.of(19, 0))
+                .status(SpaceStatus.INACTIVE)
+                .version(3)
+                .build()
+
+        assertThat(SpaceResponse.from(spaceWithoutOptionalFields).imagePath).isNull()
+        assertThat(SpaceDetailResponse.from(spaceWithoutOptionalFields).description).isNull()
+        assertThat(SpaceDetailResponse.from(spaceWithoutOptionalFields).imagePath).isNull()
     }
 
     private fun createRequest(
