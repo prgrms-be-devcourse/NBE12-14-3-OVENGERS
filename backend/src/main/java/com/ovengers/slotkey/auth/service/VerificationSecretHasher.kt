@@ -12,26 +12,25 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 class VerificationSecretHasher(
-    @Value("\${app.verification.hash-secret}") secret: String?,
+    @Value("\${app.verification.hash-secret}") secret: String,
 ) {
-    private val key: SecretKeySpec
+    private val key: SecretKeySpec =
+        Base64.getDecoder().decode(secret).let { keyBytes ->
+            require(keyBytes.size >= 32) {
+                "인증 검증용 비밀키는 최소 32바이트여야 합니다."
+            }
 
-    init {
-        val keyBytes = Base64.getDecoder().decode(secret)
-
-        require(keyBytes.size >= 32) { "인증 검증용 비밀키는 최소 32바이트여야 합니다." }
-
-        this.key = SecretKeySpec(keyBytes, "HmacSHA256")
-    }
+            SecretKeySpec(keyBytes, "HmacSHA256")
+        }
 
     fun hashCode(
-        guardId: Long?,
-        rawCode: String?,
-    ): String? = hash("CODE:" + guardId + ":" + rawCode)
+        guardId: Long,
+        rawCode: String,
+    ): String = hash("CODE:$guardId:$rawCode")
 
     fun matchesCode(
-        guardId: Long?,
-        rawCode: String?,
+        guardId: Long,
+        rawCode: String,
         storedHash: String,
     ): Boolean {
         val expected = HexFormat.of().parseHex(storedHash)
@@ -43,9 +42,9 @@ class VerificationSecretHasher(
         return MessageDigest.isEqual(expected, actual)
     }
 
-    fun hashGrant(rawGrant: String?): String? = hash("GRANT:" + rawGrant)
+    fun hashGrant(rawGrant: String): String = hash("GRANT:$rawGrant")
 
-    private fun hash(value: String): String? {
+    private fun hash(value: String): String {
         try {
             val mac = Mac.getInstance("HmacSHA256")
             mac.init(key)
