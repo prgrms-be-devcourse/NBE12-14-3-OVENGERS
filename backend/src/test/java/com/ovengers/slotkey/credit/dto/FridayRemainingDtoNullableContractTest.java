@@ -1,3 +1,4 @@
+
 package com.ovengers.slotkey.credit.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,7 +51,13 @@ class FridayRemainingDtoNullableContractTest {
             var violations = factory.getValidator().validate(request);
             assertThat(violations).anySatisfy(violation -> {
                 assertThat(violation.getPropertyPath().toString()).isEqualTo(componentName);
-                assertThat(violation.getMessage()).isEqualTo(message);
+
+                // 수정: 기본 @NotNull 메시지는 실행 환경의 언어에 따라 달라지므로 템플릿을 검증
+                if (type == WaitlistApplyRequest.class) {
+                    assertThat(violation.getMessageTemplate()).isEqualTo(message);
+                } else {
+                    assertThat(violation.getMessage()).isEqualTo(message);
+                }
             });
         }
     }
@@ -90,7 +97,7 @@ class FridayRemainingDtoNullableContractTest {
                         "paymentKey", "paymentKey는 필수입니다."),
                 Arguments.of(WaitlistApplyRequest.class,
                         "{\"startTime\":\"2026-10-25T10:00:00\",\"endTime\":\"2026-10-25T11:00:00\"}",
-                        "spaceId", "널이어서는 안됩니다")
+                        "spaceId", "{jakarta.validation.constraints.NotNull.message}")
         );
     }
 }
