@@ -1,0 +1,11 @@
+{
+  "id" : 101,
+  "actorMemberId" : null,
+  "action" : "FORCE_CANCEL_RESERVATION",
+  "targetType" : "RESERVATION",
+  "targetId" : 200,
+  "reason" : null,
+  "beforeValue" : null,
+  "afterValue" : null,
+  "createdAt" : "2026-10-14T10:20:00"
+}
