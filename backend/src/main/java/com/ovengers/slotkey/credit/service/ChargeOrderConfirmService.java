@@ -89,10 +89,10 @@ public class ChargeOrderConfirmService {
             return approved;
         }
         if (result.type() == PgConfirmationResult.Type.DECLINED) {
-            transactionService.completeDeclined(orderId, result.errorCode());
+            transactionService.completeDeclined(orderId, result.errorCode().orElseThrow());
             throw new BusinessException(ErrorCode.PAYMENT_DECLINED);
         }
-        if (result.unknownReason() == PgConfirmationResult.UnknownReason.ALREADY_PROCESSED) {
+        if (result.unknownReason().orElse(null) == PgConfirmationResult.UnknownReason.ALREADY_PROCESSED) {
             PgPaymentLookupResult lookup = pgClient.findByPaymentKey(paymentKey);
             if (lookup.status() == PgPaymentLookupResult.Status.APPROVED) {
                 return completeApprovedOrKeepConfirming(
@@ -108,7 +108,7 @@ public class ChargeOrderConfirmService {
                     lookup.status()
             );
         }
-        if (result.unknownReason() == PgConfirmationResult.UnknownReason.MERCHANT_ERROR) {
+        if (result.unknownReason().orElse(null) == PgConfirmationResult.UnknownReason.MERCHANT_ERROR) {
             throw new BusinessException(ErrorCode.PG_CONFIRMATION_ERROR);
         }
         return transactionService.prepare(
@@ -123,11 +123,14 @@ public class ChargeOrderConfirmService {
 
     /** 표시용 결제수단 기록. 실패해도 이미 확정된 충전 결과를 바꾸지 않는다. */
     private void recordPaymentMethodQuietly(String orderId, PgConfirmationResult result) {
-        if (result.paymentMethod() == null) {
+        if (result.paymentMethod().isEmpty()) {
             return;
         }
         try {
-            transactionService.recordPaymentMethod(orderId, result.paymentMethod(), result.paymentProvider());
+            transactionService.recordPaymentMethod(
+                    orderId,
+                    result.paymentMethod().orElseThrow(),
+                    result.paymentProvider().orElse(null));
         } catch (RuntimeException exception) {
             log.warn(
                     "결제수단 기록에 실패했습니다. orderId={} exceptionClass={}",

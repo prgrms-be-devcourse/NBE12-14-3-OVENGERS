@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -80,11 +81,11 @@ public class FakePgClient implements PgClient {
             String currency
     ) {
         lookupResult = PgPaymentLookupResult.approved(
-                paymentKey,
-                orderId,
-                totalAmount,
-                currency,
-                "DONE"
+                Optional.ofNullable(paymentKey),
+                Optional.ofNullable(orderId),
+                Optional.of(totalAmount),
+                Optional.ofNullable(currency),
+                Optional.of("DONE")
         );
     }
 
@@ -100,11 +101,11 @@ public class FakePgClient implements PgClient {
             String rawStatus
     ) {
         lookupResult = PgPaymentLookupResult.failed(
-                paymentKey,
-                orderId,
-                totalAmount,
-                currency,
-                rawStatus
+                Optional.ofNullable(paymentKey),
+                Optional.ofNullable(orderId),
+                Optional.of(totalAmount),
+                Optional.ofNullable(currency),
+                Optional.ofNullable(rawStatus)
         );
     }
 
@@ -120,11 +121,11 @@ public class FakePgClient implements PgClient {
             String rawStatus
     ) {
         lookupResult = PgPaymentLookupResult.unknown(
-                paymentKey,
-                orderId,
-                totalAmount,
-                currency,
-                rawStatus
+                Optional.ofNullable(paymentKey),
+                Optional.ofNullable(orderId),
+                Optional.of(totalAmount),
+                Optional.ofNullable(currency),
+                Optional.ofNullable(rawStatus)
         );
     }
 
@@ -137,11 +138,11 @@ public class FakePgClient implements PgClient {
     ) {
         lookupResult = new PgPaymentLookupResult(
                 PgPaymentLookupResult.Status.UNKNOWN,
-                paymentKey,
-                orderId,
-                totalAmount,
-                currency,
-                rawStatus,
+                Optional.ofNullable(paymentKey),
+                Optional.ofNullable(orderId),
+                Optional.ofNullable(totalAmount),
+                Optional.ofNullable(currency),
+                Optional.ofNullable(rawStatus),
                 true
         );
     }

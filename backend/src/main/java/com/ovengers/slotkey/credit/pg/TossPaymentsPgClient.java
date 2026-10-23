@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 
 public final class TossPaymentsPgClient implements PgClient {
 
@@ -68,9 +69,9 @@ public final class TossPaymentsPgClient implements PgClient {
                     && "DONE".equals(response.status())
                     && matchesRequest(response, request)) {
                 return PgConfirmationResult.approved(
-                        response.paymentKey(),
-                        response.method(),
-                        response.easyPay() == null ? null : response.easyPay().provider()
+                        Optional.ofNullable(response.paymentKey()),
+                        Optional.ofNullable(response.method()),
+                        Optional.ofNullable(response.easyPay() == null ? null : response.easyPay().provider())
                 );
             }
             PgConfirmationResult result = indeterminate();
@@ -157,31 +158,31 @@ public final class TossPaymentsPgClient implements PgClient {
 
     private PgPaymentLookupResult approvedLookup(PaymentResponse response) {
         return PgPaymentLookupResult.approved(
-                response.paymentKey(),
-                response.orderId(),
-                response.totalAmount(),
-                response.currency(),
-                response.status()
+                Optional.ofNullable(response.paymentKey()),
+                Optional.ofNullable(response.orderId()),
+                Optional.ofNullable(response.totalAmount()),
+                Optional.ofNullable(response.currency()),
+                Optional.ofNullable(response.status())
         );
     }
 
     private PgPaymentLookupResult failedLookup(PaymentResponse response) {
         return PgPaymentLookupResult.failed(
-                response.paymentKey(),
-                response.orderId(),
-                response.totalAmount(),
-                response.currency(),
-                response.status()
+                Optional.ofNullable(response.paymentKey()),
+                Optional.ofNullable(response.orderId()),
+                Optional.ofNullable(response.totalAmount()),
+                Optional.ofNullable(response.currency()),
+                Optional.ofNullable(response.status())
         );
     }
 
     private PgPaymentLookupResult unknownLookup(PaymentResponse response) {
         return PgPaymentLookupResult.unknown(
-                response.paymentKey(),
-                response.orderId(),
-                response.totalAmount(),
-                response.currency(),
-                response.status()
+                Optional.ofNullable(response.paymentKey()),
+                Optional.ofNullable(response.orderId()),
+                Optional.ofNullable(response.totalAmount()),
+                Optional.ofNullable(response.currency()),
+                Optional.ofNullable(response.status())
         );
     }
 
@@ -217,7 +218,7 @@ public final class TossPaymentsPgClient implements PgClient {
         warnConfirmationFailure(
                 orderId,
                 result,
-                result.errorCode(),
+                result.errorCode().orElse(null),
                 exceptionClass
         );
     }
@@ -233,7 +234,7 @@ public final class TossPaymentsPgClient implements PgClient {
                         + "unknownReason={} errorCode={} exceptionClass={}",
                 orderId,
                 result.type(),
-                result.unknownReason(),
+                result.unknownReason().orElse(null),
                 errorCode == null ? "N/A" : errorCode,
                 exceptionClass
         );
@@ -241,7 +242,7 @@ public final class TossPaymentsPgClient implements PgClient {
 
     private static PgConfirmationResult indeterminate() {
         return PgConfirmationResult.unknown(
-                null,
+                Optional.empty(),
                 PgConfirmationResult.UnknownReason.INDETERMINATE
         );
     }

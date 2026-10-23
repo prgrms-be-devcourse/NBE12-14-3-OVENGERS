@@ -252,7 +252,8 @@ class ChargeOrderConfirmServiceTest {
     void confirm_approved_recordsPaymentMethod() {
         ChargeOrderConfirmResponse paid = new ChargeOrderConfirmResponse("chg_order", 1_000L, ChargeOrderStatus.PAID);
         ChargeOrderConfirmService service = approvedFlow(
-                PgConfirmationResult.approved("payment-key", "간편결제", "토스페이"), paid);
+                PgConfirmationResult.approved(
+                        Optional.of("payment-key"), Optional.of("간편결제"), Optional.of("토스페이")), paid);
 
         ChargeOrderConfirmResponse response = service.confirm(7L, "payment-key", "chg_order", 1_000L, "client-key");
 
@@ -265,7 +266,8 @@ class ChargeOrderConfirmServiceTest {
     void confirm_paymentMethodRecordFailure_doesNotAffectCharge() {
         ChargeOrderConfirmResponse paid = new ChargeOrderConfirmResponse("chg_order", 1_000L, ChargeOrderStatus.PAID);
         ChargeOrderConfirmService service = approvedFlow(
-                PgConfirmationResult.approved("payment-key", "카드", null), paid);
+                PgConfirmationResult.approved(
+                        Optional.of("payment-key"), Optional.of("카드"), Optional.empty()), paid);
         willThrow(new IllegalStateException("db down"))
                 .given(transactionService).recordPaymentMethod("chg_order", "카드", null);
 

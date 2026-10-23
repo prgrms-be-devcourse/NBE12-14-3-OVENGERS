@@ -87,7 +87,7 @@ class TossPaymentsPgClientTest {
         ));
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.APPROVED);
-        assertThat(result.paymentKey()).isEqualTo("payment-key");
+        assertThat(result.paymentKey()).contains("payment-key");
         server.verify();
     }
 
@@ -129,8 +129,8 @@ class TossPaymentsPgClientTest {
         PgConfirmationResult result = client.confirm(request());
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.APPROVED);
-        assertThat(result.paymentMethod()).isEqualTo("간편결제");
-        assertThat(result.paymentProvider()).isEqualTo("토스페이");
+        assertThat(result.paymentMethod()).contains("간편결제");
+        assertThat(result.paymentProvider()).contains("토스페이");
         server.verify();
     }
 
@@ -145,8 +145,23 @@ class TossPaymentsPgClientTest {
         PgConfirmationResult result = client.confirm(request());
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.APPROVED);
-        assertThat(result.paymentMethod()).isNull();
-        assertThat(result.paymentProvider()).isNull();
+        assertThat(result.paymentMethod()).isEmpty();
+        assertThat(result.paymentProvider()).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("승인 DONE 응답에 paymentKey가 없어도 기존처럼 승인 결과와 값 부재를 보존한다")
+    void confirm_withoutPaymentKey_stillApprovedWithAbsentKey() {
+        server.expect(requestTo(BASE_URL + "/v1/payments/confirm"))
+                .andRespond(withSuccess("""
+                        {"orderId": "chg_order123", "status": "DONE", "totalAmount": 1000}
+                        """, MediaType.APPLICATION_JSON));
+
+        PgConfirmationResult result = client.confirm(request());
+
+        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.APPROVED);
+        assertThat(result.paymentKey()).isEmpty();
         server.verify();
     }
 
@@ -163,7 +178,7 @@ class TossPaymentsPgClientTest {
         PgConfirmationResult result = client.confirm(request());
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.DECLINED);
-        assertThat(result.errorCode()).isEqualTo("REJECT_CARD_PAYMENT");
+        assertThat(result.errorCode()).contains("REJECT_CARD_PAYMENT");
         assertThat(output)
                 .contains("orderId=chg_order123")
                 .contains("classification=DECLINED")
@@ -186,7 +201,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED);
+                .contains(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED);
         server.verify();
     }
 
@@ -204,7 +219,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         server.verify();
     }
 
@@ -220,8 +235,8 @@ class TossPaymentsPgClientTest {
         PgConfirmationResult result = client.confirm(request());
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
-        assertThat(result.unknownReason()).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
-        assertThat(result.errorCode()).isNull();
+        assertThat(result.unknownReason()).contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
+        assertThat(result.errorCode()).isEmpty();
         server.verify();
     }
 
@@ -242,7 +257,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         server.verify();
     }
 
@@ -258,7 +273,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         assertThat(output)
                 .contains("PG 오류 응답 파싱에 실패했습니다")
                 .contains("orderId=chg_order123")
@@ -277,7 +292,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         server.verify();
     }
 
@@ -339,7 +354,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.MERCHANT_ERROR);
+                .contains(PgConfirmationResult.UnknownReason.MERCHANT_ERROR);
         server.verify();
     }
 
@@ -359,7 +374,7 @@ class TossPaymentsPgClientTest {
         PgPaymentLookupResult lookup = unconfiguredClient.findByPaymentKey("payment-key");
 
         assertThat(confirmation.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.MERCHANT_ERROR);
+                .contains(PgConfirmationResult.UnknownReason.MERCHANT_ERROR);
         assertThat(lookup.status()).isEqualTo(PgPaymentLookupResult.Status.UNKNOWN);
         assertThat(output)
                 .contains("TOSS_PAYMENTS_SECRET_KEY")
@@ -390,7 +405,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         assertThat(output)
                 .contains("orderId=chg_order123")
                 .contains("classification=UNKNOWN")
@@ -413,7 +428,7 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN);
         assertThat(result.unknownReason())
-                .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE);
+                .contains(PgConfirmationResult.UnknownReason.INDETERMINATE);
         assertThat(output)
                 .contains("orderId=chg_order123")
                 .contains("classification=UNKNOWN")
@@ -447,8 +462,8 @@ class TossPaymentsPgClientTest {
         PgPaymentLookupResult result = client.findByPaymentKey("payment-key");
 
         assertThat(result.status()).isEqualTo(expectedStatus);
-        assertThat(result.paymentKey()).isEqualTo("payment-key");
-        assertThat(result.rawStatus()).isEqualTo(pgStatus);
+        assertThat(result.paymentKey()).contains("payment-key");
+        assertThat(result.rawStatus()).contains(pgStatus);
         assertThat(output.getOut().contains("PG 조회 상태를 확인해야 합니다"))
                 .isEqualTo(expectsWarning);
         server.verify();
@@ -472,11 +487,38 @@ class TossPaymentsPgClientTest {
 
         assertThat(result.status()).isEqualTo(PgPaymentLookupResult.Status.APPROVED);
         assertThat(result.paymentObjectReceived()).isTrue();
-        assertThat(result.paymentKey()).isEqualTo("payment-key");
-        assertThat(result.orderId()).isEqualTo("chg_order123");
-        assertThat(result.totalAmount()).isEqualTo(1_000L);
-        assertThat(result.currency()).isEqualTo("KRW");
-        assertThat(result.rawStatus()).isEqualTo("DONE");
+        assertThat(result.paymentKey()).contains("payment-key");
+        assertThat(result.orderId()).contains("chg_order123");
+        assertThat(result.totalAmount()).contains(1_000L);
+        assertThat(result.currency()).contains("KRW");
+        assertThat(result.rawStatus()).contains("DONE");
+        server.verify();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"DONE", "ABORTED", "EXPIRED", "CANCELED"})
+    @DisplayName("조회 Payment에 paymentKey가 없어도 객체 수신 사실과 상태를 보존한다")
+    void findByPaymentKey_withoutPaymentKey_preservesPaymentObject(String status) {
+        server.expect(requestTo(BASE_URL + "/v1/payments/payment-key"))
+                .andRespond(withSuccess("""
+                        {
+                          "orderId": "chg_order123",
+                          "status": "%s",
+                          "totalAmount": 1000,
+                          "currency": "KRW"
+                        }
+                        """.formatted(status), MediaType.APPLICATION_JSON));
+
+        PgPaymentLookupResult result = client.findByPaymentKey("payment-key");
+
+        assertThat(result.status()).isEqualTo(
+                "DONE".equals(status)
+                        ? PgPaymentLookupResult.Status.APPROVED
+                        : PgPaymentLookupResult.Status.FAILED
+        );
+        assertThat(result.paymentObjectReceived()).isTrue();
+        assertThat(result.paymentKey()).isEmpty();
+        assertThat(result.rawStatus()).contains(status);
         server.verify();
     }
 

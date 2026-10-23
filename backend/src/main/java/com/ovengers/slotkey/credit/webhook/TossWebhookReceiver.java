@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * 토스 웹훅 수신: 검사 후 기록 한 줄만 남기고 끝낸다. PG 호출과 충전 확정은 하지 않는다
  * (docs/decisions/pg-charge.md 5단계 결정 3).
@@ -60,9 +62,9 @@ public class TossWebhookReceiver {
                 transmissionId,
                 eventType,
                 orderId,
-                text(data.path("paymentKey"), MAX_PAYMENT_KEY_LENGTH),
-                text(data.path("status"), MAX_STATUS_LENGTH),
-                parseRetriedCount(retriedCount)
+                Optional.ofNullable(text(data.path("paymentKey"), MAX_PAYMENT_KEY_LENGTH)),
+                Optional.ofNullable(text(data.path("status"), MAX_STATUS_LENGTH)),
+                Optional.ofNullable(parseRetriedCount(retriedCount))
         ));
         log.info(
                 "웹훅을 수신했습니다. orderId={} eventType={} result={}",

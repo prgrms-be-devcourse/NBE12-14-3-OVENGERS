@@ -82,7 +82,7 @@ public class ChargeOrderController {
     ) {
         ChargeOrderResponse response = chargeOrderService.create(
                 principal.memberId(),
-                request.amount()
+                request.amount().orElseThrow()
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
@@ -129,9 +129,9 @@ public class ChargeOrderController {
     ) {
         ChargeOrderConfirmResponse response = chargeOrderConfirmService.confirm(
                 principal.memberId(),
-                request.paymentKey(),
-                request.orderId(),
-                request.amount(),
+                request.paymentKey().orElseThrow(),
+                request.orderId().orElseThrow(),
+                request.amount().orElseThrow(),
                 idempotencyKey
         );
         HttpStatus status = response.status() == ChargeOrderStatus.CONFIRMING
