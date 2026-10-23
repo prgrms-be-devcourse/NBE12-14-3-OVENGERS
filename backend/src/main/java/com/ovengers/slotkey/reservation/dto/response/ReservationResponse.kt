@@ -3,7 +3,6 @@ package com.ovengers.slotkey.reservation.dto.response
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.ovengers.slotkey.reservation.entity.Reservation
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class ReservationResponse(
@@ -15,30 +14,30 @@ data class ReservationResponse(
     val pricePerSlotSnapshot: Int,
     val totalAmount: Int,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val holdExpiresAt: Optional<LocalDateTime>,
+    val holdExpiresAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedInAt: Optional<LocalDateTime>,
+    val checkedInAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedOutAt: Optional<LocalDateTime>,
+    val checkedOutAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val cancelledAt: Optional<LocalDateTime>,
+    val cancelledAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val spaceVersion: Optional<Int>,
+    val spaceVersion: Int?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val refundAmount: Optional<Int>,
+    val refundAmount: Int?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val penaltyAmount: Optional<Int>,
+    val penaltyAmount: Int?,
     val createdAt: LocalDateTime,
 ) {
     companion object {
         @JvmStatic
-        fun from(reservation: Reservation): ReservationResponse = from(reservation, Optional.empty())
+        fun from(reservation: Reservation): ReservationResponse = from(reservation, null)
 
         @JvmStatic
         fun from(
             reservation: Reservation,
-            spaceVersion: Optional<Int>,
-        ): ReservationResponse = create(reservation, spaceVersion, Optional.empty(), Optional.empty())
+            spaceVersion: Int?,
+        ): ReservationResponse = create(reservation, spaceVersion, null, null)
 
         /** 취소 시 실제 환불액과 위약금만 채운다. */
         @JvmStatic
@@ -46,13 +45,13 @@ data class ReservationResponse(
             reservation: Reservation,
             refundAmount: Int,
             penaltyAmount: Int,
-        ): ReservationResponse = create(reservation, Optional.empty(), Optional.of(refundAmount), Optional.of(penaltyAmount))
+        ): ReservationResponse = create(reservation, null, refundAmount, penaltyAmount)
 
         private fun create(
             reservation: Reservation,
-            spaceVersion: Optional<Int>,
-            refundAmount: Optional<Int>,
-            penaltyAmount: Optional<Int>,
+            spaceVersion: Int?,
+            refundAmount: Int?,
+            penaltyAmount: Int?,
         ): ReservationResponse =
             ReservationResponse(
                 reservation.id,
@@ -62,10 +61,10 @@ data class ReservationResponse(
                 reservation.status.name,
                 reservation.pricePerSlotSnapshot,
                 reservation.totalAmount,
-                Optional.ofNullable(reservation.holdExpiresAt),
-                Optional.ofNullable(reservation.checkedInAt),
-                Optional.ofNullable(reservation.checkedOutAt),
-                Optional.ofNullable(reservation.cancelledAt),
+                reservation.holdExpiresAt,
+                reservation.checkedInAt,
+                reservation.checkedOutAt,
+                reservation.cancelledAt,
                 spaceVersion,
                 refundAmount,
                 penaltyAmount,

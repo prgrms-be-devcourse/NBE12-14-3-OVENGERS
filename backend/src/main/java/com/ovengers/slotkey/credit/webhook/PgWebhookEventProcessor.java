@@ -162,10 +162,9 @@ public class PgWebhookEventProcessor {
     private boolean matches(ChargeOrder order, PgPaymentLookupResult lookup) {
         return order.getPaymentKey().equals(lookup.paymentKey())
                 && order.getOrderId().equals(lookup.orderId())
-                && lookup.totalAmount() != null
-                && order.getAmount() == lookup.totalAmount()
+                && lookup.totalAmount() != null && order.getAmount() == lookup.totalAmount()
                 && "KRW".equals(lookup.currency())
-                && !isBlank(lookup.rawStatus());
+                && lookup.rawStatus() != null && !lookup.rawStatus().isBlank();
     }
 
     private void logCompleteError(ChargeOrder order, RuntimeException exception) {

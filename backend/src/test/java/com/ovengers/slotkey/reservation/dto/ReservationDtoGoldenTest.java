@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.dto;
 
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,13 +34,13 @@ class ReservationDtoGoldenTest {
     void responseMatchesJavaGolden(String fixture, ReservationStatus status) throws Exception {
         Reservation reservation = reservation(status);
         Object response = switch (fixture) {
-            case "hold-response" -> ReservationResponse.from(reservation, Optional.ofNullable(0));
+            case "hold-response" -> ReservationResponse.from(reservation, 0);
             case "cancelled-response" -> ReservationResponse.ofCancelled(reservation, 0, 2000);
             case "detail-empty-history" -> ReservationDetailResponse.of(reservation, List.of());
-            case "list-missing-space" -> ReservationListResponse.from(reservation, Optional.empty());
-            case "admin-missing-related-data" -> AdminReservationResponse.from(reservation, Optional.empty(), Optional.empty());
+            case "list-missing-space" -> ReservationListResponse.from(reservation, null);
+            case "admin-missing-related-data" -> AdminReservationResponse.from(reservation, null, null);
             case "admin-detail-empty-history" -> AdminReservationDetailResponse.from(
-                    reservation, Optional.empty(), Optional.empty(), List.of(), List.of());
+                    reservation, null, null, List.of(), List.of());
             default -> ReservationResponse.from(reservation);
         };
         try (InputStream expected = getClass().getResourceAsStream("/golden/reservation/" + fixture + ".json")) {

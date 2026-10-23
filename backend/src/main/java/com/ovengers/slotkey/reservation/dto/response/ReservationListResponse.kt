@@ -5,7 +5,6 @@ import com.ovengers.slotkey.reservation.entity.Reservation
 import com.ovengers.slotkey.space.entity.Space
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.Optional
 
 @JvmRecord
 data class ReservationListResponse(
@@ -13,9 +12,9 @@ data class ReservationListResponse(
     val spaceId: Long,
     val spaceName: String,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val spaceLocation: Optional<String>,
+    val spaceLocation: String?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val spaceImagePath: Optional<String>,
+    val spaceImagePath: String?,
     val date: LocalDate,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
@@ -23,37 +22,37 @@ data class ReservationListResponse(
     val pricePerSlotSnapshot: Int,
     val totalAmount: Int,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val holdExpiresAt: Optional<LocalDateTime>,
+    val holdExpiresAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedInAt: Optional<LocalDateTime>,
+    val checkedInAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val checkedOutAt: Optional<LocalDateTime>,
+    val checkedOutAt: LocalDateTime?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val cancelledAt: Optional<LocalDateTime>,
+    val cancelledAt: LocalDateTime?,
     val createdAt: LocalDateTime,
 ) {
     companion object {
         @JvmStatic
         fun from(
             reservation: Reservation,
-            space: Optional<Space>,
+            space: Space?,
         ): ReservationListResponse =
             ReservationListResponse(
                 reservation.id,
                 reservation.spaceId,
-                space.map { it.name }.orElse("오피스 정보 없음"),
-                space.map { it.location },
-                space.map { it.imagePath },
+                space?.name ?: "오피스 정보 없음",
+                space?.location,
+                space?.imagePath,
                 reservation.startTime.toLocalDate(),
                 reservation.startTime,
                 reservation.endTime,
                 reservation.status.name,
                 reservation.pricePerSlotSnapshot,
                 reservation.totalAmount,
-                Optional.ofNullable(reservation.holdExpiresAt),
-                Optional.ofNullable(reservation.checkedInAt),
-                Optional.ofNullable(reservation.checkedOutAt),
-                Optional.ofNullable(reservation.cancelledAt),
+                reservation.holdExpiresAt,
+                reservation.checkedInAt,
+                reservation.checkedOutAt,
+                reservation.cancelledAt,
                 reservation.createdAt,
             )
     }

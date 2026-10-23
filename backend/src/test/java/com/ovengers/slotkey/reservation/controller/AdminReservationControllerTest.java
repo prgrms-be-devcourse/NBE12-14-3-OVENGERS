@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.controller;
 
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -73,9 +72,9 @@ class AdminReservationControllerTest {
         AdminReservationResponse item = new AdminReservationResponse(
                 100L,
                 1L,
-                Optional.ofNullable("user@example.com"),
+                "user@example.com",
                 10L,
-                Optional.ofNullable("대회의실 A"),
+                "대회의실 A",
                 LocalDateTime.of(2026, 9, 30, 10, 0),
                 LocalDateTime.of(2026, 9, 30, 12, 0),
                 ReservationStatus.CONFIRMED,
@@ -141,9 +140,9 @@ class AdminReservationControllerTest {
         verify(adminReservationService).searchReservations(conditionCaptor.capture(), pageableCaptor.capture());
 
         AdminReservationSearchCondition captured = conditionCaptor.getValue();
-        assertThat(captured.date().orElse(null)).isEqualTo(LocalDate.of(2026, 9, 30));
-        assertThat(captured.spaceId().orElse(null)).isEqualTo(5L);
-        assertThat(captured.status().orElse(null)).isEqualTo(ReservationStatus.CONFIRMED);
+        assertThat(captured.date()).isEqualTo(LocalDate.of(2026, 9, 30));
+        assertThat(captured.spaceId()).isEqualTo(5L);
+        assertThat(captured.status()).isEqualTo(ReservationStatus.CONFIRMED);
 
         assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);

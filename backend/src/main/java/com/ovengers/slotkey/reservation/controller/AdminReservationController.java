@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.controller;
 
-import java.util.Optional;
 
 import com.ovengers.slotkey.global.common.response.ApiResponse;
 import com.ovengers.slotkey.global.common.response.PageResponse;
@@ -91,7 +90,7 @@ public class AdminReservationController {
     ) {
         AdminReservationSearchCondition searchCondition = condition != null
                 ? condition
-                : new AdminReservationSearchCondition(Optional.empty(), Optional.empty(), Optional.empty());
+                : new AdminReservationSearchCondition(null, null, null);
         Page<AdminReservationResponse> response = adminReservationService.searchReservations(searchCondition, pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(response)));
     }
@@ -156,7 +155,7 @@ public class AdminReservationController {
             @Valid @RequestBody ForceCancelRequest request
     ) {
         AdminReservationResponse response =
-                adminReservationService.forceCancel(reservationId, request.reason().orElseThrow(), principal.memberId());
+                adminReservationService.forceCancel(reservationId, request.reason(), principal.memberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -111,11 +111,9 @@ public class ChargeOrderRecoveryProcessor {
     ) {
         boolean matches = target.paymentKey().equals(result.paymentKey())
                 && target.orderId().equals(result.orderId())
-                && result.totalAmount() != null
-                && target.amount() == result.totalAmount()
+                && result.totalAmount() != null && target.amount() == result.totalAmount()
                 && "KRW".equals(result.currency())
-                && result.rawStatus() != null
-                && !result.rawStatus().isBlank();
+                && result.rawStatus() != null && !result.rawStatus().isBlank();
         if (!matches) {
             log.warn(
                     "PG 조회 응답이 로컬 주문과 일치하지 않습니다. orderId={} lookupStatus={}",

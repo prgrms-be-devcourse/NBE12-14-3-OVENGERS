@@ -103,7 +103,8 @@ class WaitlistControllerTest {
                         .header("Authorization", "Bearer " + userToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new WaitlistApplyRequest(3L, START_TIME, END_TIME))))
+                                new WaitlistApplyRequest(
+                                        3L, START_TIME, END_TIME))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.id").value(11L))
@@ -132,7 +133,8 @@ class WaitlistControllerTest {
         mockMvc.perform(post("/api/v1/waitlist")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new WaitlistApplyRequest(3L, START_TIME, END_TIME))))
+                                new WaitlistApplyRequest(
+                                        3L, START_TIME, END_TIME))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 

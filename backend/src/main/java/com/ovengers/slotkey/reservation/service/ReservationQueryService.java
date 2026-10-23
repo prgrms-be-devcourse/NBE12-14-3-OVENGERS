@@ -1,6 +1,5 @@
 package com.ovengers.slotkey.reservation.service;
 
-import java.util.Optional;
 
 import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
@@ -57,16 +56,16 @@ public class ReservationQueryService {
 
         ReservationSearchCondition searchCondition = condition != null
                 ? condition
-                : new ReservationSearchCondition(Optional.empty(), Optional.empty());
+                : new ReservationSearchCondition(null, null);
 
-        String keyword = searchCondition.keyword().orElse(null);
+        String keyword = searchCondition.keyword();
         String normalizedKeyword = keyword != null && !keyword.isBlank()
                 ? keyword.trim()
                 : null;
 
         Page<Reservation> reservations = reservationRepository.searchMemberReservations(
                 memberId,
-                searchCondition.status().orElse(null),
+                searchCondition.status(),
                 normalizedKeyword,
                 pageRequest
         );
@@ -75,7 +74,7 @@ public class ReservationQueryService {
         // map을 사용하므로 기존 페이지의 전체 건수도 유지된다.
         if (reservations.isEmpty()) {
             return reservations.map(
-                    reservation -> ReservationListResponse.from(reservation, Optional.empty())
+                    reservation -> ReservationListResponse.from(reservation, null)
             );
         }
 
@@ -94,7 +93,7 @@ public class ReservationQueryService {
         return reservations.map(reservation ->
                 ReservationListResponse.from(
                         reservation,
-                        Optional.ofNullable(spacesById.get(reservation.getSpaceId()))
+                        spacesById.get(reservation.getSpaceId())
                 )
         );
     }

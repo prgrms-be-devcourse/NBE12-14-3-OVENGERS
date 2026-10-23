@@ -15,9 +15,8 @@ class PgErrorClassifierTest {
     fun classify_clientErrorWithoutCode_returnsIndeterminate(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @ParameterizedTest
@@ -27,9 +26,8 @@ class PgErrorClassifierTest {
     fun classify_serverErrorWithoutCode_returnsIndeterminate(errorCode: String) {
         val result = PgErrorClassifier.classify(500, errorCode)
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @ParameterizedTest
@@ -58,8 +56,8 @@ class PgErrorClassifierTest {
     fun classify_userDecline_returnsDeclined(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.DECLINED)
-        assertThat(result.errorCode()).isEqualTo(errorCode)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.DECLINED)
+        assertThat(result.errorCode).isEqualTo(errorCode)
     }
 
     @ParameterizedTest
@@ -78,9 +76,8 @@ class PgErrorClassifierTest {
     fun classify_merchantProblem_returnsUnknownMerchantError(errorCode: String) {
         val result = PgErrorClassifier.classify(400, errorCode)
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.MERCHANT_ERROR)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.MERCHANT_ERROR)
     }
 
     @ParameterizedTest
@@ -89,9 +86,8 @@ class PgErrorClassifierTest {
     fun classify_indeterminate_returnsUnknown(errorCode: String) {
         val result = PgErrorClassifier.classify(500, errorCode)
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 
     @Test
@@ -103,9 +99,8 @@ class PgErrorClassifierTest {
                 "ALREADY_PROCESSED_PAYMENT",
             )
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.ALREADY_PROCESSED)
     }
 
     @Test
@@ -117,8 +112,7 @@ class PgErrorClassifierTest {
                 "REJECT_CARD_PAYMENT",
             )
 
-        assertThat(result.type()).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
-        assertThat(result.unknownReason())
-            .isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
+        assertThat(result.type).isEqualTo(PgConfirmationResult.Type.UNKNOWN)
+        assertThat(result.unknownReason).isEqualTo(PgConfirmationResult.UnknownReason.INDETERMINATE)
     }
 }

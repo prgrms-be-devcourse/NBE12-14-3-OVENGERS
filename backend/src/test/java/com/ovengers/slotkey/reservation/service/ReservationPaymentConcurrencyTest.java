@@ -104,13 +104,13 @@ class ReservationPaymentConcurrencyTest extends ReservationIntegrationTestSuppor
                 () -> reservationPaymentConfirmService.confirm(
                         memberId,
                         hold.reservationId(),
-                        hold.spaceVersion().orElseThrow(),
+                        hold.spaceVersion(),
                         "overdraft-key-1"
                 ),
                 () -> reservationPaymentConfirmService.confirm(
                         memberId,
                         anotherHold.reservationId(),
-                        anotherHold.spaceVersion().orElseThrow(),
+                        anotherHold.spaceVersion(),
                         "overdraft-key-2"
                 )
         );
@@ -159,14 +159,14 @@ class ReservationPaymentConcurrencyTest extends ReservationIntegrationTestSuppor
         ReservationResponse first = reservationPaymentConfirmService.confirm(
                 memberId,
                 hold.reservationId(),
-                hold.spaceVersion().orElseThrow(),
+                hold.spaceVersion(),
                 "same-key-different-reservation"
         );
 
         ReservationResponse second = reservationPaymentConfirmService.confirm(
                 memberId,
                 anotherHold.reservationId(),
-                anotherHold.spaceVersion().orElseThrow(),
+                anotherHold.spaceVersion(),
                 "same-key-different-reservation"
         );
 
@@ -246,7 +246,7 @@ class ReservationPaymentConcurrencyTest extends ReservationIntegrationTestSuppor
 
     private ReservationResponse pay(String idempotencyKey) {
         return reservationPaymentConfirmService.confirm(
-                memberId, hold.reservationId(), hold.spaceVersion().orElseThrow(), idempotencyKey);
+                memberId, hold.reservationId(), hold.spaceVersion(), idempotencyKey);
     }
 
     /** 예약이 CONFIRMED이고, 잔액이 정확히 총액만큼 줄었으며, 결제 원장이 1건뿐이다. */

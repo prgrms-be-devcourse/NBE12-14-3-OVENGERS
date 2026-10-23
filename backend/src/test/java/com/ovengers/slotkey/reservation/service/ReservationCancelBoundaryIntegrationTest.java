@@ -77,8 +77,8 @@ class ReservationCancelBoundaryIntegrationTest
 
         // 4. 취소 성공 및 응답 금액 검증
         assertThat(response.status()).isEqualTo("CANCELLED");
-        assertThat(response.refundAmount().orElseThrow()).isEqualTo(TOTAL_AMOUNT);
-        assertThat(response.penaltyAmount().orElseThrow()).isZero();
+        assertThat(response.refundAmount()).isEqualTo(TOTAL_AMOUNT);
+        assertThat(response.penaltyAmount()).isZero();
 
         // 5. 회원 잔액에 예약 금액 전액이 환급됐는지 확인
         assertThat(balanceOf(memberId))
@@ -126,8 +126,8 @@ class ReservationCancelBoundaryIntegrationTest
 
 
         assertThat(response.status()).isEqualTo("CANCELLED");
-        assertThat(response.refundAmount().orElseThrow()).isEqualTo(refund);
-        assertThat(response.penaltyAmount().orElseThrow()).isEqualTo(penalty);
+        assertThat(response.refundAmount()).isEqualTo(refund);
+        assertThat(response.penaltyAmount()).isEqualTo(penalty);
         assertThat(balanceOf(memberId)).isEqualTo(INITIAL_BALANCE + refund);
         assertThat(countLedger(reservationId, "REFUND")).isEqualTo(1);
         assertThat(sumLedger(reservationId, "REFUND")).isEqualTo(TOTAL_AMOUNT);
