@@ -181,6 +181,7 @@ data class ReservationPayRequest(
 - 후속 묶음의 Java 기준 283건과 JSON 골든 15건을 먼저 통과시켰고, Optional 계약 25건의 RED를 확인했다. 최종 전체 `clean build`는 **146 suites, 1,185 tests, failures 0, errors 0, skipped 0**이며 프론트 80건과 타입 검사도 통과했다.
 - 별도 읽기 전용 검토가 PG 응답의 `paymentKey` 누락 시 Kotlin NPE가 생기는 회귀 1건을 발견했다. 승인 1건·조회 4건의 실패를 재현한 뒤 Java 어댑터에서 `Optional.ofNullable`로 감싸도록 수정했다. 수정 후 PG 어댑터 44건, 독립 관련 173건, 최종 전체 1,185건이 통과했다.
 - 별도 검토의 최종 미해결 Critical·Important·Minor 항목은 0건이다. 독립 실행은 수정 전 전체 1,180건과 수정 후 관련 173건으로 나눠 수행했으며, 수정 후 전체 빌드는 구현 세션에서 수행했다.
+- 신규 Kotlin 27개를 기존 Java 소스 루트인 `src/main/java`로 이동한 뒤 현재 코드 HEAD `8cf9cda`에서 최종 검증을 다시 수행했다. JDK 21·Docker 29.6.1 환경의 `clean build`가 8분에 종료 0이었고, **146 suites, 1,185 tests, failures 0, errors 0, skipped 0**, 프론트 80건과 TypeScript 검사 통과를 확인했다.
 
 ## 6. 한계와 재검토 조건
 

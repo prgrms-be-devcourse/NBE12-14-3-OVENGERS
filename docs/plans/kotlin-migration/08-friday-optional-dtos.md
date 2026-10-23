@@ -78,7 +78,7 @@
 
 ## Task 3: 충전·PG·웹훅·대기열·알림 16개 전환
 
-**실행 상태:** 구현·전체 자기검증·별도 읽기 전용 리뷰 완료. 예약 PR #42의 두 커밋 위에 쌓였으며, 첫 PR 머지 뒤 `dev` 기준으로 정리한다. 사용자 확인 후 커밋한다.
+**실행 상태:** 구현·커밋·push·Draft PR #44·소스 루트 이동 후 최종 검증 완료. 예약 PR #42 위에 쌓였으며, 첫 PR 머지 뒤 `dev` 기준으로 정리한다.
 
 **Files:** `credit/dto` 5개, `credit/pg` 4개, `credit/webhook` 2개, `waitlist/dto` 2개, `notification/dto/response` 3개의 Java 삭제와 같은 패키지 Kotlin 추가. Controller·Service·Store·Scheduler·Repository는 타입 연결에 필요한 값 감싸기·꺼내기만 수정한다.
 
