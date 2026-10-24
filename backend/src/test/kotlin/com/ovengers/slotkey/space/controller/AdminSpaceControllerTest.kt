@@ -1,6 +1,7 @@
 package com.ovengers.slotkey.space.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
@@ -22,6 +23,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.BDDMockito.given
@@ -31,6 +35,11 @@ import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
@@ -45,6 +54,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.bind.MethodArgumentNotValidException
 import java.time.LocalTime
 
 @ExtendWith(MockitoExtension::class)
@@ -73,8 +83,10 @@ class AdminSpaceControllerTest {
         mockMvc =
             MockMvcBuilders
                 .standaloneSetup(adminSpaceController)
-                .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
-                .setControllerAdvice(GlobalExceptionHandler())
+                .setCustomArgumentResolvers(
+                    AuthenticationPrincipalArgumentResolver(),
+                    PageableHandlerMethodArgumentResolver(),
+                ).setControllerAdvice(GlobalExceptionHandler())
                 .build()
 
         val authentication =
@@ -89,6 +101,113 @@ class AdminSpaceControllerTest {
     @AfterEach
     fun tearDown() {
         SecurityContextHolder.clearContext()
+    }
+
+    @Test
+    @DisplayName("관리자 공간 목록 기본 조회 시 status/keyword null과 기본 Pageable(page=0, size=20)이 전달되고 200 OK를 반환한다")
+    fun getSpaces_default_passesNullFiltersAndDefaultPageable() {
+        // given
+        val spaceDetail =
+            SpaceDetailResponse(
+                1L,
+                "관리자 회의실",
+                "판교",
+                "설명",
+                6,
+                5000L,
+                "/images/space.jpg",
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+                0,
+            )
+        val pageable: Pageable = PageRequest.of(0, 20)
+        val page: Page<SpaceDetailResponse> = PageImpl(listOf(spaceDetail), pageable, 1L)
+
+        given(adminSpaceService.getSpaces(eq(null), eq(null), any(Pageable::class.java))).willReturn(page)
+
+        // when & then
+        mockMvc
+            .perform(
+                get("/api/v1/admin/spaces")
+                    .contentType(MediaType.APPLICATION_JSON),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.code").value("OK"))
+            .andExpect(jsonPath("$.data.page").value(0))
+            .andExpect(jsonPath("$.data.size").value(20))
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.totalPages").value(1))
+            .andExpect(jsonPath("$.data.content[0].id").value(1L))
+            .andExpect(jsonPath("$.data.content[0].name").value("관리자 회의실"))
+            .andExpect(jsonPath("$.data.content[0].location").value("판교"))
+            .andExpect(jsonPath("$.data.content[0].openingTime").value("09:00"))
+            .andExpect(jsonPath("$.data.content[0].closingTime").value("18:00"))
+
+        val statusCaptor = ArgumentCaptor.forClass(SpaceStatus::class.java)
+        val keywordCaptor = ArgumentCaptor.forClass(String::class.java)
+        val pageableCaptor = ArgumentCaptor.forClass(Pageable::class.java)
+
+        verify(adminSpaceService).getSpaces(statusCaptor.capture(), keywordCaptor.capture(), pageableCaptor.capture())
+        assertThat(statusCaptor.value).isNull()
+        assertThat(keywordCaptor.value).isNull()
+        assertThat(pageableCaptor.value.pageNumber).isEqualTo(0)
+        assertThat(pageableCaptor.value.pageSize).isEqualTo(20)
+    }
+
+    @Test
+    @DisplayName("관리자 공간 목록 필터 및 페이징 파라미터 전달 시 서비스에 올바르게 바인딩되고 200 OK를 반환한다")
+    fun getSpaces_withStatusKeywordAndPaging_passesExplicitParameters() {
+        // given
+        val spaceDetail =
+            SpaceDetailResponse(
+                2L,
+                "비활성 회의실",
+                "강남",
+                "설명",
+                4,
+                3000L,
+                null,
+                LocalTime.of(10, 0),
+                LocalTime.of(19, 0),
+                SpaceStatus.INACTIVE,
+                1,
+            )
+        val pageable: Pageable = PageRequest.of(1, 5)
+        val page: Page<SpaceDetailResponse> = PageImpl(listOf(spaceDetail), pageable, 6L)
+
+        given(adminSpaceService.getSpaces(eq(SpaceStatus.INACTIVE), eq("회의실"), any(Pageable::class.java)))
+            .willReturn(page)
+
+        // when & then
+        mockMvc
+            .perform(
+                get("/api/v1/admin/spaces")
+                    .param("status", "INACTIVE")
+                    .param("keyword", "회의실")
+                    .param("page", "1")
+                    .param("size", "5")
+                    .contentType(MediaType.APPLICATION_JSON),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.code").value("OK"))
+            .andExpect(jsonPath("$.data.page").value(1))
+            .andExpect(jsonPath("$.data.size").value(5))
+            .andExpect(jsonPath("$.data.totalElements").value(6))
+            .andExpect(jsonPath("$.data.totalPages").value(2))
+            .andExpect(jsonPath("$.data.content[0].id").value(2L))
+            .andExpect(jsonPath("$.data.content[0].name").value("비활성 회의실"))
+            .andExpect(jsonPath("$.data.content[0].status").value("INACTIVE"))
+
+        val statusCaptor = ArgumentCaptor.forClass(SpaceStatus::class.java)
+        val keywordCaptor = ArgumentCaptor.forClass(String::class.java)
+        val pageableCaptor = ArgumentCaptor.forClass(Pageable::class.java)
+
+        verify(adminSpaceService).getSpaces(statusCaptor.capture(), keywordCaptor.capture(), pageableCaptor.capture())
+        assertThat(statusCaptor.value).isEqualTo(SpaceStatus.INACTIVE)
+        assertThat(keywordCaptor.value).isEqualTo("회의실")
+        assertThat(pageableCaptor.value.pageNumber).isEqualTo(1)
+        assertThat(pageableCaptor.value.pageSize).isEqualTo(5)
     }
 
     @Test
@@ -193,6 +312,58 @@ class AdminSpaceControllerTest {
 
         verify(spaceAuthorizationService).validateCanManageSpace(ADMIN_PRINCIPAL)
         verify(adminSpaceService).createSpace(any(SpaceCreateRequest::class.java), eq(ADMIN_PRINCIPAL.memberId))
+    }
+
+    @ParameterizedTest(name = "공간 등록 시 필수 필드({0}) 키 생략 시 400 VALIDATION_FAILED를 반환한다")
+    @ValueSource(strings = ["name", "location", "capacity", "pricePerSlot", "openingTime", "closingTime"])
+    fun createSpace_omittedRequiredFields_returnsBadRequest(fieldToOmit: String) {
+        val jsonNode = createValidSpaceCreateJsonNode()
+        jsonNode.remove(fieldToOmit)
+        val rawJson = objectMapper.writeValueAsString(jsonNode)
+
+        val result =
+            mockMvc
+                .perform(
+                    post("/api/v1/admin/spaces")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(rawJson),
+                ).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("FAIL"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andReturn()
+
+        val ex = result.resolvedException
+        assertThat(ex).isInstanceOf(MethodArgumentNotValidException::class.java)
+        val bindingResult = (ex as MethodArgumentNotValidException).bindingResult
+        assertThat(bindingResult.getFieldError(fieldToOmit)).isNotNull()
+
+        verifyNoInteractions(adminSpaceService)
+    }
+
+    @ParameterizedTest(name = "공간 등록 시 필수 필드({0}) 명시 null 시 400 VALIDATION_FAILED를 반환한다")
+    @ValueSource(strings = ["name", "location", "capacity", "pricePerSlot", "openingTime", "closingTime"])
+    fun createSpace_explicitNullRequiredFields_returnsBadRequest(fieldToSetNull: String) {
+        val jsonNode = createValidSpaceCreateJsonNode()
+        jsonNode.putNull(fieldToSetNull)
+        val rawJson = objectMapper.writeValueAsString(jsonNode)
+
+        val result =
+            mockMvc
+                .perform(
+                    post("/api/v1/admin/spaces")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(rawJson),
+                ).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("FAIL"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andReturn()
+
+        val ex = result.resolvedException
+        assertThat(ex).isInstanceOf(MethodArgumentNotValidException::class.java)
+        val bindingResult = (ex as MethodArgumentNotValidException).bindingResult
+        assertThat(bindingResult.getFieldError(fieldToSetNull)).isNotNull()
+
+        verifyNoInteractions(adminSpaceService)
     }
 
     @Test
@@ -374,6 +545,104 @@ class AdminSpaceControllerTest {
             any(SpaceUpdateRequest::class.java),
             eq(ADMIN_PRINCIPAL.memberId),
         )
+    }
+
+    @Test
+    @DisplayName("공간 수정 요청 시 생략된 필드와 명시적 null 필드는 동일하게 null로 바인딩되고 200 OK를 반환한다")
+    fun updateSpace_omittedAndExplicitNullFields_bindsEquivalently() {
+        // given
+        val spaceId = 1L
+        val response =
+            SpaceDetailResponse(
+                spaceId,
+                "수정된 회의실",
+                "판교",
+                "기존 설명",
+                6,
+                5000L,
+                null,
+                LocalTime.of(9, 0),
+                LocalTime.of(18, 0),
+                SpaceStatus.ACTIVE,
+                1,
+            )
+
+        given(
+            adminSpaceService.updateSpace(
+                eq(spaceId),
+                any(SpaceUpdateRequest::class.java),
+                eq(ADMIN_PRINCIPAL.memberId),
+            ),
+        ).willReturn(response)
+
+        val omittedJson = """{"name":"수정된 회의실"}"""
+        val explicitNullJson =
+            """
+            {
+                "targetSpaceId": null,
+                "name": "수정된 회의실",
+                "location": null,
+                "description": null,
+                "capacity": null,
+                "pricePerSlot": null,
+                "imagePath": null,
+                "openingTime": null,
+                "closingTime": null,
+                "status": null
+            }
+            """.trimIndent()
+
+        // when & then — 생략된 필드 요청
+        mockMvc
+            .perform(
+                patch("/api/v1/admin/spaces/{spaceId}", spaceId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(omittedJson),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.code").value("OK"))
+            .andExpect(jsonPath("$.data.id").value(spaceId))
+            .andExpect(jsonPath("$.data.name").value("수정된 회의실"))
+
+        // when & then — 명시적 null 필드 요청
+        mockMvc
+            .perform(
+                patch("/api/v1/admin/spaces/{spaceId}", spaceId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(explicitNullJson),
+            ).andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.code").value("OK"))
+            .andExpect(jsonPath("$.data.id").value(spaceId))
+            .andExpect(jsonPath("$.data.name").value("수정된 회의실"))
+
+        val requestCaptor = ArgumentCaptor.forClass(SpaceUpdateRequest::class.java)
+        verify(adminSpaceService, org.mockito.Mockito.times(2)).updateSpace(
+            eq(spaceId),
+            requestCaptor.capture(),
+            eq(ADMIN_PRINCIPAL.memberId),
+        )
+
+        val capturedRequests = requestCaptor.allValues
+        assertThat(capturedRequests).hasSize(2)
+
+        val expectedDto =
+            SpaceUpdateRequest(
+                targetSpaceId = null,
+                name = "수정된 회의실",
+                location = null,
+                description = null,
+                capacity = null,
+                pricePerSlot = null,
+                imagePath = null,
+                openingTime = null,
+                closingTime = null,
+                status = null,
+            )
+
+        assertThat(capturedRequests[0]).isEqualTo(expectedDto)
+        assertThat(capturedRequests[1]).isEqualTo(expectedDto)
+        assertThat(capturedRequests[0]).isEqualTo(capturedRequests[1])
     }
 
     @Test
@@ -870,6 +1139,18 @@ class AdminSpaceControllerTest {
         assertThat(SpaceResponse.from(spaceWithoutOptionalFields).imagePath).isNull()
         assertThat(SpaceDetailResponse.from(spaceWithoutOptionalFields).description).isNull()
         assertThat(SpaceDetailResponse.from(spaceWithoutOptionalFields).imagePath).isNull()
+    }
+
+    private fun createValidSpaceCreateJsonNode(): ObjectNode {
+        val node = objectMapper.createObjectNode()
+        node.put("name", "판교 회의실")
+        node.put("location", "판교")
+        node.put("description", "설명")
+        node.put("capacity", 6)
+        node.put("pricePerSlot", 1000L)
+        node.put("openingTime", "09:00")
+        node.put("closingTime", "18:00")
+        return node
     }
 
     private fun createRequest(
