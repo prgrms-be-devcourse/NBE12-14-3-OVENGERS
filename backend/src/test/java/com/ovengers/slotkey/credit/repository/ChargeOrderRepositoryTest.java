@@ -77,8 +77,7 @@ class ChargeOrderRepositoryTest extends IntegrationTestSupport {
                 confirmingAt.plusMinutes(1)
         );
 
-        ChargeOrder confirming = chargeOrderRepository.findByOrderId(order.getOrderId())
-                .orElseThrow();
+        ChargeOrder confirming = chargeOrderRepository.findByOrderId(order.getOrderId());
         assertThat(updated).isEqualTo(1);
         assertThat(confirming.getStatus()).isEqualTo(ChargeOrderStatus.CONFIRMING);
         assertThat(confirming.getUpdatedAt()).isEqualTo(confirmingAt);

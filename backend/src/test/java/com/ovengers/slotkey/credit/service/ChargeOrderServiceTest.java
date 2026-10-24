@@ -134,7 +134,7 @@ class ChargeOrderServiceTest {
                 java.time.LocalDateTime.of(2026, 10, 13, 9, 0)
         );
         given(chargeOrderRepository.findByOrderId(order.getOrderId()))
-                .willReturn(Optional.of(order));
+                .willReturn(order);
 
         ChargeOrderResponse response = chargeOrderService.get(
                 7L,
@@ -156,7 +156,7 @@ class ChargeOrderServiceTest {
                 java.time.LocalDateTime.of(2026, 10, 13, 9, 0)
         );
         given(chargeOrderRepository.findByOrderId(order.getOrderId()))
-                .willReturn(Optional.of(order));
+                .willReturn(order);
 
         assertThatThrownBy(() -> chargeOrderService.get(7L, order.getOrderId()))
                 .isInstanceOf(BusinessException.class)
