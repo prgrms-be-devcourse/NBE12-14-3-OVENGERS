@@ -40,12 +40,10 @@ class ReservationStatusHistoryService(
 
     // 예약 ID 기준 상태 변경 이력 조회
     fun findAllByReservationId(reservationId: Long?): List<ReservationStatusHistoryResponse> {
-        if (reservationId == null) {
-            return emptyList()
-        }
+        val requiredReservationId = requireNotNull(reservationId)
 
         return reservationStatusHistoryRepository
-            .findAllByReservationIdOrderByChangedAtAsc(reservationId)
+            .findAllByReservationIdOrderByChangedAtAsc(requiredReservationId)
             .map(ReservationStatusHistoryResponse::from)
     }
 }

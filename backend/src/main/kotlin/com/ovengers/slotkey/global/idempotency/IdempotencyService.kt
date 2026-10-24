@@ -31,7 +31,7 @@ class IdempotencyService(
         requestPath: String,
         type: Class<T>,
     ): T? {
-        val resolvedMemberId = memberId ?: return null
+        val resolvedMemberId = requireNotNull(memberId)
 
         val stored =
             idempotencyKeyRepository.findByKeyAndMemberIdAndRequestPath(
