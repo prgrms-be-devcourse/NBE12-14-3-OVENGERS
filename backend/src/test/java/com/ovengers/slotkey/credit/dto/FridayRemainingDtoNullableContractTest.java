@@ -1,3 +1,4 @@
+
 package com.ovengers.slotkey.credit.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ class FridayRemainingDtoNullableContractTest {
             var violations = factory.getValidator().validate(request);
             assertThat(violations).anySatisfy(violation -> {
                 assertThat(violation.getPropertyPath().toString()).isEqualTo(componentName);
+
                 if (type == WaitlistApplyRequest.class) {
                     assertThat(violation.getMessageTemplate()).isEqualTo(message);
                 } else {

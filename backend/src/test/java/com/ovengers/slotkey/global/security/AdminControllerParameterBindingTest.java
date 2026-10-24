@@ -185,9 +185,9 @@ class AdminControllerParameterBindingTest {
     @Test
     @DisplayName("문의 @PathVariable 2곳: 파라미터 이름 정보가 없어도 inquiryId=7L로 정상 해석된다")
     void adminInquiryPathVariablesBound() throws Exception {
-        Method getInquiryMethod = AdminInquiryController.class.getMethod("getInquiry", Long.class);
+        Method getInquiryMethod = AdminInquiryController.class.getMethod("getInquiry", long.class);
         Method answerMethod = AdminInquiryController.class.getMethod(
-                "answer", AuthPrincipal.class, Long.class, com.ovengers.slotkey.inquiry.dto.request.InquiryAnswerRequest.class);
+                "answer", AuthPrincipal.class, long.class, com.ovengers.slotkey.inquiry.dto.request.InquiryAnswerRequest.class);
 
         MethodParameter getInquiryParam = createParameter(getInquiryMethod, 0);
         MethodParameter answerParam = createParameter(answerMethod, 1);

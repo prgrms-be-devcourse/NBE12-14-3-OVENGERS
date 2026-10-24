@@ -20,14 +20,15 @@ data class InquiryResponse(
         @JvmStatic
         fun from(inquiry: Inquiry) =
             InquiryResponse(
-                inquiry.getId(),
-                inquiry.getMemberId(),
-                inquiry.getTitle(),
-                inquiry.getContent(),
-                inquiry.getStatus(),
-                inquiry.getAnswerContent(),
-                inquiry.getAnsweredByMemberId(),
-                inquiry.getAnsweredAt(),
+                inquiry.id
+                    ?: error("저장되지 않은 문의는 응답으로 변환할 수 없습니다."),
+                inquiry.memberId,
+                inquiry.title,
+                inquiry.content,
+                inquiry.status,
+                inquiry.answerContent,
+                inquiry.answeredByMemberId,
+                inquiry.answeredAt,
                 inquiry.getCreatedAt(),
             )
     }

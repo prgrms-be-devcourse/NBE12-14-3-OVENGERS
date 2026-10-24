@@ -98,13 +98,15 @@ class AdminInquiryControllerTest {
     }
 
     private Inquiry createInquiry(Long id, Long memberId, InquiryStatus status) {
-        Inquiry inquiry = Inquiry.builder()
-                .id(id)
-                .memberId(memberId)
-                .title("테스트 문의 제목")
-                .content("테스트 문의 내용")
-                .status(status)
-                .build();
+        Inquiry inquiry = Inquiry.create(
+                memberId,
+                "테스트 문의 제목",
+                "테스트 문의 내용"
+        );
+        ReflectionTestUtils.setField(inquiry, "id", id);
+        if (status == InquiryStatus.ANSWERED) {
+            inquiry.answer(1L, "테스트 답변", LocalDateTime.of(2026, 10, 1, 12, 0));
+        }
         ReflectionTestUtils.setField(
                 inquiry,
                 "createdAt",
@@ -281,16 +283,13 @@ class AdminInquiryControllerTest {
     @DisplayName("문의 답변: inquiryId 7L, 관리자 ID 1L, 답변 본문이 서비스에 전달된다")
     void answer_passesParamsAndPrincipalCorrectly() throws Exception {
         String adminToken = createToken(1L, "admin@test.com", MemberRole.ADMIN);
-        Inquiry answered = Inquiry.builder()
-                .id(7L)
-                .memberId(10L)
-                .title("테스트 문의 제목")
-                .content("테스트 문의 내용")
-                .status(InquiryStatus.ANSWERED)
-                .answerContent("테스트 답변")
-                .answeredByMemberId(1L)
-                .answeredAt(LocalDateTime.now())
-                .build();
+        Inquiry answered = Inquiry.create(
+                10L,
+                "테스트 문의 제목",
+                "테스트 문의 내용"
+        );
+        ReflectionTestUtils.setField(answered, "id", 7L);
+        answered.answer(1L, "테스트 답변", LocalDateTime.of(2026, 10, 1, 12, 0));
         ReflectionTestUtils.setField(
                 answered,
                 "createdAt",

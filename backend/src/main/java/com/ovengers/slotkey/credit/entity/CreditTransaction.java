@@ -3,16 +3,11 @@ package com.ovengers.slotkey.credit.entity;
 import com.ovengers.slotkey.member.entity.Member;
 import com.ovengers.slotkey.reservation.entity.Reservation;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "credit_transaction")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CreditTransaction {
 
 
@@ -56,6 +51,10 @@ public class CreditTransaction {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    // Lombok @NoArgsConstructor(access = AccessLevel.PROTECTED) 대체
+    protected CreditTransaction() {
+    }
+
     // 크레딧 거래 이력 생성
     public CreditTransaction(
             Member member,
@@ -90,5 +89,43 @@ public class CreditTransaction {
         transaction.balanceAfter = balanceAfter;
         transaction.createdAt = createdAt;
         return transaction;
+    }
+
+    // Lombok @Getter 대체
+
+    public Long getId() {
+        return id;
+    }
+
+    public Member getMember() {
+        return member;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public CreditTransactionType getType() {
+        return type;
+    }
+
+    public Reservation getReservation() {
+        return reservation;
+    }
+
+    public ChargeOrder getChargeOrder() {
+        return chargeOrder;
+    }
+
+    public int getBalanceAfter() {
+        return balanceAfter;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
