@@ -29,7 +29,7 @@ data class InquiryResponse(
                 inquiry.answerContent,
                 inquiry.answeredByMemberId,
                 inquiry.answeredAt,
-                inquiry.getCreatedAt(),
+                requireNotNull(inquiry.createdAt),
             )
     }
 }

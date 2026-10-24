@@ -30,7 +30,7 @@ data class AdminMemberResponse(
             member.getRole(),
             member.getStatus(),
             member.getBalance(),
-            member.getCreatedAt(),
+            requireNotNull(member.createdAt),
             lastStatusChangedAt,
             lastStatusChangeReason,
         )

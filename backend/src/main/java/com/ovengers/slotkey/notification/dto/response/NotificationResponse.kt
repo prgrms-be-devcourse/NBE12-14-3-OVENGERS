@@ -15,7 +15,7 @@ data class NotificationResponse(
         @JvmStatic
         fun from(notification: Notification): NotificationResponse =
             NotificationResponse(
-                notification.id,
+                requireNotNull(notification.id),
                 notification.waitlistEntryId,
                 notification.message,
                 notification.readAt != null,

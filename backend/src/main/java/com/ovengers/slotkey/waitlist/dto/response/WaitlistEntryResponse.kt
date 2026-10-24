@@ -20,6 +20,14 @@ data class WaitlistEntryResponse(
             entry: WaitlistEntry,
             position: Long,
         ): WaitlistEntryResponse =
-            WaitlistEntryResponse(entry.id, entry.spaceId, entry.startTime, entry.endTime, entry.status, position, entry.createdAt)
+            WaitlistEntryResponse(
+                requireNotNull(entry.id),
+                entry.spaceId,
+                entry.startTime,
+                entry.endTime,
+                entry.status,
+                position,
+                entry.createdAt,
+            )
     }
 }

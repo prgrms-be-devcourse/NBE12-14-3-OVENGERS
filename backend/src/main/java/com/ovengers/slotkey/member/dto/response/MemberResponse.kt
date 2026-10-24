@@ -27,6 +27,6 @@ data class MemberResponse(
         member.getNickname(),
         member.getRole(),
         member.getBalance(),
-        member.getCreatedAt(),
+        requireNotNull(member.createdAt),
     )
 }

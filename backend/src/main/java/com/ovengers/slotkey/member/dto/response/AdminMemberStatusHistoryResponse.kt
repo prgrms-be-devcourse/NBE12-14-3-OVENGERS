@@ -18,13 +18,13 @@ data class AdminMemberStatusHistoryResponse(
         @JvmStatic
         fun from(auditLog: AuditLog) =
             AdminMemberStatusHistoryResponse(
-                auditLog.getId(),
-                auditLog.getAction(),
-                auditLog.getActorMemberId(),
-                auditLog.getReason(),
-                auditLog.getBeforeValue(),
-                auditLog.getAfterValue(),
-                auditLog.getCreatedAt(),
+                requireNotNull(auditLog.id),
+                auditLog.action,
+                auditLog.actorMemberId,
+                auditLog.reason,
+                auditLog.beforeValue,
+                auditLog.afterValue,
+                requireNotNull(auditLog.createdAt),
             )
     }
 }
