@@ -19,44 +19,45 @@ import java.time.LocalDateTime
 class AuditLog() {
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
-    final var id: Long? = null
-        private set
+    var id: Long? = null
+        protected set
 
     @field:Column(name = "actor_member_id")
-    final var actorMemberId: Long? = null
-        private set
+    var actorMemberId: Long? = null
+        protected set
 
     @field:Enumerated(EnumType.STRING)
     @field:Column(nullable = false, length = 30)
-    final lateinit var action: AuditAction
-        private set
+    lateinit var action: AuditAction
+        protected set
 
     @field:Enumerated(EnumType.STRING)
     @field:Column(nullable = false, length = 20, name = "target_type")
-    final lateinit var targetType: AuditTargetType
-        private set
+    lateinit var targetType: AuditTargetType
+        protected set
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getTargetIdValue")
     @field:Column(nullable = false, name = "target_id")
-    final var targetId: Long = 0
-        private set
+    var targetId: Long = 0
+        protected set
 
     @field:Column(length = 500)
-    final var reason: String? = null
-        private set
+    var reason: String? = null
+        protected set
 
     @field:Column(columnDefinition = "TEXT", name = "before_value")
-    final var beforeValue: String? = null
-        private set
+    var beforeValue: String? = null
+        protected set
 
     @field:Column(columnDefinition = "TEXT", name = "after_value")
-    final var afterValue: String? = null
-        private set
+    var afterValue: String? = null
+        protected set
 
     @field:CreatedDate
     @field:Column(nullable = false, name = "created_at", updatable = false)
-    final var createdAt: LocalDateTime? = null
-        private set
+    var createdAt: LocalDateTime? = null
+        protected set
 
     constructor(
         id: Long?,
