@@ -50,7 +50,11 @@ class FridayRemainingDtoNullableContractTest {
             var violations = factory.getValidator().validate(request);
             assertThat(violations).anySatisfy(violation -> {
                 assertThat(violation.getPropertyPath().toString()).isEqualTo(componentName);
-                assertThat(violation.getMessage()).isEqualTo(message);
+                if (type == WaitlistApplyRequest.class) {
+                    assertThat(violation.getMessageTemplate()).isEqualTo(message);
+                } else {
+                    assertThat(violation.getMessage()).isEqualTo(message);
+                }
             });
         }
     }
@@ -90,7 +94,7 @@ class FridayRemainingDtoNullableContractTest {
                         "paymentKey", "paymentKey는 필수입니다."),
                 Arguments.of(WaitlistApplyRequest.class,
                         "{\"startTime\":\"2026-10-25T10:00:00\",\"endTime\":\"2026-10-25T11:00:00\"}",
-                        "spaceId", "널이어서는 안됩니다")
+                        "spaceId", "{jakarta.validation.constraints.NotNull.message}")
         );
     }
 }
