@@ -14,6 +14,7 @@ import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
 import com.ovengers.slotkey.support.FixedClockConfig;
 import com.ovengers.slotkey.support.IntegrationTestSupport;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,6 +67,9 @@ class ReservationSlotRepositoryTest extends IntegrationTestSupport {
 
         @Autowired
         private ReservationOccupiedSlotAdapter reservationOccupiedSlotAdapter;
+
+        @Autowired
+        private EntityManager entityManager;
 
         private Long spaceId;
         private Long memberId;
@@ -167,6 +171,9 @@ class ReservationSlotRepositoryTest extends IntegrationTestSupport {
                                 LocalDateTime.of(2026, 9, 20, 12, 30),
                                 LocalDateTime.of(2026, 9, 20, 9, 55, 0));
                 createSlot(pastExpiredHeld.getId(), LocalDateTime.of(2026, 9, 20, 12, 0));
+
+                reservationSlotRepository.flush();
+                entityManager.clear();
 
                 LocalDateTime startOfDay = LocalDateTime.of(2026, 9, 20, 0, 0, 0);
                 LocalDateTime nextDayStart = LocalDateTime.of(2026, 9, 21, 0, 0, 0);

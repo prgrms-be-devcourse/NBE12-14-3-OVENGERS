@@ -462,7 +462,7 @@ class AdminReservationConcurrencyIntegrationTest extends IntegrationTestSupport 
 
             List<CreditTransaction> txs = creditTransactionRepository.findAll();
             assertThat(txs).anyMatch(tx -> tx.getType() == CreditTransactionType.RESERVATION_CHARGE
-                    && tx.getReservation() != null && tx.getReservation().getId().equals(reservationId));
+                    && tx.getReservation() != null && tx.getReservation().getId() == reservationId);
 
             assertThat(auditLogRepository.count()).isZero();
             // outbox: 강제 취소 롤백으로 0건
