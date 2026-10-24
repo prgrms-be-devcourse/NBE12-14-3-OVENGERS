@@ -116,7 +116,8 @@ class ReservationCancelServiceTest {
         verify(reservationRepository, never()).cancelIfConfirmedAndBeforeStart(any(), any(), any(), any());
         verify(creditService, never()).refund(any(), any(), anyInt());
         verify(doorAccessTokenService, never()).revokeByReservation(any(), any(), any());
-        verify(slotReleasedRecorder, never()).record(any(), any(), any());
+        verify(slotReleasedRecorder, never()).record(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any());
     }
 
     @Test
@@ -298,6 +299,7 @@ class ReservationCancelServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_STATE_CONFLICT);
 
         verify(reservationSlotRepository, never()).deleteByReservationId(any());
-        verify(slotReleasedRecorder, never()).record(any(), any(), any());
+        verify(slotReleasedRecorder, never()).record(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any());
     }
 }

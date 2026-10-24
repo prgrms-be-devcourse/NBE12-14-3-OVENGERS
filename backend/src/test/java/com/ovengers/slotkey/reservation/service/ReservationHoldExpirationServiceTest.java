@@ -117,7 +117,8 @@ class ReservationHoldExpirationServiceTest {
                                 ReservationStatus.EXPIRED);
 
                 verify(reservationStatusHistoryRepository, never()).save(any());
-                verify(slotReleasedRecorder, never()).record(any(), any(), any());
+                verify(slotReleasedRecorder, never()).record(
+                                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any());
         }
 
         @Test

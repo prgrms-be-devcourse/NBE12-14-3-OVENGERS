@@ -108,7 +108,7 @@ class ReservationExtendServiceTest {
         @Test
         @DisplayName("예약이 존재하지 않으면 RESERVATION_NOT_FOUND 예외가 발생한다")
         void extend_reservationNotFound_throwsException() {
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.empty());
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(null);
 
                 assertThatThrownBy(() -> extendService.extend(MEMBER_ID, RESERVATION_ID, endTime, newEndTime))
                                 .isInstanceOf(BusinessException.class)
@@ -120,7 +120,7 @@ class ReservationExtendServiceTest {
         @Test
         @DisplayName("예약 소유자가 아니면 FORBIDDEN_NOT_OWNER 예외가 발생한다")
         void extend_notOwner_throwsException() {
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -136,7 +136,7 @@ class ReservationExtendServiceTest {
         @DisplayName("공간 운영시간(closingTime)을 초과하여 연장 시도하면 INVALID_RESERVATION_TIME 예외가 발생한다")
         void extend_exceedsClosingTime_throwsException() {
                 LocalDateTime exceedEndTime = LocalDateTime.of(2026, 9, 20, 23, 0); // 공간 22:00 마감
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -152,7 +152,7 @@ class ReservationExtendServiceTest {
         @DisplayName("30분 단위에 맞지 않는 연장 시각이면 INVALID_RESERVATION_TIME 예외가 발생한다")
         void extend_unalignedEndTime_throwsException() {
                 LocalDateTime unalignedEndTime = LocalDateTime.of(2026, 9, 20, 14, 15);
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -168,7 +168,7 @@ class ReservationExtendServiceTest {
         @DisplayName("기존 예약과 다른 날짜로 연장 시도하면 INVALID_RESERVATION_TIME 예외가 발생한다")
         void extend_differentDate_throwsException() {
                 LocalDateTime differentDateEndTime = LocalDateTime.of(2026, 9, 21, 10, 0);
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -187,7 +187,7 @@ class ReservationExtendServiceTest {
         @Test
         @DisplayName("회원이 존재하지 않으면 AUTHENTICATION_REQUIRED 예외가 발생하고 슬롯을 확보하지 않는다")
         void extend_memberNotFound_throwsException() {
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -204,7 +204,7 @@ class ReservationExtendServiceTest {
         @Test
         @DisplayName("탈퇴한 회원이면 ACCOUNT_WITHDRAWN 예외가 발생하고 슬롯을 확보하지 않는다")
         void extend_memberWithdrawn_throwsException() {
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID))
                                 .willReturn(Optional.of(activeReservation(ReservationStatus.CONFIRMED)));
@@ -237,7 +237,7 @@ class ReservationExtendServiceTest {
                                 .createdAt(now.minusDays(1))
                                 .build();
 
-                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(Optional.of(SPACE_ID));
+                given(reservationRepository.findSpaceIdById(RESERVATION_ID)).willReturn(SPACE_ID);
                 given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(space()));
                 given(reservationRepository.findByIdForUpdate(RESERVATION_ID)).willReturn(Optional.of(reservation));
                 given(memberRepository.findByIdForUpdate(MEMBER_ID)).willReturn(Optional.of(activeMember()));

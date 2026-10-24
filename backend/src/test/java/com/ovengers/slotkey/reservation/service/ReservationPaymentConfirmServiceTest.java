@@ -148,8 +148,8 @@ class ReservationPaymentConfirmServiceTest {
         given(idempotencyService.find("key-1", OTHER_MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                 .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
 
         assertThatThrownBy(() -> confirmService.confirm(OTHER_MEMBER_ID, RESERVATION_ID, 0, "key-1"))
                 .isInstanceOf(BusinessException.class)
@@ -164,8 +164,8 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", OTHER_MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                         .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
 
         assertThatThrownBy(() -> confirmService.confirm(OTHER_MEMBER_ID, RESERVATION_ID, 999, "key-1"))
                         .isInstanceOf(BusinessException.class)
@@ -180,8 +180,8 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                 .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
         given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(spaceWithVersion(1)));
 
         assertThatThrownBy(() -> confirmService.confirm(MEMBER_ID, RESERVATION_ID, 0, "key-1"))
@@ -197,8 +197,8 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                 .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
         given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(spaceWithVersion(0)));
         given(reservationRepository.findById(RESERVATION_ID)).willReturn(Optional.of(heldReservation(MEMBER_ID)));
         given(creditService.charge(MEMBER_ID, RESERVATION_ID, 10000))
@@ -219,8 +219,8 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                 .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
         given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(spaceWithVersion(0)));
         given(reservationRepository.findById(RESERVATION_ID)).willReturn(Optional.of(heldReservation(MEMBER_ID)));
         given(creditService.charge(MEMBER_ID, RESERVATION_ID, 10000)).willReturn(80000);
@@ -244,8 +244,8 @@ void confirm_notOwner_wrongVersion_throwsForbidden_withoutSpaceLock() {
         given(idempotencyService.find("key-1", MEMBER_ID, REQUEST_PATH, ReservationResponse.class))
                 .willReturn(null);
         given(reservationRepository.findTargetInfoById(RESERVATION_ID))
-                        .willReturn(Optional.of(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
-                                        MEMBER_ID)));
+                        .willReturn(new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(SPACE_ID,
+                                        MEMBER_ID));
         given(spaceRepository.findByIdForShare(SPACE_ID)).willReturn(Optional.of(spaceWithVersion(0)));
         given(reservationRepository.findById(RESERVATION_ID)).willReturn(Optional.of(held), Optional.of(confirmed));
         given(creditService.charge(MEMBER_ID, RESERVATION_ID, 10000)).willReturn(90000);

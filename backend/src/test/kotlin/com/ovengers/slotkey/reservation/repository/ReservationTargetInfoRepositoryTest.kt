@@ -15,7 +15,7 @@ class ReservationTargetInfoRepositoryTest : ReservationIntegrationTestSupport() 
         val start = tomorrowAt(14, 0)
         val reservationId = createReservation(memberId, spaceId, ReservationStatus.HELD, start, start.plusMinutes(30))
 
-        val target = reservationRepository.findTargetInfoById(reservationId).orElseThrow()
+        val target = requireNotNull(reservationRepository.findTargetInfoById(reservationId))
 
         assertThat(target.spaceId).isEqualTo(spaceId)
         assertThat(target.memberId).isEqualTo(memberId)

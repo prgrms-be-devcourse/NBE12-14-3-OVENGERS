@@ -589,7 +589,7 @@ class SpaceReservationLockIntegrationTest extends IntegrationTestSupport {
                 try {
                     return txTemplate.execute(status -> {
                         // 잠금 순서에 따라 Space 공유 락 먼저 통과 확인
-                        Long targetSpaceId = reservationRepository.findSpaceIdById(hold.reservationId()).orElseThrow();
+                        Long targetSpaceId = reservationRepository.findSpaceIdById(hold.reservationId());
                         spaceRepository.findByIdForShare(targetSpaceId).orElseThrow();
                         secondTxPassedSpaceLockLatch.countDown();
 

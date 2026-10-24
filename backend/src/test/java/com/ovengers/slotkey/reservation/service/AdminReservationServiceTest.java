@@ -198,7 +198,8 @@ class AdminReservationServiceTest {
         verify(creditService, never()).refund(any(), any(), anyInt());
         verify(statusHistoryRepository, never()).save(any());
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
-        verify(slotReleasedRecorder, never()).record(any(), any(), any());
+        verify(slotReleasedRecorder, never()).record(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any());
     }
 
     @Test
@@ -322,7 +323,8 @@ class AdminReservationServiceTest {
         verify(doorAccessTokenService, never()).revokeByReservation(any(), any(), any());
         verify(statusHistoryRepository, never()).save(any());
         verify(auditLogService, never()).log(any(), any(), any(), any(), any(), any(), any());
-        verify(slotReleasedRecorder, never()).record(any(), any(), any());
+        verify(slotReleasedRecorder, never()).record(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any());
     }
 
     @Test

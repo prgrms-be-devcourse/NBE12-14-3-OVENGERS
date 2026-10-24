@@ -240,7 +240,7 @@ interface ReservationRepository : JpaRepository<Reservation, Long> {
     @Query("SELECT r.spaceId FROM Reservation r WHERE r.id = :id")
     fun findSpaceIdById(
         @Param("id") id: Long?,
-    ): Optional<Long>
+    ): Long?
 
     @Query(
         "SELECT new com.ovengers.slotkey.reservation.dto.ReservationTargetInfo(r.spaceId, r.memberId) " +
@@ -248,7 +248,7 @@ interface ReservationRepository : JpaRepository<Reservation, Long> {
     )
     fun findTargetInfoById(
         @Param("id") id: Long?,
-    ): Optional<ReservationTargetInfo>
+    ): ReservationTargetInfo?
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")

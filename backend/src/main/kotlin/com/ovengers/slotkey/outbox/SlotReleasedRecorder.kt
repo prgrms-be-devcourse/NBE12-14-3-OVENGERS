@@ -23,15 +23,15 @@ class SlotReleasedRecorder(
 
     @Transactional(propagation = Propagation.MANDATORY)
     fun record(
-        reservationId: Long?,
-        spaceId: Long?,
-        reason: Reason?,
+        reservationId: Long,
+        spaceId: Long,
+        reason: Reason,
     ) {
         val eventId = UUID.randomUUID().toString()
         val now = LocalDateTime.now(clock)
         val payload =
             try {
-                objectMapper.writeValueAsString(Payload(eventId, reservationId, requireNotNull(reason), now))
+                objectMapper.writeValueAsString(Payload(eventId, reservationId, reason, now))
             } catch (exception: JsonProcessingException) {
                 throw IllegalStateException("Cannot serialize SlotReleased event", exception)
             }
@@ -42,7 +42,7 @@ class SlotReleasedRecorder(
 
     private data class Payload(
         val eventId: String,
-        val reservationId: Long?,
+        val reservationId: Long,
         val reason: Reason,
         val occurredAt: LocalDateTime,
     )
