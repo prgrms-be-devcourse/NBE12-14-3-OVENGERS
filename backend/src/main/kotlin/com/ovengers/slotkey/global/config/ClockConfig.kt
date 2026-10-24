@@ -7,11 +7,11 @@ import java.time.ZoneId
 
 @Configuration
 class ClockConfig {
-    @Bean
-    fun clock(): Clock = Clock.system(DEFAULT_ZONE)
-
     companion object {
         @JvmField
         val DEFAULT_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
     }
+
+    @Bean
+    fun clock(): Clock = Clock.system(DEFAULT_ZONE)
 }

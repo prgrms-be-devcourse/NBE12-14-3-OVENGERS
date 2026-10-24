@@ -18,13 +18,14 @@ class SwaggerConfig {
                     .description("공간 예약 및 크레딧 결제 서비스 API 문서")
                     .version("v1"),
             ).components(
-                Components().addSecuritySchemes(
-                    "bearerAuth",
-                    SecurityScheme()
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT")
-                        .description("로그인 응답의 accessToken을 입력하세요. Bearer 접두사는 제외합니다."),
-                ),
+                Components()
+                    .addSecuritySchemes(
+                        "bearerAuth",
+                        SecurityScheme()
+                            .type(SecurityScheme.Type.HTTP)
+                            .scheme("bearer")
+                            .bearerFormat("JWT")
+                            .description("로그인 응답의 accessToken을 입력하세요. Bearer 접두사는 제외합니다."),
+                    ),
             )
 }
