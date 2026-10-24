@@ -138,10 +138,10 @@ class AuthController(
         @RequestBody @Valid request: LoginRequest,
     ): ResponseEntity<ApiResponse<LoginResponse>> {
         val attempt = loginRateLimitService.acquire(request.email)
-        if (!attempt.allowed()) {
+        if (!attempt.allowed) {
             return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)
-                .header(HttpHeaders.RETRY_AFTER, attempt.retryAfterSeconds().toString())
+                .header(HttpHeaders.RETRY_AFTER, attempt.retryAfterSeconds.toString())
                 .body(ApiResponse.fail(ErrorCode.LOGIN_RATE_LIMITED))
         }
 
