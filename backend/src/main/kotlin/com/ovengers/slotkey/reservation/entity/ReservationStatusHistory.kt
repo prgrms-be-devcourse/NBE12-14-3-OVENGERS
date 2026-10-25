@@ -15,35 +15,36 @@ import java.time.LocalDateTime
 class ReservationStatusHistory() {
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
-    final var id: Long? = null
-        private set
+    var id: Long? = null
+        protected set
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getReservationIdValue")
     @field:Column(name = "reservation_id", nullable = false)
-    final var reservationId: Long = 0
-        private set
+    var reservationId: Long = 0
+        protected set
 
     @field:Column(name = "changed_by_member_id")
-    final var changedByMemberId: Long? = null
-        private set
+    var changedByMemberId: Long? = null
+        protected set
 
     @field:Enumerated(EnumType.STRING)
     @field:Column(name = "from_status", length = 20)
-    final var fromStatus: ReservationStatus? = null
-        private set
+    var fromStatus: ReservationStatus? = null
+        protected set
 
     @field:Enumerated(EnumType.STRING)
     @field:Column(name = "to_status", nullable = false, length = 20)
-    final lateinit var toStatus: ReservationStatus
-        private set
+    lateinit var toStatus: ReservationStatus
+        protected set
 
     @field:Column(length = 255)
-    final var reason: String? = null
-        private set
+    var reason: String? = null
+        protected set
 
     @field:Column(name = "changed_at", nullable = false)
-    final lateinit var changedAt: LocalDateTime
-        private set
+    lateinit var changedAt: LocalDateTime
+        protected set
 
     constructor(
         id: Long?,

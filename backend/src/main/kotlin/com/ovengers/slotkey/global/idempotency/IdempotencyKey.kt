@@ -13,33 +13,34 @@ import java.time.LocalDateTime
 class IdempotencyKey() {
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
-    final var id: Long? = null
-        private set
+    var id: Long? = null
+        protected set
 
     @field:Column(name = "idempotency_key", nullable = false, length = 100)
-    final lateinit var key: String
-        private set
+    lateinit var key: String
+        protected set
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getMemberIdValue")
     @field:Column(name = "member_id", nullable = false)
-    final var memberId: Long = 0
-        private set
+    var memberId: Long = 0
+        protected set
 
     @field:Column(name = "request_path", nullable = false, length = 255)
-    final lateinit var requestPath: String
-        private set
+    lateinit var requestPath: String
+        protected set
 
     @field:Column(name = "response_status", nullable = false)
-    final var responseStatus: Int = 0
-        private set
+    var responseStatus: Int = 0
+        protected set
 
     @field:Column(name = "response_body", nullable = false, columnDefinition = "TEXT")
-    final lateinit var responseBody: String
-        private set
+    lateinit var responseBody: String
+        protected set
 
     @field:Column(name = "created_at", nullable = false)
-    final lateinit var createdAt: LocalDateTime
-        private set
+    lateinit var createdAt: LocalDateTime
+        protected set
 
     constructor(
         id: Long?,
