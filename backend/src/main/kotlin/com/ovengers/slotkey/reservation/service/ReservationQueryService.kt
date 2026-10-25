@@ -60,7 +60,8 @@ class ReservationQueryService(
         }
 
         val spaceIds = reservations.content.map { it.spaceId }.distinct()
-        val spacesById: Map<Long, Space> = spaceRepository.findAllById(spaceIds).associateBy { it.id }
+        val spacesById: Map<Long, Space> =
+            spaceRepository.findAllById(spaceIds).associateBy { it.id ?: 0L }
         return reservations.map { reservation ->
             ReservationListResponse.from(reservation, spacesById[reservation.spaceId])
         }

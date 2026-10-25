@@ -4,6 +4,7 @@ import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.space.entity.Space
 import com.ovengers.slotkey.space.entity.SpaceRegion
+import com.ovengers.slotkey.space.entity.SpaceStatus
 import com.ovengers.slotkey.space.repository.SpaceRepository
 import com.ovengers.slotkey.stats.dto.response.LocationRankingItem
 import com.ovengers.slotkey.stats.dto.response.LocationRankingResponse
@@ -63,7 +64,9 @@ class SpaceRankingQueryService(
 
         val top = ranked.subList(0, minOf(limit, ranked.size))
         val spaces = HashMap<Long, Space>()
-        spaceRepository.findAllById(top.map { it.spaceId }).forEach { space -> spaces[space.id] = space }
+        spaceRepository.findAllById(top.map { it.spaceId }).forEach { space ->
+            spaces[space.id ?: return@forEach] = space
+        }
 
         val items = ArrayList<SpaceRankingItem>()
         for (i in top.indices) {
@@ -74,9 +77,9 @@ class SpaceRankingQueryService(
                     i + 1,
                     previousRanks[row.spaceId],
                     row.spaceId,
-                    space.name,
+                    space.name ?: "",
                     row.location,
-                    space.status,
+                    space.status ?: SpaceStatus.INACTIVE,
                     row.netRevenue,
                     row.reservationCount,
                     row.slotCount,

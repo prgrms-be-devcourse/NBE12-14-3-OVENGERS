@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /** 기존 슬롯을 유지한 채 뒤쪽 슬롯을 추가하는 예약 연장 서비스. */
 @Service
@@ -62,7 +63,11 @@ class ReservationExtendService(
             throw BusinessException(ErrorCode.RESERVATION_STATE_CONFLICT, "예약 정보가 변경되었습니다. 다시 시도해주세요.")
         }
 
-        ReservationTimePolicy.validateExtension(reservation.endTime, newEndTime, space.closingTime)
+        ReservationTimePolicy.validateExtension(
+            reservation.endTime,
+            newEndTime,
+            space.closingTime ?: LocalTime.MAX,
+        )
 
         val member =
             memberRepository.findByIdForUpdate(requiredMemberId).orElseThrow {

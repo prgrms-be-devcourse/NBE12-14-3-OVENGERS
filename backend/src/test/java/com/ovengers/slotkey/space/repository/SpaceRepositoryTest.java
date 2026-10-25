@@ -3,6 +3,9 @@ package com.ovengers.slotkey.space.repository;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.entity.SpaceStatus;
 import com.ovengers.slotkey.support.IntegrationTestSupport;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,9 @@ class SpaceRepositoryTest extends IntegrationTestSupport {
 
     @Autowired
     private SpaceRepository spaceRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Space spaceAlpha;
     private Space spaceBeta;
@@ -462,6 +468,59 @@ class SpaceRepositoryTest extends IntegrationTestSupport {
         // 알파(5000원)와 감마(100원) 2건 매칭, 베타(10000원) 제외, 델타(INACTIVE) 제외
         assertThat(combinedIds)
                 .containsExactlyInAnyOrder(spaceAlpha.getId(), spaceGamma.getId());
+    }
+
+    @Test
+    @DisplayName("Space 저장 후 flush 및 clear 후 재조회 시 모든 필드가 정상 유지된다")
+    void saveAndFlushAndClear_roundTrip() {
+        Space newSpace = Space.builder()
+                .name("라운드트립 공간")
+                .location("서울시 강남구")
+                .description("라운드트립 테스트 설명")
+                .capacity(12)
+                .pricePerSlot(15000L)
+                .imagePath("/images/roundtrip.jpg")
+                .openingTime(LocalTime.of(8, 0))
+                .closingTime(LocalTime.of(20, 0))
+                .status(SpaceStatus.ACTIVE)
+                .version(0)
+                .build();
+
+        Space saved = spaceRepository.save(newSpace);
+        entityManager.flush();
+        entityManager.clear();
+
+        Space found = spaceRepository.findById(saved.getId()).orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getName()).isEqualTo("라운드트립 공간");
+        assertThat(found.getLocation()).isEqualTo("서울시 강남구");
+        assertThat(found.getDescription()).isEqualTo("라운드트립 테스트 설명");
+        assertThat(found.getCapacity()).isEqualTo(12);
+        assertThat(found.getPricePerSlot()).isEqualTo(15000L);
+        assertThat(found.getImagePath()).isEqualTo("/images/roundtrip.jpg");
+        assertThat(found.getOpeningTime()).isEqualTo(LocalTime.of(8, 0));
+        assertThat(found.getClosingTime()).isEqualTo(LocalTime.of(20, 0));
+        assertThat(found.getStatus()).isEqualTo(SpaceStatus.ACTIVE);
+        assertThat(found.getVersion()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("em.getReference 프록시는 비ID 프로퍼티 접근 전까지 미초기화 상태이고 접근 시 정상 초기화된다")
+    void getReference_proxyUninitializedUntilNonIdPropertyAccess() {
+        entityManager.flush();
+        entityManager.clear();
+
+        Long id = spaceAlpha.getId();
+        Space proxy = entityManager.getReference(Space.class, id);
+
+        // 프록시 생성 직후 미초기화 상태 검증 (id 조회는 프록시를 초기화하지 않음)
+        assertThat(Hibernate.isInitialized(proxy)).isFalse();
+        assertThat(proxy.getId()).isEqualTo(id);
+        assertThat(Hibernate.isInitialized(proxy)).isFalse();
+
+        // 첫 비ID 프로퍼티 접근 시 초기화 검증
+        assertThat(proxy.getName()).isEqualTo("판교 회의실 알파");
+        assertThat(Hibernate.isInitialized(proxy)).isTrue();
     }
 }
 
