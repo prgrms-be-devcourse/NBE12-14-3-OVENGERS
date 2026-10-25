@@ -56,7 +56,7 @@ class StatsController(
         return ResponseEntity.ok(
             ApiResponse.success(
                 PublicSpaceRankingResponse.from(
-                    queryService.getSpaceRanking(period, date, publicMetric(metric), location, limit),
+                    queryService.getSpaceRanking(period!!, date!!, publicMetric(metric), location, limit),
                 ),
             ),
         )
@@ -79,7 +79,7 @@ class StatsController(
         return ResponseEntity.ok(
             ApiResponse.success(
                 PublicLocationRankingResponse.from(
-                    queryService.getLocationRanking(period, date, publicMetric(metric), limit),
+                    queryService.getLocationRanking(period!!, date!!, publicMetric(metric), limit),
                 ),
             ),
         )
