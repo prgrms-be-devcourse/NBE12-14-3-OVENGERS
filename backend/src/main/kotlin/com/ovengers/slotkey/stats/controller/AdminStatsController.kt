@@ -59,7 +59,7 @@ class AdminStatsController(
         requirePeriodAndDate(period, date)
         return ResponseEntity.ok(
             ApiResponse.success(
-                queryService.getSpaceRanking(period, date, metricOrDefault(metric), location, limit),
+                queryService.getSpaceRanking(period!!, date!!, metricOrDefault(metric), location, limit),
             ),
         )
     }
@@ -80,7 +80,7 @@ class AdminStatsController(
         requirePeriodAndDate(period, date)
         return ResponseEntity.ok(
             ApiResponse.success(
-                queryService.getLocationRanking(period, date, metricOrDefault(metric), limit),
+                queryService.getLocationRanking(period!!, date!!, metricOrDefault(metric), limit),
             ),
         )
     }
