@@ -18,59 +18,49 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "credit_transaction")
 class CreditTransaction {
-    // 크래딧 거래 이력 PK
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
-    final var id: Long? = null
-        private set
+    var id: Long? = null
+        protected set
 
-    // 크레딧 거래가 발생한 회원
     @field:ManyToOne(fetch = FetchType.LAZY)
     @field:JoinColumn(name = "member_id", nullable = false)
-    final lateinit var member: Member
-        private set
+    lateinit var member: Member
+        protected set
 
-    // 거래에서 지급, 차감되는 크레딧 금액
     @field:Column(nullable = false)
-    final var amount: Int = 0
-        private set
+    var amount: Int = 0
+        protected set
 
-    // 크레딧 거래 유형
     @field:Enumerated(EnumType.STRING)
     @field:Column(nullable = false, length = 30)
-    final lateinit var type: CreditTransactionType
-        private set
+    lateinit var type: CreditTransactionType
+        protected set
 
-    // 크레딧 거래와 관련된 예약
     @field:ManyToOne(fetch = FetchType.LAZY)
     @field:JoinColumn(name = "reservation_id")
-    final var reservation: Reservation? = null
-        private set
+    var reservation: Reservation? = null
+        protected set
 
     @field:ManyToOne(fetch = FetchType.LAZY)
     @field:JoinColumn(name = "charge_order_id")
-    final var chargeOrder: ChargeOrder? = null
-        private set
+    var chargeOrder: ChargeOrder? = null
+        protected set
 
-    // 해당 거래 처리 후 회원의 크레딧 잔액
     @field:Column(name = "balance_after", nullable = false)
-    final var balanceAfter: Int = 0
-        private set
+    var balanceAfter: Int = 0
+        protected set
 
-    // 크레딧 거래 사유
     @field:Column(length = 500)
-    final var reason: String? = null
-        private set
+    var reason: String? = null
+        protected set
 
-    // 크레딧 거래가 발생한 시각
     @field:Column(name = "created_at", nullable = false)
-    final lateinit var createdAt: LocalDateTime
-        private set
+    lateinit var createdAt: LocalDateTime
+        protected set
 
-    // Lombok @NoArgsConstructor(access = AccessLevel.PROTECTED) 대체
     protected constructor()
 
-    // 크레딧 거래 이력 생성
     constructor(
         member: Member,
         amount: Int,
@@ -108,6 +98,4 @@ class CreditTransaction {
             return transaction
         }
     }
-
-    // Lombok @Getter 대체
 }

@@ -1,0 +1,8 @@
+{
+  "transactionId": 10,
+  "type": "SIGNUP_GRANT",
+  "amount": 10000,
+  "balanceAfter": 10000,
+  "reason": null,
+  "createdAt": "2026-10-25T12:00:00"
+}
