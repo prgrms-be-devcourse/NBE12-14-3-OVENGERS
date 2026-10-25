@@ -65,7 +65,7 @@ class SlotReleasedHandler(
             )
         if (candidates.isEmpty()) return
 
-        val spaceName = spaceRepository.findById(releasedSpaceId).map { it.name }.orElse("공간")
+        val spaceName = spaceRepository.findById(releasedSpaceId).map { it.name ?: "공간" }.orElse("공간")
         candidates.filter { isNotifiable(it, now) }.forEach { entry ->
             val entryId = requireNotNull(entry.id)
             notificationRepository.save(

@@ -21,15 +21,15 @@ data class SpaceResponse(
         @JvmStatic
         fun from(space: Space): SpaceResponse =
             SpaceResponse(
-                space.id,
-                space.name,
-                space.location,
-                space.capacity,
-                space.pricePerSlot,
+                space.id ?: 0L,
+                space.name ?: "",
+                space.location ?: "",
+                space.capacity ?: 0,
+                space.pricePerSlot ?: 0L,
                 space.imagePath,
-                space.openingTime,
-                space.closingTime,
-                space.status,
+                space.openingTime ?: LocalTime.MIN,
+                space.closingTime ?: LocalTime.MAX,
+                space.status ?: SpaceStatus.INACTIVE,
             )
     }
 }

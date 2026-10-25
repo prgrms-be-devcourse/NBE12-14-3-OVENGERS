@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 private const val HOLD_MINUTES = 10L
 
@@ -50,10 +51,16 @@ class ReservationHoldService(
             throw BusinessException(ErrorCode.SPACE_INACTIVE)
         }
 
-        ReservationTimePolicy.validate(startTime, endTime, space.openingTime, space.closingTime, now)
+        ReservationTimePolicy.validate(
+            startTime,
+            endTime,
+            space.openingTime ?: LocalTime.MIN,
+            space.closingTime ?: LocalTime.MAX,
+            now,
+        )
 
         val slotCount = pricingService.calculateSlotCount(startTime, endTime)
-        val pricePerSlotSnapshot = Math.toIntExact(space.pricePerSlot)
+        val pricePerSlotSnapshot = Math.toIntExact(space.pricePerSlot ?: 0L)
         val totalAmount = pricingService.calculateTotalAmount(pricePerSlotSnapshot, slotCount)
 
         val member =
