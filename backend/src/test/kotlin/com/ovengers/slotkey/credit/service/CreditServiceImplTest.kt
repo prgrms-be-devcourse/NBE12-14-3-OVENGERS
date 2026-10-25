@@ -1,18 +1,16 @@
-package com.ovengers.slotkey.credit
+package com.ovengers.slotkey.credit.service
 
 import com.ovengers.slotkey.credit.entity.CreditTransaction
 import com.ovengers.slotkey.credit.entity.CreditTransactionType
 import com.ovengers.slotkey.credit.repository.CreditBalanceRepository
 import com.ovengers.slotkey.credit.repository.CreditTransactionRepository
-import com.ovengers.slotkey.credit.service.CreditServiceImpl
 import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.repository.MemberRepository
 import com.ovengers.slotkey.reservation.entity.Reservation
 import com.ovengers.slotkey.reservation.repository.ReservationRepository
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -20,15 +18,15 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
-import org.mockito.BDDMockito.given
+import org.mockito.ArgumentMatchers
+import org.mockito.BDDMockito
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.util.*
+import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 @Suppress("ktlint:standard:function-naming")
@@ -75,16 +73,20 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 3000
 
-        val member = mock(Member::class.java)
-        val reservation = mock(Reservation::class.java)
+        val member = Mockito.mock(Member::class.java)
+        val reservation = Mockito.mock(Reservation::class.java)
 
-        given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(reservationRepository.findById(reservationId))
+        BDDMockito
+            .given(reservationRepository.findById(reservationId))
             .willReturn(Optional.of(reservation))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(7000)
 
         // when
@@ -96,23 +98,26 @@ class CreditServiceImplTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(7000)
+        Assertions.assertThat(balance).isEqualTo(7000)
 
-        verify(creditBalanceRepository)
+        Mockito
+            .verify(creditBalanceRepository)
             .decreaseIfEnough(memberId, amount)
 
         val captor =
             ArgumentCaptor.forClass(CreditTransaction::class.java)
 
-        verify(creditTransactionRepository)
+        Mockito
+            .verify(creditTransactionRepository)
             .save(captor.capture())
 
         val saved = captor.value
 
-        assertThat(saved.amount).isEqualTo(-3000)
-        assertThat(saved.type)
+        Assertions.assertThat(saved.amount).isEqualTo(-3000)
+        Assertions
+            .assertThat(saved.type)
             .isEqualTo(CreditTransactionType.RESERVATION_CHARGE)
-        assertThat(saved.balanceAfter).isEqualTo(7000)
+        Assertions.assertThat(saved.balanceAfter).isEqualTo(7000)
     }
 
     // 환급 성공
@@ -124,16 +129,20 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 3000
 
-        val member = mock(Member::class.java)
-        val reservation = mock(Reservation::class.java)
+        val member = Mockito.mock(Member::class.java)
+        val reservation = Mockito.mock(Reservation::class.java)
 
-        given(creditBalanceRepository.increase(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.increase(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(reservationRepository.findById(reservationId))
+        BDDMockito
+            .given(reservationRepository.findById(reservationId))
             .willReturn(Optional.of(reservation))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(
                 10000,
                 13000,
@@ -148,23 +157,26 @@ class CreditServiceImplTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(13000)
+        Assertions.assertThat(balance).isEqualTo(13000)
 
-        verify(creditBalanceRepository)
+        Mockito
+            .verify(creditBalanceRepository)
             .increase(memberId, amount)
 
         val captor =
             ArgumentCaptor.forClass(CreditTransaction::class.java)
 
-        verify(creditTransactionRepository)
+        Mockito
+            .verify(creditTransactionRepository)
             .save(captor.capture())
 
         val saved = captor.value
 
-        assertThat(saved.amount).isEqualTo(3000)
-        assertThat(saved.type)
+        Assertions.assertThat(saved.amount).isEqualTo(3000)
+        Assertions
+            .assertThat(saved.type)
             .isEqualTo(CreditTransactionType.REFUND)
-        assertThat(saved.balanceAfter).isEqualTo(13000)
+        Assertions.assertThat(saved.balanceAfter).isEqualTo(13000)
     }
 
     // 위약금 성공
@@ -176,16 +188,20 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 1500
 
-        val member = mock(Member::class.java)
-        val reservation = mock(Reservation::class.java)
+        val member = Mockito.mock(Member::class.java)
+        val reservation = Mockito.mock(Reservation::class.java)
 
-        given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(reservationRepository.findById(reservationId))
+        BDDMockito
+            .given(reservationRepository.findById(reservationId))
             .willReturn(Optional.of(reservation))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(8500)
 
         // when
@@ -197,23 +213,26 @@ class CreditServiceImplTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(8500)
+        Assertions.assertThat(balance).isEqualTo(8500)
 
-        verify(creditBalanceRepository)
+        Mockito
+            .verify(creditBalanceRepository)
             .decreaseIfEnough(memberId, amount)
 
         val captor =
             ArgumentCaptor.forClass(CreditTransaction::class.java)
 
-        verify(creditTransactionRepository)
+        Mockito
+            .verify(creditTransactionRepository)
             .save(captor.capture())
 
         val saved = captor.value
 
-        assertThat(saved.amount).isEqualTo(-1500)
-        assertThat(saved.type)
+        Assertions.assertThat(saved.amount).isEqualTo(-1500)
+        Assertions
+            .assertThat(saved.type)
             .isEqualTo(CreditTransactionType.PENALTY)
-        assertThat(saved.balanceAfter).isEqualTo(8500)
+        Assertions.assertThat(saved.balanceAfter).isEqualTo(8500)
     }
 
     // 결제 잔액 부족
@@ -225,12 +244,13 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 3000
 
-        given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
             .willReturn(0)
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.charge(
                     memberId,
                     reservationId,
@@ -239,11 +259,13 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 위약금 잔액 부족
@@ -255,12 +277,13 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 1500
 
-        given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
             .willReturn(0)
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.penalize(
                     memberId,
                     reservationId,
@@ -269,11 +292,13 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.INSUFFICIENT_BALANCE)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 잘못된 금액
@@ -287,7 +312,7 @@ class CreditServiceImplTest {
 
         // when
         val chargeException =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.charge(
                     memberId,
                     reservationId,
@@ -296,7 +321,7 @@ class CreditServiceImplTest {
             }
 
         val refundException =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.refund(
                     memberId,
                     reservationId,
@@ -305,7 +330,7 @@ class CreditServiceImplTest {
             }
 
         val penalizeException =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.penalize(
                     memberId,
                     reservationId,
@@ -314,14 +339,17 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(chargeException.errorCode)
+        Assertions
+            .assertThat(chargeException.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
-        assertThat(refundException.errorCode)
+        Assertions
+            .assertThat(refundException.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
-        assertThat(penalizeException.errorCode)
+        Assertions
+            .assertThat(penalizeException.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verifyNoInteractions(creditBalanceRepository)
+        Mockito.verifyNoInteractions(creditBalanceRepository)
     }
 
     // 환급 대상 회원 없음
@@ -333,12 +361,13 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 3000
 
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.empty())
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.refund(
                     memberId,
                     reservationId,
@@ -347,14 +376,17 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.MEMBER_NOT_FOUND)
 
-        verify(creditBalanceRepository, never())
+        Mockito
+            .verify(creditBalanceRepository, Mockito.never())
             .increase(memberId, amount)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 환불 후 잔액 최대값 초과
@@ -366,16 +398,18 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 1000
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(Int.MAX_VALUE - 500)
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.refund(
                     memberId,
                     reservationId,
@@ -384,14 +418,17 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verify(creditBalanceRepository, never())
+        Mockito
+            .verify(creditBalanceRepository, Mockito.never())
             .increase(memberId, amount)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 예약 조회 실패
@@ -403,18 +440,21 @@ class CreditServiceImplTest {
         val reservationId = 10L
         val amount = 3000
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.decreaseIfEnough(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(reservationRepository.findById(reservationId))
+        BDDMockito
+            .given(reservationRepository.findById(reservationId))
             .willReturn(Optional.empty())
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditService.charge(
                     memberId,
                     reservationId,
@@ -423,10 +463,12 @@ class CreditServiceImplTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.RESERVATION_NOT_FOUND)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 }

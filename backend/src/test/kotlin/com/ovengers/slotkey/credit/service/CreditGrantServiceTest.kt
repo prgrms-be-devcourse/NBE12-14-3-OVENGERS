@@ -1,16 +1,14 @@
-package com.ovengers.slotkey.credit
+package com.ovengers.slotkey.credit.service
 
 import com.ovengers.slotkey.credit.entity.CreditTransaction
 import com.ovengers.slotkey.credit.entity.CreditTransactionType
 import com.ovengers.slotkey.credit.repository.CreditBalanceRepository
 import com.ovengers.slotkey.credit.repository.CreditTransactionRepository
-import com.ovengers.slotkey.credit.service.CreditGrantService
 import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.repository.MemberRepository
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -19,15 +17,15 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
-import org.mockito.BDDMockito.given
+import org.mockito.ArgumentMatchers
+import org.mockito.BDDMockito
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.util.*
+import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 @Suppress("ktlint:standard:function-naming")
@@ -69,13 +67,16 @@ class CreditGrantServiceTest {
         val memberId = 1L
         val amount = 10000
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(creditBalanceRepository.increase(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.increase(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(
                 0,
                 10000,
@@ -89,22 +90,24 @@ class CreditGrantServiceTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(10000)
+        Assertions.assertThat(balance).isEqualTo(10000)
 
         val captor =
             ArgumentCaptor.forClass(CreditTransaction::class.java)
 
-        verify(creditTransactionRepository)
+        Mockito
+            .verify(creditTransactionRepository)
             .save(captor.capture())
 
         val saved = captor.value
 
-        assertThat(saved.amount).isEqualTo(10000)
-        assertThat(saved.type)
+        Assertions.assertThat(saved.amount).isEqualTo(10000)
+        Assertions
+            .assertThat(saved.type)
             .isEqualTo(CreditTransactionType.SIGNUP_GRANT)
-        assertThat(saved.balanceAfter).isEqualTo(10000)
-        assertThat(saved.reservation).isNull()
-        assertThat(saved.reason).isNull()
+        Assertions.assertThat(saved.balanceAfter).isEqualTo(10000)
+        Assertions.assertThat(saved.reservation).isNull()
+        Assertions.assertThat(saved.reason).isNull()
     }
 
     // 관리자 지급 성공
@@ -116,13 +119,16 @@ class CreditGrantServiceTest {
         val amount = 5000
         val reason = "이벤트 보상"
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(creditBalanceRepository.increase(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.increase(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(
                 10000,
                 15000,
@@ -137,21 +143,23 @@ class CreditGrantServiceTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(15000)
+        Assertions.assertThat(balance).isEqualTo(15000)
 
         val captor =
             ArgumentCaptor.forClass(CreditTransaction::class.java)
 
-        verify(creditTransactionRepository)
+        Mockito
+            .verify(creditTransactionRepository)
             .save(captor.capture())
 
         val saved = captor.value
 
-        assertThat(saved.amount).isEqualTo(5000)
-        assertThat(saved.type)
+        Assertions.assertThat(saved.amount).isEqualTo(5000)
+        Assertions
+            .assertThat(saved.type)
             .isEqualTo(CreditTransactionType.ADMIN_GRANT)
-        assertThat(saved.balanceAfter).isEqualTo(15000)
-        assertThat(saved.reason).isEqualTo(reason)
+        Assertions.assertThat(saved.balanceAfter).isEqualTo(15000)
+        Assertions.assertThat(saved.reason).isEqualTo(reason)
     }
 
     // 잘못된 지급액
@@ -164,7 +172,7 @@ class CreditGrantServiceTest {
 
         // when
         val signupException =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantSignupCredit(
                     memberId,
                     amount,
@@ -172,7 +180,7 @@ class CreditGrantServiceTest {
             }
 
         val adminException =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantAdminCredit(
                     memberId,
                     amount,
@@ -181,12 +189,14 @@ class CreditGrantServiceTest {
             }
 
         // then
-        assertThat(signupException.errorCode)
+        Assertions
+            .assertThat(signupException.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
-        assertThat(adminException.errorCode)
+        Assertions
+            .assertThat(adminException.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verifyNoInteractions(creditBalanceRepository)
+        Mockito.verifyNoInteractions(creditBalanceRepository)
     }
 
     // 지급 대상 회원 없음
@@ -197,12 +207,13 @@ class CreditGrantServiceTest {
         val memberId = 1L
         val amount = 10000
 
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.empty())
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantSignupCredit(
                     memberId,
                     amount,
@@ -210,14 +221,17 @@ class CreditGrantServiceTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.MEMBER_NOT_FOUND)
 
-        verify(creditBalanceRepository, never())
+        Mockito
+            .verify(creditBalanceRepository, Mockito.never())
             .increase(memberId, amount)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 지급 후 잔액 최대값 초과
@@ -228,16 +242,18 @@ class CreditGrantServiceTest {
         val memberId = 1L
         val amount = 1000
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(Int.MAX_VALUE - 500)
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantAdminCredit(
                     memberId,
                     amount,
@@ -246,14 +262,17 @@ class CreditGrantServiceTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verify(creditBalanceRepository, never())
+        Mockito
+            .verify(creditBalanceRepository, Mockito.never())
             .increase(memberId, amount)
 
-        verify(creditTransactionRepository, never())
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository, Mockito.never())
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 
     // 관리자 지급 사유 누락
@@ -268,7 +287,7 @@ class CreditGrantServiceTest {
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantAdminCredit(
                     memberId,
                     amount,
@@ -277,10 +296,11 @@ class CreditGrantServiceTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verifyNoInteractions(creditBalanceRepository)
+        Mockito.verifyNoInteractions(creditBalanceRepository)
     }
 
     // 관리자 지급 사유 501자 거절
@@ -294,7 +314,7 @@ class CreditGrantServiceTest {
 
         // when
         val exception =
-            assertThrows(BusinessException::class.java) {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException::class.java) {
                 creditGrantService.grantAdminCredit(
                     memberId,
                     amount,
@@ -303,10 +323,11 @@ class CreditGrantServiceTest {
             }
 
         // then
-        assertThat(exception.errorCode)
+        Assertions
+            .assertThat(exception.errorCode)
             .isEqualTo(ErrorCode.VALIDATION_FAILED)
 
-        verifyNoInteractions(creditBalanceRepository)
+        Mockito.verifyNoInteractions(creditBalanceRepository)
     }
 
     // 관리자 지급 사유 500자 허용
@@ -318,13 +339,16 @@ class CreditGrantServiceTest {
         val amount = 5000
         val reason = "a".repeat(500)
 
-        val member = mock(Member::class.java)
+        val member = Mockito.mock(Member::class.java)
 
-        given(creditBalanceRepository.increase(memberId, amount))
+        BDDMockito
+            .given(creditBalanceRepository.increase(memberId, amount))
             .willReturn(1)
-        given(memberRepository.findById(memberId))
+        BDDMockito
+            .given(memberRepository.findById(memberId))
             .willReturn(Optional.of(member))
-        given(member.balance)
+        BDDMockito
+            .given(member.balance)
             .willReturn(
                 0,
                 5000,
@@ -339,9 +363,10 @@ class CreditGrantServiceTest {
             )
 
         // then
-        assertThat(balance).isEqualTo(5000)
+        Assertions.assertThat(balance).isEqualTo(5000)
 
-        verify(creditTransactionRepository)
-            .save(any(CreditTransaction::class.java))
+        Mockito
+            .verify(creditTransactionRepository)
+            .save(ArgumentMatchers.any(CreditTransaction::class.java))
     }
 }

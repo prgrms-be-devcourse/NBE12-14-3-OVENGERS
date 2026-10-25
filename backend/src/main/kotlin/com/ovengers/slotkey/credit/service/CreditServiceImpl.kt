@@ -154,24 +154,16 @@ class CreditServiceImpl(
     }
 
     // ID로 회원 조회
-    private fun findMember(memberId: Long?): Member {
-        return memberRepository.findById(requireNotNull(memberId))
-            .orElseThrow {
-                BusinessException(
-                    ErrorCode.MEMBER_NOT_FOUND,
-                )
-            }
-    }
+    private fun findMember(memberId: Long?): Member =
+        memberRepository
+            .findById(requireNotNull(memberId))
+            .orElseThrow { BusinessException(ErrorCode.MEMBER_NOT_FOUND) }
 
     // ID로 예약 조회
-    private fun findReservation(reservationId: Long?): Reservation {
-        return reservationRepository.findById(requireNotNull(reservationId))
-            .orElseThrow {
-                BusinessException(
-                    ErrorCode.RESERVATION_NOT_FOUND,
-                )
-            }
-    }
+    private fun findReservation(reservationId: Long?): Reservation =
+        reservationRepository
+            .findById(requireNotNull(reservationId))
+            .orElseThrow { BusinessException(ErrorCode.RESERVATION_NOT_FOUND) }
 
     // 크레딧 금액은 0보다 큰 값만 허용
     private fun validateAmount(amount: Int) {

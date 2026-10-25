@@ -113,14 +113,10 @@ class CreditGrantService(
     }
 
     // ID로 회원 조회
-    private fun findMember(memberId: Long?): Member {
-        return memberRepository.findById(requireNotNull(memberId))
-            .orElseThrow {
-                BusinessException(
-                    ErrorCode.MEMBER_NOT_FOUND,
-                )
-            }
-    }
+    private fun findMember(memberId: Long?): Member =
+        memberRepository
+            .findById(requireNotNull(memberId))
+            .orElseThrow { BusinessException(ErrorCode.MEMBER_NOT_FOUND) }
 
     // 크레딧 지급 거래 내역 저장
     private fun saveGrantTransaction(
