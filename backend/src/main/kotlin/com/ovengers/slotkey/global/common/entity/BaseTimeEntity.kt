@@ -13,11 +13,11 @@ import java.time.LocalDateTime
 abstract class BaseTimeEntity {
     @field:CreatedDate
     @field:Column(name = "created_at", nullable = false, updatable = false)
-    final var createdAt: LocalDateTime? = null
-        private set
+    var createdAt: LocalDateTime? = null
+        protected set
 
     @field:LastModifiedDate
     @field:Column(name = "updated_at")
-    final var updatedAt: LocalDateTime? = null
-        private set
+    var updatedAt: LocalDateTime? = null
+        protected set
 }

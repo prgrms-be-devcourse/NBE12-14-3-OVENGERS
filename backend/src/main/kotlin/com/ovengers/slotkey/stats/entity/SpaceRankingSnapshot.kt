@@ -16,42 +16,43 @@ import java.time.LocalDateTime
 class SpaceRankingSnapshot protected constructor() {
     @field:Id
     @field:GeneratedValue(strategy = GenerationType.IDENTITY)
-    final var id: Long? = null
-        private set
+    var id: Long? = null
+        protected set
 
     @field:Enumerated(EnumType.STRING)
     @field:Column(name = "period_type", nullable = false, length = 10)
-    final lateinit var periodType: RankingPeriodType
-        private set
+    lateinit var periodType: RankingPeriodType
+        protected set
 
     @field:Column(name = "period_start", nullable = false)
-    final lateinit var periodStart: LocalDate
-        private set
+    lateinit var periodStart: LocalDate
+        protected set
 
+    @Suppress("INAPPLICABLE_JVM_NAME")
     @get:JvmName("getSpaceIdValue")
     @field:Column(name = "space_id", nullable = false)
-    final var spaceId: Long = 0
-        private set
+    var spaceId: Long = 0
+        protected set
 
     @field:Column(nullable = false)
-    final lateinit var location: String
-        private set
+    lateinit var location: String
+        protected set
 
     @field:Column(name = "net_revenue", nullable = false)
-    final var netRevenue: Long = 0
-        private set
+    var netRevenue: Long = 0
+        protected set
 
     @field:Column(name = "reservation_count", nullable = false)
-    final var reservationCount: Int = 0
-        private set
+    var reservationCount: Int = 0
+        protected set
 
     @field:Column(name = "slot_count", nullable = false)
-    final var slotCount: Int = 0
-        private set
+    var slotCount: Int = 0
+        protected set
 
     @field:Column(name = "computed_at", nullable = false)
-    final lateinit var computedAt: LocalDateTime
-        private set
+    lateinit var computedAt: LocalDateTime
+        protected set
 
     constructor(
         periodType: RankingPeriodType,
