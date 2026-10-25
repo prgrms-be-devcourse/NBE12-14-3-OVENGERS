@@ -1,3 +1,4 @@
+
 package com.ovengers.slotkey.member.dto.response
 
 import com.ovengers.slotkey.credit.entity.CreditTransaction
@@ -17,12 +18,12 @@ data class AdminMemberCreditTransactionResponse(
         @JvmStatic
         fun from(transaction: CreditTransaction) =
             AdminMemberCreditTransactionResponse(
-                transaction.getId(),
-                transaction.getType(),
-                transaction.getAmount(),
-                transaction.getBalanceAfter(),
-                transaction.getReason(),
-                transaction.getCreatedAt(),
+                requireNotNull(transaction.id),
+                transaction.type,
+                transaction.amount,
+                transaction.balanceAfter,
+                transaction.reason,
+                transaction.createdAt,
             )
     }
 }
