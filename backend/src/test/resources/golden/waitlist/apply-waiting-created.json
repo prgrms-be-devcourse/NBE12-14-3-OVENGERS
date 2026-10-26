@@ -1,0 +1,1 @@
+{"status":"SUCCESS","code":"OK","message":"요청이 성공적으로 처리되었습니다.","data":{"id":11,"spaceId":3,"startTime":"2026-10-20T14:00:00","endTime":"2026-10-20T15:00:00","status":"WAITING","position":2,"createdAt":"2026-10-15T09:00:00"}}
