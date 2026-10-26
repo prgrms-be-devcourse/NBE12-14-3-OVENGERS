@@ -490,6 +490,8 @@ Authorization: Bearer {accessToken}
 
 상세한 테스트 전략과 전수 실행 결과 보고서는 [docs/testing/test-strategy.md](docs/testing/test-strategy.md) 및 [docs/testing/test-results.md](docs/testing/test-results.md)를 참고합니다.
 
+AI가 작성·변환한 테스트가 "통과하지만 믿을 수 없는" 경우는 [뮤테이션 테스트 결정](docs/decisions/mutation-testing.md)으로 확인했습니다. 핵심 도메인 로직에 한정해 수동으로 실행하며(`cd backend && ./gradlew pitest`) CI에는 연결하지 않았습니다.
+
 ## 🚀 프로젝트 구조 및 실행
 
 ### 저장소 구조

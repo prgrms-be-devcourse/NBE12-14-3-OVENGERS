@@ -14,6 +14,7 @@
 - **`Clock` 주입 (`FixedClockConfig`)**: 시간 경계 조건 검증 시 `Thread.sleep` 없이 가상 시간을 주입하여 `HELD` 10분 만료, 체크인 시작 15분 전/후 경계, 노쇼 판정 등을 밀리초 단위로 정확하게 검증한다.
 - **다중 스레드/커넥션 (`CountDownLatch`, `ExecutorService`)**: 동시성 테스트에서 복수의 스레드가 동시에 같은 리소스에 경합을 유도하여 데이터 정합성을 검증한다.
 - **MockMvc / Spring Security Test**: 관리자 권한(`ROLE_ADMIN`), 인증 토큰 누락, 위변조, 정지 회원 토큰 등의 인가 흐름을 슬라이스/통합 테스트한다.
+- **PIT 뮤테이션 테스트 (`./gradlew pitest`, 수동 실행)**: 운영 코드를 일부러 망가뜨려 보고 테스트가 잡는지 확인해 "통과하지만 믿을 수 없는 테스트"를 찾는다. 핵심 도메인 로직에 한정하며 CI에는 넣지 않았다. 결정과 결과는 [뮤테이션 테스트 결정](../decisions/mutation-testing.md)을 본다.
 - **Node.js 내장 Test Runner (`node --test`)**: 프론트엔드의 정적 렌더링, 시간대·검색 필터·API 페이로드 등을 검증한다. 과거 14개 통과 수를 현재 전체 테스트 수로 사용하지 않고 새 실행에서 집계한다.
 
 ---
@@ -138,6 +139,7 @@
    - 조건부 UPDATE의 0 반환 시 예외 발생 단위 테스트는 있으나, 상태 전이 불가 6종 조합에 대한 전수 통합 테스트 및 노쇼 전이 시 실제 크레딧 잔액 미변동 실 DB 검증은 미구현 상태임.
 5. **사용자 일반 취소 재취소 및 이용 시작 후 취소 거절 시간 경계 테스트 부재**:
    - 관리자 강제 취소의 순차 2회 호출은 실 DB 테스트(`AdminReservationConcurrencyIntegrationTest.contract_cancelCompleted_reCancelAbortsWithAlreadyCancelled`)로 검증되었으나, 사용자 일반 취소 경로(`ReservationCancelService.cancel`)에서 동일 예약에 2회 순차 호출하는 통합 테스트와 이용 시작 시각 정각/경과 후 취소 시도에 대한 실 DB/시간 경계 통합 테스트는 미작성 상태임.
+   - **2026-10-26 갱신:** 이용 시작 정각 취소 거절의 실 DB 경계는 `ReservationCancelBoundaryIntegrationTest.cancel_atStartTime_rejectsWithoutSideEffects`가 검증한다. 취소 쿼리의 `:now < r.startTime`을 `<=`로 변조하면 이 테스트가 실패함을 확인했다([뮤테이션 테스트 결정](../decisions/mutation-testing.md) §5). 동일 예약 2회 순차 취소는 이 갱신의 확인 범위가 아니다.
 6. **취소 시 REFUND·PENALTY 원장 2건 동시 영속성 통합 테스트 부재**:
    - `ReservationCancelServiceTest` 단위 Mockito 테스트에서는 두 메서드 호출이 확인되었으나, 실제 DB에 `REFUND`와 `PENALTY` 거래 내역 두 건이 각각 정확히 영속화되는 통합 테스트는 미작성 상태임.
 7. **관리자 강제 취소 ↔ 사용자 연장 동시 경합(데드락 부재) 테스트 부재**:
@@ -146,7 +148,24 @@
    - 일반 회원이 관리자 크레딧 지급 경로(`POST /api/v1/admin/members/{memberId}/credits`)를 호출했을 때의 403 차단 테스트 및 타인 예약 조회 API 소유권 차단 테스트, 가격 변경 후 기존 확정 예약 조회 시 원래 금액이 유지되는 복합 시나리오 통합 테스트는 미작성 상태임.
 9. **비즈니스 예외 시 감사 로그 동반 롤백 및 자동 체크아웃 컬럼 영속성 통합 테스트 부재**:
    - 감사 실패 시 비즈니스 롤백은 검증되었으나 비즈니스 예외 발생 시 감사 로그 동반 롤백 통합 테스트는 미작성 상태이며, 스케줄러 단위 Mockito 테스트 외 실제 DB `checked_out_at = end_time` 컬럼 값 영속 상태 확인 통합 테스트도 미작성 상태임.
+   - **2026-10-26 갱신:** 자동 체크아웃의 `checked_out_at = end_time` 영속은 `ReservationConditionalUpdateBoundaryTest`(`automatic checkout transitions at the exact end time and records the end time`)가 실제 MySQL로 확인한다. 비즈니스 예외 시 감사 로그 동반 롤백 통합 테스트는 여전히 미작성이다.
 10. **Swagger UI 브라우저 `Try it out` 파일 업로드**:
     - MockMvc 및 정적 스키마 검증은 완료되었으나, 브라우저 환경에서 실제 multipart 바이너리를 Swagger UI로 업로드하는 시나리오는 수동 브라우저 미검증 상태임.
 11. **AWS 클라우드 인프라 배포 및 운영 스토리지**:
     - RDS/S3/EC2/CloudFront의 실제 배포 및 장애 조치(Failover) 검증은 미실시 상태임.
+
+---
+
+## 10. 테스트의 신뢰도 검증 (뮤테이션 테스트)
+
+위 1~9절은 "어떤 규칙을 어떤 테스트가 확인하는가"를 다룬다. 이 절은 **그 테스트들이 실제로 틀린 코드를 잡아내는가**를 다룬다. 테스트 수와 라인 커버리지는 단언이 약해도 통과하므로, 도구(PIT)와 수동 변조로 운영 코드를 일부러 망가뜨려 테스트가 실패하는지 확인했다.
+
+| 항목 | 내용 |
+| --- | --- |
+| 결정·결과·한계 | [뮤테이션 테스트 결정](../decisions/mutation-testing.md) (§5 최종 결과 요약) |
+| 범위·진행 | [뮤테이션 테스트 계획](../plans/mutation-testing/00-mutation-testing-plan.md) |
+| 단계별 보고 | [`lab/notes/mutation-testing/`](../lab/notes/mutation-testing/) |
+| 실행 방법 | `cd backend && ./gradlew pitest` (결과: `backend/build/reports/pitest/`). 수동 실행이며 CI에 연결하지 않았다 |
+| 새 테스트를 추가할 때 | `backend/build.gradle`의 `pitest.targetTests`에도 클래스를 추가해야 PIT 결과에 반영된다 |
+| 요약 (2026-10-26) | 구멍 16개를 찾아 테스트 21개로 보강했다. 정책 2개·`PricingService`는 뮤턴트 43개 중 43개를 잡았고, 돈이 오가는 핵심(주문 상태, 잔액, 원장)은 기존 테스트가 이미 탄탄했다 |
+| 이 방법으로 검증하지 못하는 것 | 필드 대입과 쿼리(JPQL) 문자열은 PIT가 변조하지 못해 수동 변조로 보완했다. 동시성·멱등성 경합은 뮤턴트로 잡히지 않으므로 1·2절의 통합 테스트가 계속 필요하다 |
