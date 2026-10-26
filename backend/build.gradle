@@ -90,5 +90,6 @@ pitest {
     targetTests = ['com.ovengers.slotkey.reservation.policy.*']
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
+    mutators = ['STRONGER']
     threads = 4
 }
