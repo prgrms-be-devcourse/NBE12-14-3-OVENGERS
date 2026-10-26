@@ -65,13 +65,20 @@ class CustomAuthenticationFilter(
             return
         }
 
-        val sessionResult = authSessionService.validate(sessionId, principal.memberId)
+        val memberId = principal.memberId
+        if (memberId == null) {
+            writeError(response, ErrorCode.INVALID_ACCESS_TOKEN)
+            return
+        }
+
+        val sessionResult = authSessionService.validate(sessionId, memberId)
+
         if (sessionResult == AuthSessionService.ValidationResult.UNAVAILABLE) {
             writeError(response, ErrorCode.AUTHENTICATION_SERVICE_UNAVAILABLE)
             return
         }
         if (sessionResult == AuthSessionService.ValidationResult.MEMBER_INACTIVE) {
-            recordInactiveMemberAccessAttempt(request, principal.memberId!!)
+            recordInactiveMemberAccessAttempt(request, principal.memberId)
             writeError(response, ErrorCode.INVALID_ACCESS_TOKEN)
             return
         }

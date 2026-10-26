@@ -47,7 +47,7 @@ class AdminSpaceService(
     }
 
     @Transactional(readOnly = true)
-    fun getSpaceDetailById(spaceId: Long?): Space =
+    fun getSpaceDetailById(spaceId: Long): Space =
         spaceRepository!!
             .findById(spaceId)
             .orElseThrow { BusinessException(ErrorCode.SPACE_NOT_FOUND) }

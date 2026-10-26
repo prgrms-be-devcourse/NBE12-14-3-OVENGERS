@@ -125,7 +125,7 @@ class SpaceController(
     fun getSpaceDetailById(
         @Parameter(description = "조회할 공간 ID", example = "1")
         @PathVariable("spaceId")
-        spaceId: Long?,
+        spaceId: Long,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         val space = spaceQueryService.getSpaceDetailById(spaceId)
         return ResponseEntity.ok(ApiResponse.success(SpaceDetailResponse.from(space)))
@@ -160,7 +160,7 @@ class SpaceController(
     fun getSlotAvailability(
         @Parameter(description = "조회할 공간 ID", example = "1")
         @PathVariable("spaceId")
-        spaceId: Long?,
+        spaceId: Long,
         @Parameter(description = "조회 날짜 (yyyy-MM-dd)", example = "2026-10-01")
         @RequestParam(name = "date")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

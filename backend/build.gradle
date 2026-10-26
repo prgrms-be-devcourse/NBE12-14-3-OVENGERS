@@ -88,7 +88,10 @@ pitest {
         'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy',
         'com.ovengers.slotkey.reservation.service.PricingService',
         'com.ovengers.slotkey.credit.entity.ChargeOrder',
-        'com.ovengers.slotkey.credit.entity.ChargeOrder$*'
+        'com.ovengers.slotkey.credit.entity.ChargeOrder$*',
+        'com.ovengers.slotkey.space.policy.SpaceOperatingHoursPolicy',
+        'com.ovengers.slotkey.credit.service.CreditServiceImpl',
+        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicy'
     ]
     targetTests = [
         'com.ovengers.slotkey.reservation.policy.*',
@@ -97,7 +100,12 @@ pitest {
         'com.ovengers.slotkey.credit.service.ChargeOrderServiceTest',
         'com.ovengers.slotkey.credit.service.ChargeOrderConfirmServiceTest',
         'com.ovengers.slotkey.credit.scheduler.ChargeOrderRecoverySchedulerTest',
-        'com.ovengers.slotkey.credit.webhook.PgWebhookEventSchedulerTest'
+        'com.ovengers.slotkey.credit.webhook.PgWebhookEventSchedulerTest',
+        'com.ovengers.slotkey.space.policy.SpaceOperatingHoursPolicyTest',
+        'com.ovengers.slotkey.space.service.SpaceSlotAvailabilityServiceTest',
+        'com.ovengers.slotkey.credit.service.CreditServiceImplTest',
+        'com.ovengers.slotkey.credit.service.CreditServiceImplMutationTest',
+        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicyTest'
     ]
     outputFormats = ['HTML', 'XML']
     timestampedReports = false

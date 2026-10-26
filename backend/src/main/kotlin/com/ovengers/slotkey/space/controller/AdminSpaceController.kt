@@ -106,7 +106,7 @@ class AdminSpaceController(
     )
     @GetMapping("/spaces/{spaceId}")
     fun getSpaceDetailById(
-        @PathVariable("spaceId") spaceId: Long?,
+        @PathVariable("spaceId") spaceId: Long,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         val response = SpaceDetailResponse.from(adminSpaceService.getSpaceDetailById(spaceId))
         return ResponseEntity.ok(ApiResponse.success(response))
@@ -263,7 +263,7 @@ class AdminSpaceController(
     fun uploadSpaceImage(
         @Parameter(description = "대상 공간 ID", example = "1")
         @PathVariable("spaceId")
-        spaceId: Long?,
+        spaceId: Long,
         @Parameter(description = "업로드할 공간 대표 사진 파일 (JPEG/PNG, 최대 5MB, 최대 4096x4096px)")
         @RequestParam("file")
         file: MultipartFile,
