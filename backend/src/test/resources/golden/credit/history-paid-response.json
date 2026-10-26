@@ -1,0 +1,9 @@
+{
+  "orderId" : "order-history-paid",
+  "amount" : 1000,
+  "status" : "PAID",
+  "paymentMethod" : "CARD",
+  "paymentProvider" : "TOSS_PAYMENTS",
+  "createdAt" : "2026-10-23T09:00:00",
+  "updatedAt" : "2026-10-23T09:01:00"
+}

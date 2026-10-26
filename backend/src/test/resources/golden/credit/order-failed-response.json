@@ -1,0 +1,5 @@
+{
+  "orderId" : "order-failed",
+  "amount" : 1000,
+  "status" : "FAILED"
+}
