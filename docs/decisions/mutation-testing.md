@@ -9,7 +9,7 @@ related: [kotlin-test-guardrails.md, reservation-concurrency.md, reservation-ide
 
 # AI가 쓴 테스트의 약점을 뮤테이션 테스트(PIT)로 확인한다
 
-> **상태:** 채택 (2026-10-26, 사용자 확인). 구현 전이다. 범위·순서는 [plans/mutation-testing](../plans/mutation-testing/00-mutation-testing-plan.md)에 있고 여기에 복사하지 않는다.
+> **상태:** 채택 (2026-10-26, 사용자 확인). 0~4단계와 후속 #154까지 구현·검증했고 5~6단계가 남았다. 범위·순서는 [plans/mutation-testing](../plans/mutation-testing/00-mutation-testing-plan.md)에 있고 여기에 복사하지 않는다.
 
 ## 한 줄 요약
 
@@ -87,15 +87,44 @@ AI가 작성하거나 Kotlin 전환 중 옮긴 테스트가 "틀렸는데 통과
 | 3 | `PricingService` | 0 | 0 | 0 | 0 |
 | 4 | `ChargeOrder` PIT | 1 | 1 | 1 | 0 |
 | 4 | 예약 조건부 UPDATE 수동 변조 20건 | 6 | 8 | 7 | 1 |
-| 합계 | | **8** | **13** | **9** | **4** |
+| #154 | `ChargeOrder` 전이·쿼리 수동 변조 20건 | 5 | 2 | 2 | 0 |
+| 합계 | | **13** | **15** | **11** | **4** |
 
 **대표 사례 후보 (아직 확정 아님)**
 1. 운영시간 마감 초과 검사 누락: 검사를 지워도 전체 테스트 통과, 라인 커버리지 100%였다(2단계).
 2. 노쇼·자동 체크아웃 쿼리의 `<`/`<=` 경계와 상태 가드: 기존 서비스 테스트는 Repository를 mock으로 대체해 JPQL을 실행하지 않아 6건의 변조를 모두 통과시켰다(4단계). 도구(PIT)가 보지 못하는 쿼리 속 비즈니스 규칙을 수동 변조로 검증한 사례다.
 3. `ChargeOrder.createPending`의 null 회원 ID 거절 검사 누락(4단계).
 
+### #154 검증 결과 (`ChargeOrder` 상태 전이 수동 변조, 2026-10-26 · Claude 별도 세션 검증)
+
+> 구현은 Codex, 검증은 Claude(새 세션)이다. 보고서(`follow-up-154.md`)의 수치를 믿지 않고 아래를 직접 확인했다.
+
+| 확인 항목 | 결과 |
+| --- | --- |
+| 전체 테스트 | `cleanTest test` 직접 실행: 175개 클래스, 1,318건, 실패 0·오류 0·스킵 0, 9분 23초. 신규 2건 통과 |
+| 운영 코드·CI·`build.gradle` | 변경 없음. 신규 파일은 `ChargeOrderTransitionMutationTest.kt` 하나 |
+| 규칙 위반 | 신규 Kotlin 파일에 Lombok·`data class`·시크릿 없음 |
+| 수동 변조 20건 재현 | 보고서와 **완전히 일치**. 매번 `cleanTest`로 실행하고 원복해 최종 diff 없음 |
+| 기존 테스트가 잡은 15건 | 15건 모두 **단언 실패**(컨텍스트 로딩 실패로 잡힌 약한 kill 0건) |
+| 구멍 5건 | 기존 테스트 전부 통과(실패 0) → 신규 테스트로 재변조 시 5건 모두 단언 실패 |
+
+**구멍 5건과 그 의미 (과장 주의)**
+
+| 변조 | 구멍인 이유 | 운영에서의 영향 |
+| --- | --- | --- |
+| `markPaid`: `failureCode = null` 제거 | 기존 승인 테스트가 성공 후 주문 필드를 확인하지 않음 | 운영에서 `markPaid`는 `CONFIRMING`에서만 호출되고 `failureCode`는 `markFailed`(FAILED)에서만 채워지므로, 이 시점의 값은 이미 null이다. **운영 경로에서는 관찰되지 않는 동작**이며, 신규 테스트는 `FAILED` 주문에 `markPaid`를 호출하는 비현실적 순서로 이를 고정한다 |
+| `markPaid`: `recoveryNextAttemptAt = null` 제거 | 같은 이유 | `CONFIRMING`에서는 값이 있을 수 있다. 다만 복구 후보 조회가 `status`로 거르므로 PAID 주문이 후보가 되지 않아 동작은 같고, 남는 것은 잘못된 메타데이터다 |
+| `markPaid`: `updatedAt = now → createdAt` | 갱신 시각을 단언하지 않음 | 승인 시각 기록 오류 |
+| `markFailed`: `recoveryNextAttemptAt = null` 제거 | 위와 같음 | 위와 같음 |
+| `markFailed`: `updatedAt = now → createdAt` | 위와 같음 | 위와 같음 |
+
+- **돈이 오가는 핵심(상태 `PAID` 전이, 잔액 증가, 원장)은 이미 기존 테스트가 잡았다**(`markPaid`의 `PAID→FAILED`, `markFailed`의 `FAILED→PAID` 변조는 각각 15건·9건 실패). 구멍 5건은 주문의 **보조 메타데이터(실패코드·복구 예약·갱신 시각) 정리**이며 금액이 틀어지는 종류가 아니다. 구현자 보고서의 "돈 관련 대표 사례"라는 표현은 과하므로 포폴·발표에서는 "돈 경로는 기존 테스트가 탄탄했고, 보조 상태 정리가 비어 있었다"로 쓴다.
+- 구멍 1번(`failureCode`)은 운영에서 동치에 가깝다. 신규 테스트가 비현실적 순서를 쓴다는 점을 구현자도 보고서에 적었다.
+- 열린 질문(팀 판단): `markPaid`·`markFailed`가 엔티티 내부에서 출발 상태(`CONFIRMING`)를 검사하게 할지. 지금은 서비스가 호출 전에 검사하므로 운영은 안전하지만, public 메서드 자체는 `FAILED → PAID` 재개방을 막지 않는다. #155(엔티티 전이 메서드 삭제 여부)와 함께 논의하는 것이 자연스럽다.
+
 **검증 중 발견한 한계·주의**
 - PIT는 필드 대입을 변조하지 못한다. 오픈소스 PIT에는 대입용 mutator가 없다(`MEMBER_VARIABLE`은 unknown으로 거부됨). 그래서 `ChargeOrder.markPaid`·`markFailed`·`markRecoveryExhausted` 등 돈이 오가는 상태 전이 메서드에는 뮤턴트가 0건이다. 이 메서드들의 전이는 PIT로 검증되지 않았다. 필요하면 쿼리처럼 수동 변조로 별도 확인한다(후속 후보).
+  - 후속 이슈 #154에서 `ChargeOrder` 전이 메서드를 수동 변조로 검증했다(아래 "#154 검증 결과").
 - 수동 변조 중 `SET status` 계열 4건(`cancelIfHeld`, `forceCancelIfStatusIs`, `checkInIfConfirmed`, `checkOutIfInUse`)은 변조하면 쿼리의 파라미터가 하나 남아 Spring이 컨텍스트를 못 띄우므로 테스트가 대량으로 실패한다. 단언이 잡은 증거가 아니다. 예: `cancelIfHeld`의 `SET status = :cancelled → :held`는 쿼리에서 `:cancelled` 파라미터가 사용되지 않아 Spring이 쿼리를 거부하므로, 새 통합 테스트 8건이 모두 컨텍스트 로딩 실패로 실패한다. "상태가 CANCELLED로 바뀌었는가" 단언이 아니라 쿼리 검증에 의해 죽은 것이다. 같은 의미의 오류(다른 상태로 설정)는 단언 테스트(`HELD cancellation changes status and records the cancellation time`)가 잡아야 하지만 이 변조 방식으로는 분리해 확인하지 못했다.
 - Codex가 변조하지 않은 후보 조회 쿼리 3개(`findExpiredHoldIds`, `findNoShowCandidateIds`, `findAutoCheckOutCandidateIds`)가 같은 경계 조건을 가진다. UPDATE가 조건을 다시 검사하므로 위험은 낮지만 미검증이다.
 - 노쇼 정각 경계 테스트는 Repository 파라미터(`startTimeBefore`)에 직접 값을 넣는다. 파라미터를 `now - 15분`으로 계산하는 `ReservationBatchProcessor`의 계산 자체는 경계에서 검증하지 않는다.
