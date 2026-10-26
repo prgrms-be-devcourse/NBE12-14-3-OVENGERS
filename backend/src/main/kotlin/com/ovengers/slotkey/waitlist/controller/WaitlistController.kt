@@ -29,7 +29,7 @@ class WaitlistController(
     ): ResponseEntity<ApiResponse<WaitlistEntryResponse>> {
         val response =
             waitlistService.apply(
-                principal.memberId(),
+                principal.memberId,
                 requireNotNull(request.spaceId),
                 requireNotNull(request.startTime),
                 requireNotNull(request.endTime),
@@ -42,7 +42,7 @@ class WaitlistController(
         @CurrentMember principal: AuthPrincipal,
         @PathVariable waitlistEntryId: Long,
     ): ResponseEntity<Void> {
-        waitlistService.cancel(principal.memberId(), waitlistEntryId)
+        waitlistService.cancel(principal.memberId, waitlistEntryId)
         return ResponseEntity.noContent().build()
     }
 
@@ -50,5 +50,5 @@ class WaitlistController(
     fun getMyEntries(
         @CurrentMember principal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<List<WaitlistEntryResponse>>> =
-        ResponseEntity.ok(ApiResponse.success(waitlistService.getMyEntries(principal.memberId())))
+        ResponseEntity.ok(ApiResponse.success(waitlistService.getMyEntries(principal.memberId)))
 }

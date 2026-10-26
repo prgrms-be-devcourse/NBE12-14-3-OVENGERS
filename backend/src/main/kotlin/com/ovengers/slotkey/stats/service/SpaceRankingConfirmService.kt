@@ -6,10 +6,13 @@ import com.ovengers.slotkey.stats.repository.SpaceRankingAggregationRepository
 import com.ovengers.slotkey.stats.repository.SpaceRankingSnapshotRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * 끝난 기간의 공간별 집계를 계산해 확정값(space_ranking_snapshot)으로 저장한다.
@@ -22,6 +25,8 @@ class SpaceRankingConfirmService(
     private val snapshotRepository: SpaceRankingSnapshotRepository,
     private val clock: Clock,
 ) {
+    private val confirmLock = ReentrantLock(true)
+
     /**
      * @param dateInPeriod 확정할 기간에 속한 아무 날짜(KST)
      * @return 저장한 행 수
@@ -42,25 +47,46 @@ class SpaceRankingConfirmService(
             )
         }
 
-        val aggregates =
-            aggregationRepository.aggregate(periodStart.atStartOfDay(), periodEnd.atStartOfDay())
-
-        snapshotRepository.deleteByPeriod(periodType, periodStart)
-        val snapshots =
-            aggregates.map { a ->
-                SpaceRankingSnapshot(
-                    periodType,
-                    periodStart,
-                    a.spaceId,
-                    a.location!!,
-                    a.netRevenue,
-                    a.reservationCount,
-                    a.slotCount,
-                    now,
+        confirmLock.lock()
+        var lockHandledByTxSync = false
+        try {
+            if (TransactionSynchronizationManager.isActualTransactionActive() &&
+                TransactionSynchronizationManager.isSynchronizationActive()
+            ) {
+                TransactionSynchronizationManager.registerSynchronization(
+                    object : TransactionSynchronization {
+                        override fun afterCompletion(status: Int) {
+                            confirmLock.unlock()
+                        }
+                    },
                 )
+                lockHandledByTxSync = true
             }
-        snapshotRepository.saveAll(snapshots)
-        return snapshots.size
+
+            val aggregates =
+                aggregationRepository.aggregate(periodStart.atStartOfDay(), periodEnd.atStartOfDay())
+
+            snapshotRepository.deleteByPeriod(periodType, periodStart)
+            val snapshots =
+                aggregates.map { a ->
+                    SpaceRankingSnapshot(
+                        periodType,
+                        periodStart,
+                        a.spaceId,
+                        a.location!!,
+                        a.netRevenue,
+                        a.reservationCount,
+                        a.slotCount,
+                        now,
+                    )
+                }
+            snapshotRepository.saveAll(snapshots)
+            return snapshots.size
+        } finally {
+            if (!lockHandledByTxSync) {
+                confirmLock.unlock()
+            }
+        }
     }
 
     companion object {

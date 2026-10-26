@@ -70,7 +70,7 @@ class DoorAccessController(
         @PathVariable reservationId: Long,
         @Parameter(hidden = true) @AuthenticationPrincipal authPrincipal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<DoorAccessTokenResponse>> {
-        val response = doorAccessTokenService.issue(authPrincipal.memberId(), reservationId)
+        val response = doorAccessTokenService.issue(authPrincipal.memberId, reservationId)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response))
     }
 
@@ -94,7 +94,7 @@ class DoorAccessController(
         @Parameter(hidden = true) @AuthenticationPrincipal authPrincipal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<Void>> {
         doorAccessTokenService.revokeByReservationId(
-            authPrincipal.memberId(),
+            authPrincipal.memberId,
             reservationId,
             LocalDateTime.now(clock),
             "사용자 요청",
@@ -120,7 +120,7 @@ class DoorAccessController(
     ): ResponseEntity<ApiResponse<List<DoorAccessLogResponse>>> =
         ResponseEntity.ok(
             ApiResponse.success(
-                doorAccessLogService.findResponsesByReservationId(authPrincipal.memberId(), reservationId),
+                doorAccessLogService.findResponsesByReservationId(authPrincipal.memberId, reservationId),
             ),
         )
 
@@ -146,6 +146,6 @@ class DoorAccessController(
         @Valid @RequestBody request: DoorAccessVerifyRequest,
     ): ResponseEntity<ApiResponse<DoorAccessVerifyResponse>> =
         ResponseEntity.ok(
-            ApiResponse.success(doorAccessVerificationService.verify(authPrincipal.memberId(), request)),
+            ApiResponse.success(doorAccessVerificationService.verify(authPrincipal.memberId, request)),
         )
 }

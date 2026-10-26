@@ -8,6 +8,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.jpa' version '1.9.25'
     id 'org.jetbrains.kotlin.plugin.allopen' version '1.9.25'
     id 'org.jlleitschuh.gradle.ktlint' version '12.1.1'
+    id 'info.solidsoft.pitest' version '1.19.0'
 
     id 'org.jetbrains.kotlin.plugin.lombok' version '1.9.25'
 }
@@ -77,4 +78,29 @@ ktlint {
 tasks.named('test') {
     useJUnitPlatform()
     systemProperty 'spring.test.context.cache.maxSize', '2'
+}
+
+// 뮤테이션 테스트(수동 실행: ./gradlew pitest). 대상·범위는 docs/plans/mutation-testing 참고.
+pitest {
+    junit5PluginVersion = '1.2.3'
+    targetClasses = [
+        'com.ovengers.slotkey.reservation.policy.ReservationTimePolicy',
+        'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy',
+        'com.ovengers.slotkey.reservation.service.PricingService',
+        'com.ovengers.slotkey.credit.entity.ChargeOrder',
+        'com.ovengers.slotkey.credit.entity.ChargeOrder$*'
+    ]
+    targetTests = [
+        'com.ovengers.slotkey.reservation.policy.*',
+        'com.ovengers.slotkey.reservation.service.PricingServiceTest',
+        'com.ovengers.slotkey.credit.entity.ChargeOrderMutationTest',
+        'com.ovengers.slotkey.credit.service.ChargeOrderServiceTest',
+        'com.ovengers.slotkey.credit.service.ChargeOrderConfirmServiceTest',
+        'com.ovengers.slotkey.credit.scheduler.ChargeOrderRecoverySchedulerTest',
+        'com.ovengers.slotkey.credit.webhook.PgWebhookEventSchedulerTest'
+    ]
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+    mutators = ['STRONGER']
+    threads = 4
 }

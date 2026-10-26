@@ -1,0 +1,18 @@
+{
+  "status" : "SUCCESS",
+  "code" : "OK",
+  "message" : "요청이 성공적으로 처리되었습니다.",
+  "data" : [ {
+    "accessLogId" : 1002,
+    "attemptedAt" : "2026-10-23T14:05:30",
+    "requestedSpaceName" : "회의실 A",
+    "result" : "ALLOW",
+    "reasonCode" : null
+  }, {
+    "accessLogId" : 1001,
+    "attemptedAt" : "2026-10-23T14:04:30",
+    "requestedSpaceName" : null,
+    "result" : "DENY",
+    "reasonCode" : "SPACE_MISMATCH"
+  } ]
+}

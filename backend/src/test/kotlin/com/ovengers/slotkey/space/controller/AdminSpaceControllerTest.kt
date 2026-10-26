@@ -93,7 +93,7 @@ class AdminSpaceControllerTest {
             UsernamePasswordAuthenticationToken(
                 ADMIN_PRINCIPAL,
                 null,
-                ADMIN_PRINCIPAL.authorities,
+                ADMIN_PRINCIPAL.getAuthorities(),
             )
         SecurityContextHolder.getContext().authentication = authentication
     }
@@ -850,7 +850,7 @@ class AdminSpaceControllerTest {
             UsernamePasswordAuthenticationToken(
                 USER_PRINCIPAL,
                 null,
-                USER_PRINCIPAL.authorities,
+                USER_PRINCIPAL.getAuthorities(),
             )
         SecurityContextHolder.getContext().authentication = authentication
 
@@ -966,7 +966,7 @@ class AdminSpaceControllerTest {
             UsernamePasswordAuthenticationToken(
                 USER_PRINCIPAL,
                 null,
-                USER_PRINCIPAL.authorities,
+                USER_PRINCIPAL.getAuthorities(),
             )
         SecurityContextHolder.getContext().authentication = authentication
 

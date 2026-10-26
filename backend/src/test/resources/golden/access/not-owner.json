@@ -1,0 +1,5 @@
+{
+  "status" : "FAIL",
+  "code" : "FORBIDDEN_NOT_OWNER",
+  "message" : "본인 예약이 아닙니다."
+}

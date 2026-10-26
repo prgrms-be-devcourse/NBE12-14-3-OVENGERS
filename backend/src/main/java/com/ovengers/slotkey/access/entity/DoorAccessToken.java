@@ -2,16 +2,11 @@ package com.ovengers.slotkey.access.entity;
 
 import com.ovengers.slotkey.reservation.entity.Reservation;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
 @Entity
 @Table(name = "door_access_token")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DoorAccessToken {
 
     @Id
@@ -33,6 +28,33 @@ public class DoorAccessToken {
 
     @Column(name = "revoke_reason", length = 100)
     private String revokeReason;
+
+    protected DoorAccessToken() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Reservation getReservation() {
+        return reservation;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
+    }
+
+    public LocalDateTime getIssuedAt() {
+        return issuedAt;
+    }
+
+    public LocalDateTime getRevokedAt() {
+        return revokedAt;
+    }
+
+    public String getRevokeReason() {
+        return revokeReason;
+    }
 
     // 출입 토큰 생성
     public DoorAccessToken(

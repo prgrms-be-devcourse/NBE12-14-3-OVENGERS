@@ -115,7 +115,7 @@ class ReservationController(
     ): ResponseEntity<ApiResponse<ReservationResponse>> {
         val response =
             reservationHoldService.createHold(
-                principal.memberId(),
+                principal.memberId,
                 requireNotNull(request.spaceId),
                 request.toStartDateTime(),
                 request.toEndDateTime(),
@@ -189,7 +189,7 @@ class ReservationController(
     ): ResponseEntity<ApiResponse<ReservationResponse>> {
         val response =
             reservationPaymentConfirmService.confirm(
-                principal.memberId(),
+                principal.memberId,
                 reservationId,
                 requireNotNull(request.spaceVersion),
                 idempotencyKey,
@@ -239,7 +239,7 @@ class ReservationController(
         principal: AuthPrincipal,
         @PathVariable reservationId: Long,
     ): ResponseEntity<ApiResponse<ReservationResponse>> {
-        val response = reservationCancelService.cancel(principal.memberId(), reservationId)
+        val response = reservationCancelService.cancel(principal.memberId, reservationId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -299,7 +299,7 @@ class ReservationController(
     ): ResponseEntity<ApiResponse<ReservationResponse>> {
         val response =
             reservationExtendService.extend(
-                principal.memberId(),
+                principal.memberId,
                 reservationId,
                 requireNotNull(request.expectedEndTime),
                 requireNotNull(request.newEndTime),
@@ -349,7 +349,7 @@ class ReservationController(
         principal: AuthPrincipal,
         @PathVariable reservationId: Long,
     ): ResponseEntity<ApiResponse<ReservationResponse>> {
-        val response = reservationCheckOutService.checkOut(principal.memberId(), reservationId)
+        val response = reservationCheckOutService.checkOut(principal.memberId, reservationId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -385,7 +385,7 @@ class ReservationController(
     ): ResponseEntity<ApiResponse<PageResponse<ReservationListResponse>>> {
         val response =
             reservationQueryService.getMyReservations(
-                principal.memberId(),
+                principal.memberId,
                 condition,
                 pageable,
             )
@@ -424,7 +424,7 @@ class ReservationController(
         principal: AuthPrincipal,
         @PathVariable reservationId: Long,
     ): ResponseEntity<ApiResponse<ReservationDetailResponse>> {
-        val response = reservationQueryService.getMyReservation(principal.memberId(), reservationId)
+        val response = reservationQueryService.getMyReservation(principal.memberId, reservationId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 }

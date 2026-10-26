@@ -12,7 +12,6 @@ import com.ovengers.slotkey.member.entity.Member;
 import com.ovengers.slotkey.reservation.entity.Reservation;
 import com.ovengers.slotkey.reservation.repository.ReservationRepository;
 import com.ovengers.slotkey.space.entity.Space;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +19,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DoorAccessLogService {
 
     private final DoorAccessLogRepository doorAccessLogRepository;
     private final ReservationRepository reservationRepository;
     private final DoorAccessAuthorizationService doorAccessAuthorizationService;
+
+    public DoorAccessLogService(
+            DoorAccessLogRepository doorAccessLogRepository,
+            ReservationRepository reservationRepository,
+            DoorAccessAuthorizationService doorAccessAuthorizationService
+    ) {
+        this.doorAccessLogRepository = doorAccessLogRepository;
+        this.reservationRepository = reservationRepository;
+        this.doorAccessAuthorizationService = doorAccessAuthorizationService;
+    }
 
     // 출입 시도 결과에 대한 로그 생성
     @Transactional

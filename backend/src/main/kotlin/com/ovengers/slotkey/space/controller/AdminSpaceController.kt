@@ -106,7 +106,7 @@ class AdminSpaceController(
     )
     @GetMapping("/spaces/{spaceId}")
     fun getSpaceDetailById(
-        @PathVariable("spaceId") spaceId: Long?,
+        @PathVariable("spaceId") spaceId: Long,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         val response = SpaceDetailResponse.from(adminSpaceService.getSpaceDetailById(spaceId))
         return ResponseEntity.ok(ApiResponse.success(response))
@@ -144,7 +144,7 @@ class AdminSpaceController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = adminSpaceService.createSpace(request, authPrincipal!!.memberId())
+        val response = adminSpaceService.createSpace(request, authPrincipal!!.memberId)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response))
     }
 
@@ -189,7 +189,7 @@ class AdminSpaceController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = adminSpaceService.updateSpace(spaceId, request, authPrincipal!!.memberId())
+        val response = adminSpaceService.updateSpace(spaceId, request, authPrincipal!!.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -263,14 +263,14 @@ class AdminSpaceController(
     fun uploadSpaceImage(
         @Parameter(description = "대상 공간 ID", example = "1")
         @PathVariable("spaceId")
-        spaceId: Long?,
+        spaceId: Long,
         @Parameter(description = "업로드할 공간 대표 사진 파일 (JPEG/PNG, 최대 5MB, 최대 4096x4096px)")
         @RequestParam("file")
         file: MultipartFile,
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = spaceImageService.uploadAndAttachSpaceImage(spaceId, file, authPrincipal!!.memberId())
+        val response = spaceImageService.uploadAndAttachSpaceImage(spaceId, file, authPrincipal!!.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 }

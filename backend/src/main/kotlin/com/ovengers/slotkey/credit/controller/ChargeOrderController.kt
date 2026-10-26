@@ -58,7 +58,7 @@ class ChargeOrderController(
         @Parameter(hidden = true) @CurrentMember principal: AuthPrincipal,
         @Valid @RequestBody request: ChargeOrderCreateRequest,
     ): ResponseEntity<ApiResponse<ChargeOrderResponse>> {
-        val response = chargeOrderService.create(principal.memberId(), requireNotNull(request.amount))
+        val response = chargeOrderService.create(principal.memberId, requireNotNull(request.amount))
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response))
     }
 
@@ -68,14 +68,14 @@ class ChargeOrderController(
         @Parameter(hidden = true) @CurrentMember principal: AuthPrincipal,
         @PageableDefault(size = 10) pageable: Pageable,
     ): ApiResponse<PageResponse<ChargeOrderHistoryResponse>> =
-        ApiResponse.success(PageResponse.from(chargeOrderService.getMyHistory(principal.memberId(), pageable)))
+        ApiResponse.success(PageResponse.from(chargeOrderService.getMyHistory(principal.memberId, pageable)))
 
     @Operation(summary = "충전 주문 상태 조회", description = "인증 회원 본인의 충전 주문 현재 상태를 조회합니다.")
     @GetMapping("/{orderId}")
     fun get(
         @Parameter(hidden = true) @CurrentMember principal: AuthPrincipal,
         @PathVariable orderId: String,
-    ): ApiResponse<ChargeOrderResponse> = ApiResponse.success(chargeOrderService.get(principal.memberId(), orderId))
+    ): ApiResponse<ChargeOrderResponse> = ApiResponse.success(chargeOrderService.get(principal.memberId, orderId))
 
     @Operation(summary = "충전 주문 승인", description = "저장된 주문 금액을 검증하고 PG 승인 후 크레딧을 충전합니다.")
     @PostMapping("/confirm")
@@ -86,7 +86,7 @@ class ChargeOrderController(
     ): ResponseEntity<ApiResponse<ChargeOrderConfirmResponse>> {
         val response =
             chargeOrderConfirmService.confirm(
-                principal.memberId(),
+                principal.memberId,
                 requireNotNull(request.paymentKey),
                 requireNotNull(request.orderId),
                 requireNotNull(request.amount),

@@ -8,7 +8,6 @@ import com.ovengers.slotkey.global.error.BusinessException;
 import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.member.entity.Member;
 import com.ovengers.slotkey.member.repository.MemberRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class InactiveMemberAccessLogService {
 
     private final MemberRepository memberRepository;
     private final DoorAccessLogRepository doorAccessLogRepository;
+
+    public InactiveMemberAccessLogService(
+            MemberRepository memberRepository,
+            DoorAccessLogRepository doorAccessLogRepository
+    ) {
+        this.memberRepository = memberRepository;
+        this.doorAccessLogRepository = doorAccessLogRepository;
+    }
 
     // 인증 단계에서 비활성으로 판정된 회원의 출입 시도 기록
     @Transactional(propagation = Propagation.REQUIRES_NEW)

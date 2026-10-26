@@ -124,7 +124,7 @@ class SpaceQueryService(
         return if (trimmed.isEmpty()) null else trimmed
     }
 
-    fun getSpaceDetailById(spaceId: Long?): Space =
+    fun getSpaceDetailById(spaceId: Long): Space =
         spaceRepository
             .findById(spaceId)
             .orElseThrow { BusinessException(ErrorCode.SPACE_NOT_FOUND) }

@@ -13,7 +13,7 @@ class MemberAuthorizationService {
      * null principal 또는 ADMIN 이외의 역할은 FORBIDDEN_ROLE 예외를 발생시킨다.
      */
     fun validateCanManageMember(principal: AuthPrincipal?) {
-        if (principal?.role() != MemberRole.ADMIN) {
+        if (principal?.role != MemberRole.ADMIN) {
             throw BusinessException(ErrorCode.FORBIDDEN_ROLE)
         }
     }

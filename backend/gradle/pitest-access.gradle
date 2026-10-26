@@ -1,0 +1,27 @@
+// ./gradlew pitest : 박창현 담당 Step 1·2 전환 코드에만 적용한다.
+// 아직 Java인 컨트롤러·필터·엔티티·서비스는 이후 전환 시 별도로 범위를 확장한다.
+pitest {
+    pitestVersion = '1.22.1'
+    junit5PluginVersion = '1.2.3'
+    targetClasses = [
+        'com.ovengers.slotkey.access.authorization.*',
+        'com.ovengers.slotkey.access.dto.*',
+        'com.ovengers.slotkey.access.policy.*',
+        'com.ovengers.slotkey.access.support.*',
+        'com.ovengers.slotkey.access.entity.AccessResult*',
+        'com.ovengers.slotkey.access.entity.AccessDenyReason*',
+        'com.ovengers.slotkey.global.security.AuthPrincipal*',
+        'com.ovengers.slotkey.global.security.CurrentMember*',
+        'com.ovengers.slotkey.global.security.jwt.*'
+    ]
+    targetTests = [
+        'com.ovengers.slotkey.access.*',
+        'com.ovengers.slotkey.global.security.*'
+    ]
+    threads = 2
+    timeoutConstInMillis = 60000
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+    reportDir = layout.buildDirectory.dir('reports/pitest/access')
+    jvmArgs = ['-Xmx1536m', '-Dspring.test.context.cache.maxSize=2']
+}

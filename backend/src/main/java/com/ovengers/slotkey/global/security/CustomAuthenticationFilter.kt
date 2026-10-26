@@ -49,7 +49,7 @@ class CustomAuthenticationFilter(
             return
         }
 
-        val payload: Map<String, Any> =
+        val payload: Map<String, Any?> =
             jwtProvider.payloadOrNull(accessToken) ?: run {
                 writeError(response, ErrorCode.INVALID_ACCESS_TOKEN)
                 return
@@ -65,13 +65,13 @@ class CustomAuthenticationFilter(
             return
         }
 
-        val sessionResult = authSessionService.validate(sessionId, principal.memberId())
+        val sessionResult = authSessionService.validate(sessionId, principal.memberId)
         if (sessionResult == AuthSessionService.ValidationResult.UNAVAILABLE) {
             writeError(response, ErrorCode.AUTHENTICATION_SERVICE_UNAVAILABLE)
             return
         }
         if (sessionResult == AuthSessionService.ValidationResult.MEMBER_INACTIVE) {
-            recordInactiveMemberAccessAttempt(request, principal.memberId())
+            recordInactiveMemberAccessAttempt(request, principal.memberId!!)
             writeError(response, ErrorCode.INVALID_ACCESS_TOKEN)
             return
         }
@@ -81,7 +81,7 @@ class CustomAuthenticationFilter(
         }
 
         val authentication =
-            UsernamePasswordAuthenticationToken(principal, null, principal.authorities)
+            UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
         val context = SecurityContextHolder.createEmptyContext()
         context.authentication = authentication
         SecurityContextHolder.setContext(context)
@@ -105,7 +105,7 @@ class CustomAuthenticationFilter(
         }
     }
 
-    private fun extractPrincipal(payload: Map<String, Any>): AuthPrincipal? {
+    private fun extractPrincipal(payload: Map<String, Any?>): AuthPrincipal? {
         val id = payload["id"] as? Number ?: return null
         val email = payload["email"] as? String ?: return null
         val role = payload["role"] as? String ?: return null

@@ -45,9 +45,12 @@ class MemberController(
     fun getMyInfo(
         @AuthenticationPrincipal principal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<MemberResponse>> =
-        ResponseEntity.ok(ApiResponse.success(MemberResponse(memberService.getMyInfo(principal.memberId()))))
+        ResponseEntity.ok(ApiResponse.success(MemberResponse(memberService.getMyInfo(requireNotNull(principal.memberId)))))
 
-    @Operation(summary = "내 닉네임 수정", description = "로그인한 회원의 닉네임을 수정합니다.")
+    @Operation(
+        summary = "내 닉네임 수정",
+        description = "로그인한 회원의 닉네임을 수정합니다.",
+    )
     @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me")
     fun updateMyInfo(
@@ -55,6 +58,11 @@ class MemberController(
         @Valid @RequestBody request: MemberUpdateRequest,
     ): ResponseEntity<ApiResponse<MemberResponse>> =
         ResponseEntity.ok(
-            ApiResponse.success(memberService.updateNickname(principal.memberId(), requireNotNull(request.nickname))),
+            ApiResponse.success(
+                memberService.updateNickname(
+                    requireNotNull(principal.memberId),
+                    requireNotNull(request.nickname),
+                ),
+            ),
         )
 }

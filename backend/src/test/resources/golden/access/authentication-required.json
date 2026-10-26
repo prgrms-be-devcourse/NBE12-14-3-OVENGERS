@@ -1,0 +1,5 @@
+{
+  "status" : "FAIL",
+  "code" : "AUTHENTICATION_REQUIRED",
+  "message" : "로그인 후 이용해주세요."
+}
