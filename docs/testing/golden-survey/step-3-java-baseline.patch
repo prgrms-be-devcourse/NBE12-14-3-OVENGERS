@@ -1,0 +1,357 @@
+diff --git a/backend/src/test/java/com/ovengers/slotkey/support/JavaSurveyGolden.java b/backend/src/test/java/com/ovengers/slotkey/support/JavaSurveyGolden.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/support/JavaSurveyGolden.java
+@@ -0,0 +1,29 @@
++package com.ovengers.slotkey.support;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.StandardOpenOption;
++import static org.assertj.core.api.Assertions.assertThat;
++
++/** Baseline-only, opt-in capture. CREATE_NEW prevents overwriting prior output. */
++public class JavaSurveyGolden {
++    public static JsonNode readGolden(ObjectMapper mapper, String path, JsonNode actual) throws Exception {
++        String capture = System.getenv("GOLDEN_SURVEY_CAPTURE_DIR");
++        if (capture != null) {
++            Path output = Path.of(capture, path + ".json");
++            Files.createDirectories(output.getParent());
++            Files.writeString(output, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(actual) + "\n",
++                    StandardOpenOption.CREATE_NEW);
++        }
++        try (var input = JavaSurveyGolden.class.getResourceAsStream("/golden/" + path + ".json")) {
++            assertThat(input).as("Java a380133 golden: %s", path).isNotNull();
++            return mapper.readTree(input);
++        }
++    }
++    public static void assertGolden(ObjectMapper mapper, String path, Object value) throws Exception {
++        JsonNode actual = mapper.readTree(mapper.writeValueAsString(value));
++        assertThat(actual).isEqualTo(readGolden(mapper, path, actual));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/support/SurveyGoldenClockConfig.java b/backend/src/test/java/com/ovengers/slotkey/support/SurveyGoldenClockConfig.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/support/SurveyGoldenClockConfig.java
+@@ -0,0 +1,15 @@
++package com.ovengers.slotkey.support;
++
++import org.springframework.boot.test.context.TestConfiguration;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Primary;
++import java.time.Clock;
++import java.time.Instant;
++import java.time.ZoneId;
++
++@TestConfiguration(proxyBeanMethods = false)
++public class SurveyGoldenClockConfig {
++    @Bean @Primary public Clock surveyClock() {
++        return Clock.fixed(Instant.parse("2026-10-23T00:00:00Z"), ZoneId.of("Asia/Seoul"));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/credit/dto/ChargeOrderSupplementGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/credit/dto/ChargeOrderSupplementGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/credit/dto/ChargeOrderSupplementGoldenTest.java
+@@ -0,0 +1,28 @@
++package com.ovengers.slotkey.credit.dto;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.credit.dto.response.ChargeOrderHistoryResponse;
++import com.ovengers.slotkey.credit.dto.response.ChargeOrderResponse;
++import com.ovengers.slotkey.credit.entity.ChargeOrder;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.json.JsonTest;
++import java.time.LocalDateTime;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.assertGolden;
++
++@JsonTest
++class ChargeOrderSupplementGoldenTest {
++    @Autowired private ObjectMapper mapper;
++    private static final LocalDateTime created = LocalDateTime.of(2026, 10, 23, 9, 0);
++    @Test void paidHistoryIncludesPaymentDisplayAndUpdatedTime() throws Exception {
++        var order = ChargeOrder.createPending(1L, "order-history-paid", 1000L, created);
++        order.recordPaymentMethod("CARD", "TOSS_PAYMENTS");
++        order.markPaid(created.plusMinutes(1));
++        assertGolden(mapper, "credit/history-paid-response", ChargeOrderHistoryResponse.from(order));
++    }
++    @Test void failedOrderKeepsFailedStatus() throws Exception {
++        var order = ChargeOrder.createPending(1L, "order-failed", 1000L, created);
++        order.markFailed("PG_REJECTED", created.plusMinutes(1));
++        assertGolden(mapper, "credit/order-failed-response", ChargeOrderResponse.from(order));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/credit/webhook/PgWebhookResultGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/credit/webhook/PgWebhookResultGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/credit/webhook/PgWebhookResultGoldenTest.java
+@@ -0,0 +1,20 @@
++package com.ovengers.slotkey.credit.webhook;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.EnumSource;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.json.JsonTest;
++import java.util.Locale;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.assertGolden;
++
++@JsonTest
++class PgWebhookResultGoldenTest {
++    @Autowired private ObjectMapper mapper;
++    @ParameterizedTest
++    @EnumSource(value = PgWebhookEventResult.class, names = {"CONFIRMED"}, mode = EnumSource.Mode.EXCLUDE)
++    void missingResultKeepsJavaEnumString(PgWebhookEventResult result) throws Exception {
++        String situation = result.name().toLowerCase(Locale.ROOT).replace('_', '-');
++        assertGolden(mapper, "credit/webhook-" + situation + "-result", result);
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/waitlist/WaitlistCancelledGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/waitlist/WaitlistCancelledGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/waitlist/WaitlistCancelledGoldenTest.java
+@@ -0,0 +1,24 @@
++package com.ovengers.slotkey.waitlist;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.waitlist.dto.response.WaitlistEntryResponse;
++import com.ovengers.slotkey.waitlist.entity.WaitlistEntry;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.json.JsonTest;
++import org.springframework.test.util.ReflectionTestUtils;
++import java.time.LocalDateTime;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.assertGolden;
++
++@JsonTest
++class WaitlistCancelledGoldenTest {
++    @Autowired private ObjectMapper mapper;
++    @Test void responseKeepsJavaFactoryOutput() throws Exception {
++        var created = LocalDateTime.of(2026, 10, 23, 9, 0);
++        var start = LocalDateTime.of(2026, 10, 25, 10, 0);
++        var entry = WaitlistEntry.waiting(1L, 20L, start, start.plusHours(1), created);
++        ReflectionTestUtils.setField(entry, "id", 3L);
++        entry.cancel();
++        assertGolden(mapper, "waitlist/entry-cancelled-response", WaitlistEntryResponse.of(entry, 0L));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/notification/NotificationReadGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/notification/NotificationReadGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/notification/NotificationReadGoldenTest.java
+@@ -0,0 +1,23 @@
++package com.ovengers.slotkey.notification;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.notification.dto.response.NotificationResponse;
++import com.ovengers.slotkey.notification.entity.Notification;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.json.JsonTest;
++import org.springframework.test.util.ReflectionTestUtils;
++import java.time.LocalDateTime;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.assertGolden;
++
++@JsonTest
++class NotificationReadGoldenTest {
++    @Autowired private ObjectMapper mapper;
++    @Test void responseKeepsJavaFactoryOutput() throws Exception {
++        var created = LocalDateTime.of(2026, 10, 23, 9, 0);
++        var notification = new Notification(1L, 3L, "00000000-0000-4000-8000-000000000001", "빈자리가 생겼습니다.", created);
++        ReflectionTestUtils.setField(notification, "id", 5L);
++        ReflectionTestUtils.setField(notification, "readAt", created.plusMinutes(1));
++        assertGolden(mapper, "notification/read-true-response", NotificationResponse.from(notification));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/outbox/OutboxPayloadGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/outbox/OutboxPayloadGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/outbox/OutboxPayloadGoldenTest.java
+@@ -0,0 +1,57 @@
++package com.ovengers.slotkey.outbox;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.support.IntegrationTestSupport;
++import com.ovengers.slotkey.support.SurveyGoldenClockConfig;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.EnumSource;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.context.annotation.Import;
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.transaction.annotation.Transactional;
++import java.time.LocalDateTime;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++import java.util.UUID;
++import static org.assertj.core.api.Assertions.assertThat;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.readGolden;
++
++@Import(SurveyGoldenClockConfig.class)
++@Transactional
++class OutboxPayloadGoldenTest extends IntegrationTestSupport {
++    @Autowired private SlotReleasedRecorder recorder;
++    @Autowired private JdbcTemplate jdbc;
++    @Autowired private ObjectMapper mapper;
++    @ParameterizedTest @EnumSource(SlotReleasedRecorder.Reason.class)
++    void recordedPayloadKeepsJavaFields(SlotReleasedRecorder.Reason reason) throws Exception {
++        recorder.record(10L, 20L, reason);
++        var rows = jdbc.queryForList("SELECT * FROM outbox_event WHERE partition_key = '20'");
++        assertThat(rows).hasSize(1);
++        var row = rows.getFirst();
++        assertThat(row.get("event_type")).isEqualTo("SlotReleased");
++        assertThat(row.get("topic")).isEqualTo("slot-released");
++        assertThat(row.get("partition_key")).isEqualTo("20");
++        assertThat(row.get("status")).isEqualTo("PENDING");
++        assertThat(row.get("attempts")).isEqualTo(0);
++        assertThat(row.get("published_at")).isNull();
++        var actual = mapper.readTree(row.get("payload").toString());
++        var situation = reason.name().toLowerCase(Locale.ROOT).replace('_', '-');
++        var expected = readGolden(mapper, "outbox/slot-released-" + situation + "-payload", actual);
++        List<String> actualFields = new ArrayList<>(), expectedFields = new ArrayList<>();
++        actual.fieldNames().forEachRemaining(actualFields::add);
++        expected.fieldNames().forEachRemaining(expectedFields::add);
++        assertThat(actualFields).containsExactlyInAnyOrderElementsOf(expectedFields);
++        assertThat(actual.get("eventId").isTextual()).isTrue();
++        assertThat(actual.get("eventId").textValue()).isEqualTo(row.get("event_id"));
++        var eventId = UUID.fromString(actual.get("eventId").textValue());
++        assertThat(eventId.toString()).isEqualTo(actual.get("eventId").textValue());
++        assertThat(eventId.version()).isEqualTo(4);
++        assertThat(eventId.variant()).isEqualTo(2);
++        for (var field : List.of("reservationId", "reason", "occurredAt"))
++            assertThat(actual.get(field)).as(field).isEqualTo(expected.get(field));
++        assertThat(actual.get("reservationId").isIntegralNumber()).isTrue();
++        assertThat(LocalDateTime.parse(actual.get("occurredAt").textValue()))
++            .isEqualTo(LocalDateTime.of(2026, 10, 23, 9, 0));
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/reservation/controller/ReservationHttpSupplementGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/reservation/controller/ReservationHttpSupplementGoldenTest.java
+new file mode 100644
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/reservation/controller/ReservationHttpSupplementGoldenTest.java
+@@ -0,0 +1,121 @@
++package com.ovengers.slotkey.reservation.controller;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.global.security.jwt.JwtProvider;
++import com.ovengers.slotkey.reservation.entity.ReservationStatus;
++import com.ovengers.slotkey.support.ReservationIntegrationTestSupport;
++import com.ovengers.slotkey.support.SurveyGoldenClockConfig;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.context.annotation.Import;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++import java.util.ArrayList;
++import java.util.Map;
++import static java.nio.charset.StandardCharsets.UTF_8;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static com.ovengers.slotkey.support.JavaSurveyGolden.readGolden;
++
++@AutoConfigureMockMvc
++@Import(SurveyGoldenClockConfig.class)
++class ReservationHttpSupplementGoldenTest extends ReservationIntegrationTestSupport {
++    @Autowired private MockMvc mvc;
++    @Autowired private ObjectMapper mapper;
++    @Autowired private JwtProvider jwtProvider;
++    @ParameterizedTest(name = "{0} -> {1}")
++    @CsvSource({"pay,200", "extend,200", "force-cancel,200", "expired-pay,409"})
++    void responseBodyKeepsJavaHttpOutput(String situation, int httpStatus) throws Exception {
++        Long memberId = createMember(30000), spaceId = createSpace();
++        jdbcTemplate.update("UPDATE member SET email = 'golden-owner@slotkey.test' WHERE id = ?", memberId);
++        jdbcTemplate.update("UPDATE spaces SET name = 'golden-space' WHERE id = ?", spaceId);
++        var initial = situation.endsWith("pay") ? ReservationStatus.HELD : ReservationStatus.CONFIRMED;
++        var start = now().plusDays(2).withHour(10);
++        var end = start.plusHours(1);
++        Long reservationId = createReservation(memberId, spaceId, initial, start, end);
++        if (situation.equals("expired-pay"))
++            jdbcTemplate.update("UPDATE reservation SET hold_expires_at = ? WHERE id = ?", now().minusMinutes(1), reservationId);
++        Long actorId = memberId;
++        if (situation.equals("force-cancel")) {
++            actorId = createMember(0);
++            jdbcTemplate.update("UPDATE member SET role = 'ADMIN' WHERE id = ?", actorId);
++        }
++        var token = issueSessionBoundAccessToken(memberRepository.findById(actorId).orElseThrow(), jwtProvider);
++        var endpoint = switch (situation) {
++            case "force-cancel" -> "/api/v1/admin/reservations/" + reservationId + "/force-cancel";
++            case "extend" -> "/api/v1/reservations/" + reservationId + "/extend";
++            default -> "/api/v1/reservations/" + reservationId + "/pay";
++        };
++        var body = switch (situation) {
++            case "force-cancel" -> "{\"reason\":\"golden cancellation\"}";
++            case "extend" -> mapper.writeValueAsString(Map.of("expectedEndTime", end, "newEndTime", end.plusMinutes(30)));
++            default -> "{\"spaceVersion\":0}";
++        };
++        var request = post(endpoint).header("Authorization", "Bearer " + token)
++                .header("Idempotency-Key", "golden-" + situation).contentType(MediaType.APPLICATION_JSON).content(body);
++        var response = mvc.perform(request).andExpect(status().is(httpStatus)).andReturn().getResponse();
++        var actual = mapper.readTree(response.getContentAsString(UTF_8));
++        var fixture = "reservation/" + situation + "-" + (httpStatus == 409 ? "conflict" : "success");
++        var expected = readGolden(mapper, fixture, actual);
++        assertFields(actual, expected);
++        var fields = expected.fields();
++        while (fields.hasNext()) {
++            var field = fields.next();
++            if (field.getKey().equals("data")) {
++                var actualData = actual.get("data");
++                assertFields(actualData, field.getValue());
++                var generatedIds = Map.of("reservationId", reservationId, "spaceId", spaceId, "memberId", memberId);
++                var dataFields = field.getValue().fields();
++                while (dataFields.hasNext()) {
++                    var dataField = dataFields.next();
++                    var name = dataField.getKey();
++                    if (generatedIds.containsKey(name)) {
++                        assertThat(actualData.get(name).isIntegralNumber()).as(name).isTrue();
++                        assertThat(actualData.get(name).longValue()).isEqualTo(generatedIds.get(name));
++                    } else assertThat(actualData.get(name)).as("data." + name).isEqualTo(dataField.getValue());
++                }
++                assertThat(actualData.get("totalAmount").isIntegralNumber()).isTrue();
++            } else assertThat(actual.get(field.getKey())).as(field.getKey()).isEqualTo(field.getValue());
++        }
++        switch (situation) {
++            case "pay" -> {
++                assertThat(statusOf(reservationId)).isEqualTo("CONFIRMED");
++                assertThat(balanceOf(memberId)).isEqualTo(20000);
++                var replay = mvc.perform(request).andExpect(status().isOk()).andReturn().getResponse();
++                assertThat(mapper.readTree(replay.getContentAsString(UTF_8))).isEqualTo(actual);
++                assertThat(balanceOf(memberId)).isEqualTo(20000);
++                assertThat(countLedger(reservationId, "RESERVATION_CHARGE")).isEqualTo(1);
++            }
++            case "extend" -> {
++                assertThat(statusOf(reservationId)).isEqualTo("CONFIRMED");
++                assertThat(balanceOf(memberId)).isEqualTo(25000);
++                assertThat(countSlots(reservationId)).isEqualTo(3);
++            }
++            case "force-cancel" -> {
++                assertThat(statusOf(reservationId)).isEqualTo("CANCELLED");
++                assertThat(balanceOf(memberId)).isEqualTo(40000);
++                assertThat(countSlots(reservationId)).isZero();
++                assertThat(countLedger(reservationId, "REFUND")).isEqualTo(1);
++            }
++            case "expired-pay" -> {
++                assertThat(statusOf(reservationId)).isEqualTo("HELD");
++                assertThat(balanceOf(memberId)).isEqualTo(30000);
++                assertThat(countSlots(reservationId)).isEqualTo(2);
++                assertThat(countLedger(reservationId, "RESERVATION_CHARGE")).isZero();
++                assertThat(countIdempotencyKeys(memberId)).isZero();
++            }
++        }
++    }
++    private void assertFields(JsonNode actual, JsonNode expected) {
++        assertThat(actual.isObject()).isTrue();
++        var actualFields = new ArrayList<String>();
++        var expectedFields = new ArrayList<String>();
++        actual.fieldNames().forEachRemaining(actualFields::add);
++        expected.fieldNames().forEachRemaining(expectedFields::add);
++        assertThat(actualFields).containsExactlyInAnyOrderElementsOf(expectedFields);
++    }
++}
