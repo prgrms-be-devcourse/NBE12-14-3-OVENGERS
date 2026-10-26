@@ -104,6 +104,7 @@ pitest {
         'com.ovengers.slotkey.space.policy.SpaceOperatingHoursPolicyTest',
         'com.ovengers.slotkey.space.service.SpaceSlotAvailabilityServiceTest',
         'com.ovengers.slotkey.credit.service.CreditServiceImplTest',
+        'com.ovengers.slotkey.credit.service.CreditServiceImplMutationTest',
         'com.ovengers.slotkey.access.policy.DoorAccessTimePolicyTest'
     ]
     outputFormats = ['HTML', 'XML']
