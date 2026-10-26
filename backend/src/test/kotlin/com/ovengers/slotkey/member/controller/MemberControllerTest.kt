@@ -42,7 +42,7 @@ class MemberControllerTest {
                 .build()
         val principal = AuthPrincipal(1L, "member@example.com", MemberRole.USER)
         SecurityContextHolder.getContext().authentication =
-            UsernamePasswordAuthenticationToken(principal, null, principal.authorities)
+            UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
     }
 
     @AfterEach
