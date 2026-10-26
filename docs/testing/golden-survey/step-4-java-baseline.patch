@@ -1,0 +1,172 @@
+diff --git a/backend/src/test/java/com/ovengers/slotkey/support/HttpBodyJavaSupport.java b/backend/src/test/java/com/ovengers/slotkey/support/HttpBodyJavaSupport.java
+new file mode 100644
+index 0000000..bc942c9
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/support/HttpBodyJavaSupport.java
+@@ -0,0 +1,71 @@
++package com.ovengers.slotkey.support;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.access.service.InactiveMemberAccessLogService;
++import com.ovengers.slotkey.auth.service.AuthSessionService;
++import com.ovengers.slotkey.credit.controller.ChargeOrderController;
++import com.ovengers.slotkey.credit.service.ChargeOrderConfirmService;
++import com.ovengers.slotkey.credit.service.ChargeOrderService;
++import com.ovengers.slotkey.global.config.*;
++import com.ovengers.slotkey.global.error.GlobalExceptionHandler;
++import com.ovengers.slotkey.global.security.CurrentMemberArgumentResolver;
++import com.ovengers.slotkey.global.security.jwt.JwtProvider;
++import com.ovengers.slotkey.global.security.jwt.JwtUtil;
++import com.ovengers.slotkey.notification.controller.NotificationController;
++import com.ovengers.slotkey.notification.service.NotificationQueryService;
++import com.ovengers.slotkey.waitlist.controller.WaitlistController;
++import com.ovengers.slotkey.waitlist.service.WaitlistService;
++import org.junit.jupiter.api.BeforeEach;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.boot.test.autoconfigure.web.servlet.*;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.context.annotation.Import;
++import org.springframework.test.context.ActiveProfiles;
++import org.springframework.test.web.servlet.MockMvc;
++import java.nio.file.*;
++import java.nio.charset.StandardCharsets;
++import java.util.Map;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.ArgumentMatchers.*;
++import static org.mockito.BDDMockito.given;
++
++@WebMvcTest({ChargeOrderController.class, WaitlistController.class, NotificationController.class})
++@AutoConfigureMockMvc(print = MockMvcPrint.NONE)
++@ActiveProfiles("test")
++@Import({SecurityConfig.class, ClockConfig.class, JwtProvider.class, WebMvcConfig.class,
++        CurrentMemberArgumentResolver.class, GlobalExceptionHandler.class})
++public abstract class HttpBodyJavaSupport {
++    @Autowired protected MockMvc mvc;
++    @Autowired protected ObjectMapper mapper;
++    @MockBean protected ChargeOrderService chargeOrders;
++    @MockBean protected ChargeOrderConfirmService confirmations;
++    @MockBean protected WaitlistService waitlist;
++    @MockBean protected NotificationQueryService notifications;
++    @MockBean private AuthSessionService sessions;
++    @MockBean private InactiveMemberAccessLogService inactiveAccess;
++    @Value("${custom.jwt.secret-key}") private String secretKey;
++
++    @BeforeEach
++    void allowSession() {
++        given(sessions.validate(anyString(), anyLong())).willReturn(AuthSessionService.ValidationResult.VALID);
++    }
++
++    protected String authorization() {
++        return "Bearer " + JwtUtil.createToken(secretKey, 300_000L,
++                Map.of("id", 7L, "email", "user@slotkey.test", "role", "USER", "sid", "test-session"));
++    }
++
++    protected void compare(String path, byte[] body) throws Exception {
++        String capture = System.getenv("GOLDEN_HTTP_CAPTURE_DIR");
++        if (capture != null) {
++            Path target = Path.of(capture, path + ".json");
++            Files.createDirectories(target.getParent());
++            Files.write(target, body, StandardOpenOption.CREATE_NEW);
++        }
++        try (var input = getClass().getResourceAsStream("/golden/" + path + ".json")) {
++            assertThat(input).as("Java a380133 HTTP golden: %s", path).isNotNull();
++            assertThat(mapper.readTree(body)).isEqualTo(mapper.readTree(input));
++        }
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/credit/controller/ChargeConfirmHttpBodyJavaGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/credit/controller/ChargeConfirmHttpBodyJavaGoldenTest.java
+new file mode 100644
+index 0000000..44a74ea
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/credit/controller/ChargeConfirmHttpBodyJavaGoldenTest.java
+@@ -0,0 +1,25 @@
++package com.ovengers.slotkey.credit.controller;
++import com.ovengers.slotkey.support.HttpBodyJavaSupport;
++import com.ovengers.slotkey.credit.dto.response.ChargeOrderConfirmResponse;
++import com.ovengers.slotkey.credit.entity.ChargeOrderStatus;
++import org.junit.jupiter.api.Test;
++import org.springframework.http.MediaType;
++import static org.mockito.BDDMockito.given;
++import static org.mockito.Mockito.verify;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++class ChargeConfirmHttpBodyJavaGoldenTest extends HttpBodyJavaSupport {
++    @Test void confirmingReturns202WithJavaBody() throws Exception {
++        String orderId = "chg_550e8400-e29b-41d4-a716-446655440000";
++        given(confirmations.confirm(7L, "payment-key", orderId, 1000L, "request-key"))
++                .willReturn(new ChargeOrderConfirmResponse(orderId, 1000L, ChargeOrderStatus.CONFIRMING));
++        var response = mvc.perform(post("/api/v1/credits/charge-orders/confirm")
++                .header("Authorization", authorization()).header("Idempotency-Key", "request-key")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content("{\"paymentKey\":\"payment-key\",\"orderId\":\"" + orderId + "\",\"amount\":1000}"))
++                .andExpect(status().isAccepted()).andReturn().getResponse();
++        compare("credit/confirm-confirming-accepted", response.getContentAsByteArray());
++        verify(confirmations).confirm(7L, "payment-key", orderId, 1000L, "request-key");
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/waitlist/controller/WaitlistApplyHttpBodyJavaGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/waitlist/controller/WaitlistApplyHttpBodyJavaGoldenTest.java
+new file mode 100644
+index 0000000..11fa4f7
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/waitlist/controller/WaitlistApplyHttpBodyJavaGoldenTest.java
+@@ -0,0 +1,26 @@
++package com.ovengers.slotkey.waitlist.controller;
++import com.ovengers.slotkey.support.HttpBodyJavaSupport;
++import com.ovengers.slotkey.waitlist.dto.response.WaitlistEntryResponse;
++import com.ovengers.slotkey.waitlist.entity.WaitlistStatus;
++import java.time.LocalDateTime;
++import org.junit.jupiter.api.Test;
++import org.springframework.http.MediaType;
++import static org.mockito.BDDMockito.given;
++import static org.mockito.Mockito.verify;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++class WaitlistApplyHttpBodyJavaGoldenTest extends HttpBodyJavaSupport {
++    @Test void waitingReturns201WithJavaBody() throws Exception {
++        var start = LocalDateTime.of(2026, 10, 20, 14, 0);
++        var end = start.plusHours(1);
++        given(waitlist.apply(7L, 3L, start, end)).willReturn(new WaitlistEntryResponse(
++                11L, 3L, start, end, WaitlistStatus.WAITING, 2L, LocalDateTime.of(2026, 10, 15, 9, 0)));
++        var response = mvc.perform(post("/api/v1/waitlist").header("Authorization", authorization())
++                .contentType(MediaType.APPLICATION_JSON)
++                .content("{\"spaceId\":3,\"startTime\":\"2026-10-20T14:00:00\",\"endTime\":\"2026-10-20T15:00:00\"}"))
++                .andExpect(status().isCreated()).andReturn().getResponse();
++        compare("waitlist/apply-waiting-created", response.getContentAsByteArray());
++        verify(waitlist).apply(7L, 3L, start, end);
++    }
++}
+diff --git a/backend/src/test/java/com/ovengers/slotkey/notification/NotificationListHttpBodyJavaGoldenTest.java b/backend/src/test/java/com/ovengers/slotkey/notification/NotificationListHttpBodyJavaGoldenTest.java
+new file mode 100644
+index 0000000..05ebae3
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/notification/NotificationListHttpBodyJavaGoldenTest.java
+@@ -0,0 +1,26 @@
++package com.ovengers.slotkey.notification;
++import com.ovengers.slotkey.support.HttpBodyJavaSupport;
++import com.ovengers.slotkey.notification.dto.response.NotificationResponse;
++import java.time.LocalDateTime;
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.springframework.data.domain.PageImpl;
++import org.springframework.data.domain.PageRequest;
++import static org.mockito.BDDMockito.given;
++import static org.mockito.Mockito.verify;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++class NotificationListHttpBodyJavaGoldenTest extends HttpBodyJavaSupport {
++    @Test void listReturnsOrderedNotificationsAndJavaPageBody() throws Exception {
++        var pageable = PageRequest.of(1, 2);
++        var created = LocalDateTime.of(2026, 10, 16, 12, 0);
++        given(notifications.getMyNotifications(7L, pageable)).willReturn(new PageImpl<>(List.of(
++                new NotificationResponse(2L, 12L, "두 번째 알림", true, created.plusMinutes(1)),
++                new NotificationResponse(1L, 11L, "자리가 비었습니다", false, created)), pageable, 5L));
++        var response = mvc.perform(get("/api/v1/notifications").param("page", "1").param("size", "2")
++                .header("Authorization", authorization())).andExpect(status().isOk()).andReturn().getResponse();
++        compare("notification/list-nonfirst-page-ok", response.getContentAsByteArray());
++        verify(notifications).getMyNotifications(7L, pageable);
++    }
++}
