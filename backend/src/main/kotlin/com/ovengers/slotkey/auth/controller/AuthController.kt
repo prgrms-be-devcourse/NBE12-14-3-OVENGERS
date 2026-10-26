@@ -9,6 +9,7 @@ import com.ovengers.slotkey.auth.ratelimit.LoginRateLimitService
 import com.ovengers.slotkey.auth.service.AuthService
 import com.ovengers.slotkey.auth.service.PasswordResetService
 import com.ovengers.slotkey.global.common.response.ApiResponse
+import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.global.security.AuthPrincipal
 import com.ovengers.slotkey.member.dto.request.MemberWithdrawalRequest
@@ -184,10 +185,17 @@ class AuthController(
     )
     @PostMapping("/refresh")
     fun refresh(
-        @CookieValue(name = "refreshToken", required = false) rawRefreshToken: String?,
+        @CookieValue(name = "refreshToken", required = false)
+        rawRefreshToken: String?,
     ): ResponseEntity<ApiResponse<LoginResponse>> {
-        val result = authService.refresh(rawRefreshToken)
+        val token =
+            rawRefreshToken
+                ?.takeIf { it.isNotBlank() }
+                ?: throw BusinessException(ErrorCode.INVALID_REFRESH_TOKEN)
+
+        val result = authService.refresh(token)
         val refreshCookie = refreshCookie(result.refreshToken, result.sessionExpiresAt)
+
         return ResponseEntity
             .ok()
             .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
@@ -220,9 +228,13 @@ class AuthController(
     @ApiResponses(value = [OpenApiResponse(responseCode = "204", description = "로그아웃 처리 완료. 응답 본문 없음", content = [Content()])])
     @PostMapping("/logout")
     fun logout(
-        @CookieValue(name = "refreshToken", required = false) rawRefreshToken: String?,
+        @CookieValue(name = "refreshToken", required = false)
+        rawRefreshToken: String?,
     ): ResponseEntity<Void> {
-        authService.logout(rawRefreshToken)
+        rawRefreshToken
+            ?.takeIf { it.isNotBlank() }
+            ?.let(authService::logout)
+
         return ResponseEntity
             .noContent()
             .header(HttpHeaders.SET_COOKIE, deleteRefreshCookie().toString())
