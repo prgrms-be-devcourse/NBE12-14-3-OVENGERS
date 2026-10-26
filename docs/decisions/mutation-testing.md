@@ -63,6 +63,45 @@ AI가 작성하거나 Kotlin 전환 중 옮긴 테스트가 "틀렸는데 통과
 - 실행 시간을 기록해 CI 편입 가능 여부를 판단한다.
 - 점수 100% 달성은 목표가 아니다.
 
+### 검증 결과 (4단계까지, 2026-10-26 · Claude 별도 세션 검증)
+
+> 6단계가 끝나지 않아 최종 결과가 아니다. 구현은 Codex(4단계)와 Claude(1~3단계), 검증은 4단계만 Claude가 새 세션에서 했다. 5단계(팀원 담당 클래스)와 6단계(최종 정리)는 남아 있다. 보고서 수치를 그대로 쓰지 않고 아래를 직접 확인했다.
+
+| 확인 항목 | 결과 |
+| --- | --- |
+| 전체 테스트 | `cleanTest test` 직접 실행: 169개 클래스, 1,305건, 실패 0·오류 0·스킵 0, 8분 49초. (처음 `test`만 실행했을 때 Gradle이 `up-to-date`로 이전 결과를 재사용해 5초 만에 끝났고, 이는 증거로 쓰지 않았다) |
+| 운영 코드·CI 변경 | 없음. `git diff HEAD -- backend/src/main .github` 비어 있음. `ReservationRepository.kt`에 변조 흔적 없음 |
+| 규칙 위반 | 새 Kotlin 테스트에 Lombok·`data class`·시크릿 없음. 배포 job 변경 없음. 에이전트 코드 변경 없음 |
+| `ChargeOrder` PIT 수치 | 직접 재측정: 28개 생성, 12 잡힘, 4 생존, 12 커버리지 없음. 보고서와 일치 |
+| 수동 변조 6건(구멍으로 분류된 것) 재현 | 6건 모두 새 `ReservationConditionalUpdateBoundaryTest`가 실패. 매번 원복해 최종 diff 없음 |
+| "기존 테스트는 못 잡았다" 주장 | 변조 5건(`cancelIfHeld` 상태 가드, 노쇼 2건, 자동 체크아웃 2건)을 `ReservationCancelServiceTest`·`ReservationBatchProcessorTest`·`ReservationCompletionSchedulerTest`·`ReservationHoldExpirationServiceTest`에 직접 적용해 모두 통과(실패 0)함을 확인. 이 테스트들은 Repository를 mock으로 대체해 JPQL을 실행하지 않는다. 나머지 1건(`SET status` 변조)은 쿼리 검증 오류라 mock 테스트에서는 애초에 드러나지 않는다 |
+| 새 테스트 8건 중 변조로 실제 실패한 것 | 7건. 나머지 1건(자동 체크아웃, 종료 1초 전에는 전이하지 않음)은 어떤 변조에서도 실패하지 않아 경계 고정용 보강으로 본다 |
+
+**누적 성과 (1~4단계)**
+
+| 단계 | 대상 | 구멍 | 추가한 테스트 | 뮤턴트·변조를 직접 죽인 테스트 | 경계 고정용 보강 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 1 | 정책 2개 baseline | 0 | 0 | 0 | 0 |
+| 2 | 정책 2개 `STRONGER` | 1 | 4 | 1 | 3 |
+| 3 | `PricingService` | 0 | 0 | 0 | 0 |
+| 4 | `ChargeOrder` PIT | 1 | 1 | 1 | 0 |
+| 4 | 예약 조건부 UPDATE 수동 변조 20건 | 6 | 8 | 7 | 1 |
+| 합계 | | **8** | **13** | **9** | **4** |
+
+**대표 사례 후보 (아직 확정 아님)**
+1. 운영시간 마감 초과 검사 누락: 검사를 지워도 전체 테스트 통과, 라인 커버리지 100%였다(2단계).
+2. 노쇼·자동 체크아웃 쿼리의 `<`/`<=` 경계와 상태 가드: 기존 서비스 테스트는 Repository를 mock으로 대체해 JPQL을 실행하지 않아 6건의 변조를 모두 통과시켰다(4단계). 도구(PIT)가 보지 못하는 쿼리 속 비즈니스 규칙을 수동 변조로 검증한 사례다.
+3. `ChargeOrder.createPending`의 null 회원 ID 거절 검사 누락(4단계).
+
+**검증 중 발견한 한계·주의**
+- PIT는 필드 대입을 변조하지 못한다. 오픈소스 PIT에는 대입용 mutator가 없다(`MEMBER_VARIABLE`은 unknown으로 거부됨). 그래서 `ChargeOrder.markPaid`·`markFailed`·`markRecoveryExhausted` 등 돈이 오가는 상태 전이 메서드에는 뮤턴트가 0건이다. 이 메서드들의 전이는 PIT로 검증되지 않았다. 필요하면 쿼리처럼 수동 변조로 별도 확인한다(후속 후보).
+- 수동 변조 `cancelIfHeld`의 `SET status = :cancelled → :held`는 쿼리에서 `:cancelled` 파라미터가 사용되지 않아 Spring이 쿼리를 거부하므로, 새 통합 테스트 8건이 모두 컨텍스트 로딩 실패로 실패한다. "상태가 CANCELLED로 바뀌었는가" 단언이 아니라 쿼리 검증에 의해 죽은 것이다. 같은 의미의 오류(다른 상태로 설정)는 단언 테스트(`HELD cancellation changes status and records the cancellation time`)가 잡아야 하지만 이 변조 방식으로는 분리해 확인하지 못했다.
+- Codex가 변조하지 않은 후보 조회 쿼리 3개(`findExpiredHoldIds`, `findNoShowCandidateIds`, `findAutoCheckOutCandidateIds`)가 같은 경계 조건을 가진다. UPDATE가 조건을 다시 검사하므로 위험은 낮지만 미검증이다.
+- 노쇼 정각 경계 테스트는 Repository 파라미터(`startTimeBefore`)에 직접 값을 넣는다. 파라미터를 `now - 15분`으로 계산하는 `ReservationBatchProcessor`의 계산 자체는 경계에서 검증하지 않는다.
+- `Reservation` 엔티티의 전이 메서드 7개는 운영 코드에서 호출되지 않는다. 전이 규칙이 엔티티와 쿼리에 중복돼 어긋날 위험이 있다. 삭제 여부는 팀 판단으로 남아 있다(보고서의 질문 1).
+- 노쇼 정각 경계(보고서의 질문 2): 현재 쿼리의 `startTime < now - 15분`(정각까지는 NO_SHOW 아님)은 `access-key-policy.md`의 최초 체크인 구간 `[start, start+15분]`(닫힌 구간)과 일치한다. 정각 `start+15분`에 체크인할 수 있어야 하므로 노쇼는 그 이후여야 한다. 코드 변경 없이 유지하면 된다.
+- CI에서의 전체 테스트 통과는 PR을 올린 뒤 확인한다(이 검증은 로컬 Docker 환경).
+
 ## 6. 한계와 재검토 조건
 
 - 뮤테이션 테스트는 단위 수준의 단언 품질을 본다. 동시성·멱등성 같은 경합 문제는 뮤턴트로 잡히지 않으므로 기존 통합 테스트가 계속 필요하다.
