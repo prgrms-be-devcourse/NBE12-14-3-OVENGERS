@@ -1,6 +1,6 @@
 # 뮤테이션 테스트(PIT) 도입 계획
 
-> 작성: 2026-10-26. 범위·순서의 기준 문서다. 이유와 trade-off는 [decisions/mutation-testing.md](../../decisions/mutation-testing.md)에 있고 여기에 복사하지 않는다. 상태: 0~4단계와 후속 #154 완료(2026-10-26), 5~6단계 대기. 진행 현황은 아래 "3-1. 진행 현황"을 본다.
+> 작성: 2026-10-26. 범위·순서의 기준 문서다. 이유와 trade-off는 [decisions/mutation-testing.md](../../decisions/mutation-testing.md)에 있고 여기에 복사하지 않는다. 상태: 0~6단계와 후속 #154 모두 완료(2026-10-26). 진행 현황은 아래 "3-1. 진행 현황"을 본다.
 
 ## 1. 목표와 범위
 
@@ -50,12 +50,12 @@
 | 2 | 완료 | 구멍 1개, 테스트 4개 | PR #144, [step-2](../../lab/notes/mutation-testing/step-2.md) |
 | 3 | 완료 | 구멍 0개 | PR #151, [step-3](../../lab/notes/mutation-testing/step-3.md) |
 | 4 | 완료 | 구멍 7개, 테스트 9개 (`ChargeOrder` PIT, 예약 조건부 UPDATE 수동 변조) | PR #151, [step-4](../../lab/notes/mutation-testing/step-4.md) |
-| 후속 #154 | 완료 | `ChargeOrder` 전이 수동 변조 20건, 구멍 5개, 테스트 2개 | [follow-up-154](../../lab/notes/mutation-testing/follow-up-154.md) |
-| 후속 #155 | 대기 | `Reservation` 엔티티의 호출되지 않는 전이 메서드 7개 삭제 여부 (팀 판단) | 이슈 #155 |
-| 5 | 대기 | 팀원 담당 클래스. 담당자 사전 공유 필요 | |
-| 6 | 대기 | 발표용 정리, 면접 정리, CI 편입 재검토 | |
+| 후속 #154 | 완료 | `ChargeOrder` 전이 수동 변조 20건, 구멍 5개, 테스트 2개 | PR #158, [follow-up-154](../../lab/notes/mutation-testing/follow-up-154.md) |
+| 후속 #155 | 완료 (유지로 결정) | `Reservation` 엔티티의 호출되지 않는 전이 메서드 7개는 삭제하지 않고 유지 | [결정 문서 §5 최종 요약](../../decisions/mutation-testing.md) |
+| 5 | 완료 | 팀원 담당 클래스 측정. `CreditServiceImpl` 구멍 3개, 테스트 6개 (박창현·김재철 클래스는 조치 없음) | PR #163, [step-5](../../lab/notes/mutation-testing/step-5.md), [step-5-credit](../../lab/notes/mutation-testing/step-5-credit.md) |
+| 6 | 완료 | 최종 정리, 면접·발표용 정리, CI 편입 판단(수동 유지) | [결정 문서](../../decisions/mutation-testing.md), [발표 구성안](../../lab/notes/mutation-testing/presentation-outline.md) |
 
-누적: 구멍 13개, 추가한 테스트 15개(직접 죽인 11개 + 경계 고정용 4개). 상세 수치와 한계는 [결정 문서 §5](../../decisions/mutation-testing.md)에 있다.
+최종 누적: 구멍 16개, 추가한 테스트 21개(직접 죽인 16개 + 경계 고정용 5개). 상세 수치와 한계는 [결정 문서 §5](../../decisions/mutation-testing.md)에 있다.
 
 ### 작업 규칙
 
