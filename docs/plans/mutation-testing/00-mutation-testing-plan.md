@@ -5,7 +5,7 @@
 ## 1. 목표와 범위
 
 - 목표: 포트폴리오 서사가 우선이다(품질 게이트는 목표 아님). AI가 작성·변환한 테스트가 "틀렸는데 통과"하거나 "누락"된 곳을 살아남은 뮤턴트로 찾아 보강한다.
-- 포함: 이태호 담당 도메인(reservation, credit PG 충전)의 핵심 로직(정책, 금액 계산, 상태 전이)
+- 포함: 핵심 도메인 로직(정책, 금액 계산, 상태 전이). 이태호 담당(reservation, credit PG 충전)부터 시작하고, 이후 access·space·credit 원장으로 넓힌다
 - 제외: Controller, Repository, DTO, 설정, PG 클라이언트. 통합 테스트(Testcontainers) 의존 코드. 동시성·멱등성 검증(기존 통합 테스트가 담당)
 - 비목표: 점수 목표, 점수 100%, CI 상시 실행(수동 실행. 실행 시간을 본 뒤 편입 여부 재검토)
 - 성과 기록: 전/후 점수(참고), 발견한 구멍 N개, 추가한 테스트 M개, 대표 사례 3개(기존 테스트에서 고른 사례 포함 가능)
@@ -21,16 +21,11 @@
 | 3 | `reservation/service/PricingService` | 이태호 | 21 | Java 단위 | 가격 계산 |
 | 4 | `reservation/entity/Reservation` 상태 전이 메서드 | 이태호 | 324 | 대부분 Java 서비스·통합 테스트 | 단위 테스트 부족 가능성. 먼저 확인 필요 |
 | 4 | `credit/entity/ChargeOrder` 상태 전이 | 이태호 | 160 | Java | 금액·멱등성 근처 |
+| 5 | `access/policy/DoorAccessTimePolicy` | 박창현 | 64 | Kotlin 단위 + 서비스 테스트 | 출입 시간 경계 |
+| 5 | `space/policy/SpaceOperatingHoursPolicy` | 김재철 | 88 | Kotlin 단위 + 서비스 테스트 | 운영 시간 |
+| 5 | `credit/service/CreditService` | 백한비 | 53 | Java | 크레딧 차감·증가 |
 
-### 확장 후보 (팀원 담당, 시간이 남을 때만)
-
-> 2026-10-26 결정: 한 사람(이태호)이 PIT 설정·실행·측정을 주도하고, 1차 대상은 본인 담당 도메인으로 한정한다. 아래는 담당자와 협의한 뒤에만 진행한다. 이 경우 이태호가 살아남은 뮤턴트 목록을 만들어 공유하고, 구멍 판단과 테스트 추가는 담당자가 하거나 새 테스트 파일로 추가한 PR을 담당자가 리뷰한다. 담당 구분은 [team-guide.md](../kotlin-migration/team-guide.md)를 따른다.
-
-| 대상 클래스 | 담당 | 줄 수 | 기존 테스트 |
-| --- | --- | --- | --- |
-| `access/policy/DoorAccessTimePolicy` | 박창현 | 64 | Kotlin 단위 + 서비스 테스트 |
-| `space/policy/SpaceOperatingHoursPolicy` | 김재철 | 88 | Kotlin 단위 + 서비스 테스트 |
-| `credit/service/CreditService` | 백한비 | 53 | Java |
+> 2026-10-26 결정: 한 사람(이태호)이 PIT 설정·실행·측정·테스트 추가를 모두 맡는다. 5단계 대상은 다른 팀원 담당 파일이므로, 새 테스트는 새 파일로 추가하고 PR은 해당 담당자의 리뷰를 받는다. 구멍인지 동치 뮤턴트인지 애매하면 담당자에게 묻는다. 담당 구분은 [team-guide.md](../kotlin-migration/team-guide.md)를 따른다.
 
 ## 3. 단계
 
@@ -43,7 +38,8 @@
 | 2 | 살아남은 뮤턴트 분류(구멍 / 동치 / 대상 아님), 구멍은 테스트 먼저 추가 | 추가 테스트가 해당 뮤턴트를 죽임, 전체 테스트 통과 |
 | 3 | `PricingService`로 확장 | 단계 2와 동일 |
 | 4 | 상태 전이(`Reservation`, `ChargeOrder`)로 확장(범위 확정). `dev`를 다시 받아 최신 상태에서 baseline 측정. 단위 테스트가 부족하면 먼저 단위 테스트 추가 | 단계 2와 동일 |
-| 5 | (선택) 확장 후보의 살아남은 뮤턴트 목록을 담당자와 공유. 전/후 점수, 구멍 N개·테스트 M개·대표 사례 3개 정리, 결정 문서 §5·면접 정리 채움, CI 편입 여부 재검토 | 검증 결과 작성 |
+| 5 | 다른 팀원 담당 클래스(`DoorAccessTimePolicy`, `SpaceOperatingHoursPolicy`, `CreditService`)로 확장. 단계 2와 동일하게 진행하고 PR은 담당자 리뷰를 받는다 | 단계 2와 동일 |
+| 6 | 전/후 점수, 구멍 N개·테스트 M개·대표 사례 3개 정리, 결정 문서 §5·면접 정리 채움, CI 편입 여부 재검토 | 검증 결과 작성 |
 
 ### 작업 규칙
 
