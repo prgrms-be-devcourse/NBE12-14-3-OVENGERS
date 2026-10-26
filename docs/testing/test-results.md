@@ -8,6 +8,22 @@
 
 ---
 
+## 0-MT. 뮤테이션 테스트 도입과 전체 회귀 (2026-10-26, 로컬)
+
+> 결정과 상세 결과는 [뮤테이션 테스트 결정](../decisions/mutation-testing.md), 단계별 보고는 [`lab/notes/mutation-testing/`](../lab/notes/mutation-testing/)에 있다. 아래는 작업 단계마다 구현과 다른 세션에서 직접 재실행한 전체 회귀 결과다. 모두 Docker를 켠 로컬에서 `cleanTest test`로 실행했다.
+
+| 시점 | 명령 | 클래스 | 테스트 | 실패·오류·스킵 | 시간 |
+| --- | --- | ---: | ---: | ---: | --- |
+| 4단계 (예약 조건부 UPDATE 수동 변조 보강) | `./gradlew cleanTest test` | 169 | 1,305 | 0 | 8분 49초 |
+| 후속 #154 (`ChargeOrder` 전이 보강) | `./gradlew cleanTest test` | 175 | 1,318 | 0 | 9분 23초 |
+| 5단계 (`CreditServiceImpl` 보강) | `./gradlew cleanTest test` | 175 | 1,322 | 0 | 9분 38초 |
+
+- 테스트 수 증가는 뮤테이션 작업의 새 테스트(4단계 8건, #154 2건, 5단계 6건)와 같은 기간에 병합된 다른 PR의 테스트가 함께 반영된 결과다.
+- **재현 주의:** `./gradlew test`만 다시 실행하면 입력이 같을 때 Gradle이 `up-to-date`로 이전 결과를 재사용해 5초 만에 끝난다. 실제 재실행 근거는 `cleanTest`를 붙이거나 소스가 바뀐 실행만 쓴다.
+- PIT 실행(`./gradlew pitest`, 단위 테스트 한정)은 Gradle 기동 포함 약 22~43초다. 통합 테스트까지 포함하면 7분 17초였다.
+
+---
+
 ## 0-KT2. 목요일 전환 타입 non-null 후속 변경 (2026-10-22, 로컬)
 
 > 사용자의 nullable 제거 요청을 반영한 코드 `3c65285`, 브랜치 `feat/kotlin-thursday-policies`, PR #26. 초기 boxed Long·null 입력 보존 계약은 [non-null 결정](../decisions/kotlin-thursday-non-null-contract.md)으로 변경했다. 외부 PG 누락 값의 결과 모름 처리와 HTTP Bean Validation 경계는 유지했다.

@@ -4,7 +4,7 @@ type: 정책
 status: 채택
 date: 2026-10-22
 tags: [kotlin, testing, golden-file, ci, migration]
-related: [kotlin-ktlint.md, kotlin-data-class-scope.md]
+related: [kotlin-ktlint.md, kotlin-data-class-scope.md, mutation-testing.md]
 ---
 
 # 테스트는 코드와 함께 Kotlin으로 옮기되 테스트 수 하한과 골든 파일로 약해지지 않게 지킨다
@@ -51,7 +51,7 @@ related: [kotlin-ktlint.md, kotlin-data-class-scope.md]
 
 ## 6. 한계와 재검토 조건
 
-- 테스트 수가 같아도 단언이 약해진 경우는 이 검사가 잡지 못한다. 리뷰에서 판정 줄 변경 여부를 확인한다.
+- 테스트 수가 같아도 단언이 약해진 경우는 이 검사가 잡지 못한다. 리뷰에서 판정 줄 변경 여부를 확인한다. 이 한계는 [뮤테이션 테스트](mutation-testing.md)로 보완했다(핵심 도메인 로직 한정, 수동 실행, 2026-10-26).
 - 서비스 파라미터가 Kotlin non-null이 되면 Mockito 매처(`any()`, `eq()`, `capture()`는 `null`을 반환)가 호출 시점에 NPE를 낸다(2026-10-24 step-05 전체 빌드에서 8건). 서비스 파라미터를 nullable로 느슨하게 하지 않고 테스트 쪽에서 값을 그대로 돌려주는 헬퍼(`eqNonNull`, `captureNonNull` 등)로 고친다. 직접 대응 테스트만 돌리면 놓치므로 변환한 클래스를 참조하는 테스트 전체를 실행한다. 같은 문제가 여러 파일에서 반복되면 mockito-kotlin 도입을 재검토한다.
 - 전환이 끝난 뒤 골든 파일을 계속 유지할지, 일반 계약 테스트로 흡수할지 재검토한다.
 
