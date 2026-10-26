@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
@@ -118,7 +119,7 @@ class DoorAccessGoldenTest {
             mockMvc
                 .perform(
                     post("/api/v1/reservations/101/door-token")
-                        .header("Authorization", authorization),
+                        .header(HttpHeaders.AUTHORIZATION, authorization),
                 ).andExpect(status().isCreated)
                 .andReturn()
 
@@ -170,7 +171,7 @@ class DoorAccessGoldenTest {
         val result =
             mockMvc
                 .perform(
-                    get("/api/v1/reservations/101/access-logs").header("Authorization", authorization),
+                    get("/api/v1/reservations/101/access-logs").header(HttpHeaders.AUTHORIZATION, authorization),
                 ).andExpect(status().isOk)
                 .andReturn()
 
@@ -185,7 +186,7 @@ class DoorAccessGoldenTest {
         val result =
             mockMvc
                 .perform(
-                    get("/api/v1/reservations/101/access-logs").header("Authorization", authorization),
+                    get("/api/v1/reservations/101/access-logs").header(HttpHeaders.AUTHORIZATION, authorization),
                 ).andExpect(status().isOk)
                 .andReturn()
 
@@ -237,7 +238,7 @@ class DoorAccessGoldenTest {
         val result =
             mockMvc
                 .perform(
-                    get("/api/v1/reservations/101/access-logs").header("Authorization", authorization),
+                    get("/api/v1/reservations/101/access-logs").header(HttpHeaders.AUTHORIZATION, authorization),
                 ).andExpect(status().isForbidden)
                 .andReturn()
 
@@ -251,7 +252,7 @@ class DoorAccessGoldenTest {
         mockMvc
             .perform(
                 post("/api/v1/door-access/verify")
-                    .header("Authorization", authorization)
+                    .header(HttpHeaders.AUTHORIZATION, authorization)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(body),
             ).andExpect(status().`is`(expectedStatus))

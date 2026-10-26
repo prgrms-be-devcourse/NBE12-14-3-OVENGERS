@@ -63,7 +63,7 @@ object ReservationTimePolicy {
             throw BusinessException(ErrorCode.INVALID_RESERVATION_TIME, "연장은 기존 예약과 같은 날짜 내에서만 가능합니다.")
         }
         val newEnd = newEndTime.toLocalTime()
-        if (newEnd.isAfter(closing) || (newEnd == LocalTime.MIDNIGHT && closing != LocalTime.MIDNIGHT)) {
+        if (newEnd.isAfter(closing)) {
             throw BusinessException(ErrorCode.INVALID_RESERVATION_TIME, "오피스 운영시간 내에서만 연장할 수 있습니다.")
         }
     }

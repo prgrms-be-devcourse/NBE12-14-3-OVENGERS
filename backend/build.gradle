@@ -80,4 +80,16 @@ tasks.named('test') {
     systemProperty 'spring.test.context.cache.maxSize', '2'
 }
 
-apply from: 'gradle/pitest-access.gradle'
+// 뮤테이션 테스트(수동 실행: ./gradlew pitest). 대상·범위는 docs/plans/mutation-testing 참고.
+pitest {
+    junit5PluginVersion = '1.2.3'
+    targetClasses = [
+        'com.ovengers.slotkey.reservation.policy.ReservationTimePolicy',
+        'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy'
+    ]
+    targetTests = ['com.ovengers.slotkey.reservation.policy.*']
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+    mutators = ['STRONGER']
+    threads = 4
+}
