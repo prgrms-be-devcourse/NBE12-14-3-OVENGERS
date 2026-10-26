@@ -85,9 +85,13 @@ pitest {
     junit5PluginVersion = '1.2.3'
     targetClasses = [
         'com.ovengers.slotkey.reservation.policy.ReservationTimePolicy',
-        'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy'
+        'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy',
+        'com.ovengers.slotkey.reservation.service.PricingService'
     ]
-    targetTests = ['com.ovengers.slotkey.reservation.policy.*']
+    targetTests = [
+        'com.ovengers.slotkey.reservation.policy.*',
+        'com.ovengers.slotkey.reservation.service.PricingServiceTest'
+    ]
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
     mutators = ['STRONGER']
