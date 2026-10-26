@@ -1,0 +1,5 @@
+{
+  "status" : "FAIL",
+  "code" : "RESERVATION_STATE_CONFLICT",
+  "message" : "HOLD가 만료되었거나 이미 처리된 예약입니다."
+}

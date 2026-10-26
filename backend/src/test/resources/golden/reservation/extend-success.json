@@ -1,0 +1,22 @@
+{
+  "status" : "SUCCESS",
+  "code" : "OK",
+  "message" : "요청이 성공적으로 처리되었습니다.",
+  "data" : {
+    "reservationId" : 2,
+    "spaceId" : 2,
+    "startTime" : "2026-10-25T10:00:00",
+    "endTime" : "2026-10-25T11:30:00",
+    "status" : "CONFIRMED",
+    "pricePerSlotSnapshot" : 5000,
+    "totalAmount" : 15000,
+    "holdExpiresAt" : null,
+    "checkedInAt" : null,
+    "checkedOutAt" : null,
+    "cancelledAt" : null,
+    "spaceVersion" : null,
+    "refundAmount" : null,
+    "penaltyAmount" : null,
+    "createdAt" : "2026-10-23T09:00:00"
+  }
+}

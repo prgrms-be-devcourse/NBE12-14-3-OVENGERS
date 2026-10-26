@@ -1,0 +1,17 @@
+{
+  "status" : "SUCCESS",
+  "code" : "OK",
+  "message" : "요청이 성공적으로 처리되었습니다.",
+  "data" : {
+    "reservationId" : 3,
+    "memberId" : 3,
+    "memberEmail" : "golden-owner@slotkey.test",
+    "spaceId" : 3,
+    "spaceName" : "golden-space",
+    "startTime" : "2026-10-25T10:00:00",
+    "endTime" : "2026-10-25T11:00:00",
+    "status" : "CANCELLED",
+    "totalAmount" : 10000,
+    "createdAt" : "2026-10-23T09:00:00"
+  }
+}
