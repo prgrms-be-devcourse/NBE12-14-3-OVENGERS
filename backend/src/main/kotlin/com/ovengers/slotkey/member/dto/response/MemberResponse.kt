@@ -22,11 +22,11 @@ data class MemberResponse(
     val createdAt: LocalDateTime,
 ) {
     constructor(member: Member) : this(
-        member.getId(),
-        member.getEmail(),
-        member.getNickname(),
-        member.getRole(),
-        member.getBalance(),
+        requireNotNull(member.id),
+        member.email,
+        member.nickname,
+        member.role,
+        member.balance,
         requireNotNull(member.createdAt),
     )
 }

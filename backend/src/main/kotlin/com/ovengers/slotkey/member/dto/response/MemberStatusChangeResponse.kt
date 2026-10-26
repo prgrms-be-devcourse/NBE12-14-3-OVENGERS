@@ -18,8 +18,8 @@ data class MemberStatusChangeResponse(
             reason: String,
             changedAt: LocalDateTime,
         ) = MemberStatusChangeResponse(
-            member.getId(),
-            member.getStatus(),
+            requireNotNull(member.id),
+            member.status,
             reason,
             changedAt,
         )

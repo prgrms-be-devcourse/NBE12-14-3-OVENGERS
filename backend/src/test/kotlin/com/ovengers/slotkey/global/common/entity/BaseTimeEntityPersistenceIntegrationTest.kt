@@ -75,7 +75,7 @@ class BaseTimeEntityPersistenceIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
-    @DisplayName("Member(Java 하위 엔티티) 저장 시 createdAt·updatedAt이 채워지고 수정 후 createdAt은 유지되며 updatedAt만 갱신된다")
+    @DisplayName("Member(Kotlin 하위 엔티티) 저장 시 createdAt·updatedAt이 채워지고 수정 후 createdAt은 유지되며 updatedAt만 갱신된다")
     fun memberPersistence_populatesTimestampsOnInsert_andAdvancesUpdatedAtOnlyOnUpdate() {
         mutableTestClock.setLocalDateTime(INITIAL_TIME)
         val uniqueSuffix = UUID.randomUUID().toString().substring(0, 8)
@@ -86,7 +86,8 @@ class BaseTimeEntityPersistenceIntegrationTest : IntegrationTestSupport() {
         entityManager.flush()
         entityManager.clear()
 
-        val afterInsert = memberRepository.findById(saved.id).orElseThrow()
+        val memberId = requireNotNull(saved.id)
+        val afterInsert = memberRepository.findById(memberId).orElseThrow()
         assertThat(afterInsert.createdAt).isEqualTo(INITIAL_TIME)
         assertThat(afterInsert.updatedAt).isEqualTo(INITIAL_TIME)
 
@@ -95,7 +96,7 @@ class BaseTimeEntityPersistenceIntegrationTest : IntegrationTestSupport() {
         entityManager.flush()
         entityManager.clear()
 
-        val afterUpdate = memberRepository.findById(saved.id).orElseThrow()
+        val afterUpdate = memberRepository.findById(memberId).orElseThrow()
         assertThat(afterUpdate.nickname).isEqualTo("변경된닉네임")
         assertThat(afterUpdate.createdAt).isEqualTo(INITIAL_TIME)
         assertThat(afterUpdate.updatedAt).isEqualTo(UPDATED_TIME)
@@ -113,7 +114,11 @@ class BaseTimeEntityPersistenceIntegrationTest : IntegrationTestSupport() {
             )
         val savedInquiry =
             inquiryRepository.save(
-                Inquiry.create(member.id, "초기 문의 제목", "초기 문의 본문"),
+                Inquiry.create(
+                    requireNotNull(member.id),
+                    "초기 문의 제목",
+                    "초기 문의 본문",
+                ),
             )
         entityManager.flush()
         entityManager.clear()

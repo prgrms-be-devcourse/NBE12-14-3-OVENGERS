@@ -55,6 +55,6 @@ class MemberController(
         @Valid @RequestBody request: MemberUpdateRequest,
     ): ResponseEntity<ApiResponse<MemberResponse>> =
         ResponseEntity.ok(
-            ApiResponse.success(memberService.updateNickname(principal.memberId(), request.nickname())),
+            ApiResponse.success(memberService.updateNickname(principal.memberId(), requireNotNull(request.nickname))),
         )
 }
