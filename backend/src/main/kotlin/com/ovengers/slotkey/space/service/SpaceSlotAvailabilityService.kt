@@ -26,7 +26,7 @@ class SpaceSlotAvailabilityService(
      * 특정 날짜의 30분 단위 슬롯 가용성 스냅샷을 조회합니다.
      */
     fun getSlotAvailability(
-        spaceId: Long?,
+        spaceId: Long,
         date: LocalDate?,
     ): SpaceSlotAvailabilityResponse {
         val space: Space =
@@ -59,6 +59,6 @@ class SpaceSlotAvailabilityService(
                     SlotResponse.of(window.start, window.end, available)
                 }.toList()
 
-        return SpaceSlotAvailabilityResponse.of(spaceId!!, date!!, slotResponses)
+        return SpaceSlotAvailabilityResponse.of(spaceId, date!!, slotResponses)
     }
 }

@@ -28,7 +28,7 @@ class SpaceImageService(
     private val log: Logger = LoggerFactory.getLogger(SpaceImageService::class.java)
 
     fun uploadAndAttachSpaceImage(
-        spaceId: Long?,
+        spaceId: Long,
         file: MultipartFile?,
         adminMemberId: Long?,
     ): SpaceDetailResponse? {

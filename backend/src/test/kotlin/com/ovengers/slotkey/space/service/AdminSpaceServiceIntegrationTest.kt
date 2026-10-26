@@ -57,7 +57,7 @@ class AdminSpaceServiceIntegrationTest : IntegrationTestSupport() {
                     .build(),
             )
 
-        val spaceId = space.id
+        val spaceId = space.id!!
 
         // 이름과 가격을 바꾸면서 운영시간을 무효하게 전달 (22:00 ~ 08:00)
         val invalidRequest =
@@ -140,7 +140,7 @@ class AdminSpaceServiceIntegrationTest : IntegrationTestSupport() {
                     .build(),
             )
 
-        val spaceId = space.id
+        val spaceId = space.id!!
 
         doThrow(RuntimeException("Audit DB failure"))
             .`when`(auditLogRepository)
