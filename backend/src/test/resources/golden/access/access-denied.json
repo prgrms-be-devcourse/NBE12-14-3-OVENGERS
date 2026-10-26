@@ -1,0 +1,12 @@
+{
+  "status" : "SUCCESS",
+  "code" : "OK",
+  "message" : "요청이 성공적으로 처리되었습니다.",
+  "data" : {
+    "result" : "DENY",
+    "reasonCode" : "TOKEN_REVOKED",
+    "spaceName" : null,
+    "firstCheckIn" : null,
+    "attemptedAt" : "2026-10-23T14:05:30"
+  }
+}

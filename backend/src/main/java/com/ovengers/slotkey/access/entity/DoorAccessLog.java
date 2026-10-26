@@ -4,16 +4,11 @@ import com.ovengers.slotkey.member.entity.Member;
 import com.ovengers.slotkey.reservation.entity.Reservation;
 import com.ovengers.slotkey.space.entity.Space;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
 @Entity
 @Table(name = "door_access_log")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DoorAccessLog {
 
     @Id
@@ -42,6 +37,37 @@ public class DoorAccessLog {
 
     @Column(name = "attempted_at", nullable = false)
     private LocalDateTime attemptedAt;
+
+    protected DoorAccessLog() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Member getActorMember() {
+        return actorMember;
+    }
+
+    public Reservation getReservation() {
+        return reservation;
+    }
+
+    public Space getRequestedSpace() {
+        return requestedSpace;
+    }
+
+    public AccessResult getResult() {
+        return result;
+    }
+
+    public AccessDenyReason getReasonCode() {
+        return reasonCode;
+    }
+
+    public LocalDateTime getAttemptedAt() {
+        return attemptedAt;
+    }
 
     // 출입 시도 결과 로그 생성
     public DoorAccessLog(

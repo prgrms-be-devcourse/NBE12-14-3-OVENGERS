@@ -29,7 +29,7 @@ class NotificationController(
     ): ResponseEntity<ApiResponse<PageResponse<NotificationResponse>>> =
         ResponseEntity.ok(
             ApiResponse.success(
-                PageResponse.from(notificationQueryService.getMyNotifications(principal.memberId(), pageable)),
+                PageResponse.from(notificationQueryService.getMyNotifications(principal.memberId, pageable)),
             ),
         )
 
@@ -38,7 +38,7 @@ class NotificationController(
         @CurrentMember principal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<UnreadCountResponse>> =
         ResponseEntity.ok(
-            ApiResponse.success(UnreadCountResponse(notificationQueryService.countUnread(principal.memberId()))),
+            ApiResponse.success(UnreadCountResponse(notificationQueryService.countUnread(principal.memberId))),
         )
 
     @PostMapping("/read-all")
@@ -47,6 +47,6 @@ class NotificationController(
         @RequestParam("upToId") upToId: Long,
     ): ResponseEntity<ApiResponse<ReadAllResponse>> =
         ResponseEntity.ok(
-            ApiResponse.success(ReadAllResponse(notificationQueryService.readAll(principal.memberId(), upToId))),
+            ApiResponse.success(ReadAllResponse(notificationQueryService.readAll(principal.memberId, upToId))),
         )
 }

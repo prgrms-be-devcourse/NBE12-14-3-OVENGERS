@@ -33,7 +33,7 @@ class InquiryController(
         @Valid @RequestBody request: InquiryCreateRequest,
     ): ResponseEntity<ApiResponse<InquiryResponse>> =
         inquiryService
-            .create(principal.memberId(), request)
+            .create(principal.memberId!!, request)
             .let {
                 ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -46,7 +46,7 @@ class InquiryController(
         @PageableDefault(size = 20) pageable: Pageable,
     ): ResponseEntity<ApiResponse<PageResponse<InquiryResponse>>> =
         inquiryService
-            .getMyInquiries(principal.memberId(), pageable)
+            .getMyInquiries(principal.memberId!!, pageable)
             .map(InquiryResponse::from)
             .let {
                 ResponseEntity.ok(
@@ -60,7 +60,7 @@ class InquiryController(
         @PathVariable inquiryId: Long,
     ): ResponseEntity<ApiResponse<InquiryResponse>> =
         inquiryService
-            .getMyInquiry(principal.memberId(), inquiryId)
+            .getMyInquiry(principal.memberId!!, inquiryId)
             .let {
                 ResponseEntity.ok(
                     ApiResponse.success(InquiryResponse.from(it)),
@@ -74,7 +74,7 @@ class InquiryController(
         @Valid @RequestBody request: InquiryUpdateRequest,
     ): ResponseEntity<ApiResponse<InquiryResponse>> =
         inquiryService
-            .update(principal.memberId(), inquiryId, request)
+            .update(principal.memberId!!, inquiryId, request)
             .let {
                 ResponseEntity.ok(
                     ApiResponse.success(InquiryResponse.from(it)),

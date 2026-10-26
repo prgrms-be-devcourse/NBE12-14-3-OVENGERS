@@ -169,7 +169,7 @@ class AdminReservationController(
             adminReservationService.forceCancel(
                 reservationId,
                 requireNotNull(request.reason),
-                principal.memberId(),
+                principal.memberId,
             )
         return ResponseEntity.ok(ApiResponse.success(response))
     }

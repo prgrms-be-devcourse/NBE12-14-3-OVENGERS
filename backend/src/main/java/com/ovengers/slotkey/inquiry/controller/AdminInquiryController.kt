@@ -67,7 +67,7 @@ class AdminInquiryController(
         @Valid @RequestBody request: InquiryAnswerRequest,
     ): ResponseEntity<ApiResponse<InquiryResponse>> =
         adminInquiryService
-            .answer(inquiryId, principal.memberId(), request)
+            .answer(inquiryId, principal.memberId!!, request)
             .let {
                 ResponseEntity.ok(
                     ApiResponse.success(InquiryResponse.from(it)),

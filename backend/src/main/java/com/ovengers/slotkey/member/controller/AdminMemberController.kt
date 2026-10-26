@@ -166,7 +166,7 @@ class AdminMemberController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<MemberStatusChangeResponse>> {
         memberAuthorizationService.validateCanManageMember(authPrincipal)
-        val response = adminMemberService.suspend(memberId, request.reason, authPrincipal.memberId())
+        val response = adminMemberService.suspend(memberId, request.reason, authPrincipal.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -186,7 +186,7 @@ class AdminMemberController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal,
     ): ResponseEntity<ApiResponse<MemberStatusChangeResponse>> {
         memberAuthorizationService.validateCanManageMember(authPrincipal)
-        val response = adminMemberService.restore(memberId, request.reason, authPrincipal.memberId())
+        val response = adminMemberService.restore(memberId, request.reason, authPrincipal.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -214,7 +214,7 @@ class AdminMemberController(
                 memberId,
                 requireNotNull(request.amount),
                 request.reason,
-                authPrincipal.memberId(),
+                authPrincipal.memberId,
             )
         return ResponseEntity.ok(ApiResponse.success(response))
     }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * 대기 신청·취소·내 목록. 활성 대기는 `status = WAITING AND startTime > now`로 판정한다.
@@ -53,8 +54,8 @@ class WaitlistService(
         ReservationTimePolicy.validate(
             requiredStartTime,
             requiredEndTime,
-            space.openingTime,
-            space.closingTime,
+            space.openingTime ?: LocalTime.MIN,
+            space.closingTime ?: LocalTime.MAX,
             now,
         )
         validateMemberCanApply(requiredMemberId)

@@ -17,8 +17,6 @@ import com.ovengers.slotkey.reservation.repository.ReservationRepository;
 import com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository;
 import com.ovengers.slotkey.space.entity.Space;
 import com.ovengers.slotkey.space.repository.SpaceRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +24,12 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DoorAccessVerificationService {
+
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(DoorAccessVerificationService.class);
 
     private final DoorAccessTokenService doorAccessTokenService;
     private final DoorAccessTokenRepository doorAccessTokenRepository;
@@ -42,6 +41,30 @@ public class DoorAccessVerificationService {
     private final ReservationRepository reservationRepository;
     private final ReservationStatusHistoryRepository reservationStatusHistoryRepository;
     private final jakarta.persistence.EntityManager entityManager;
+
+    public DoorAccessVerificationService(
+            DoorAccessTokenService doorAccessTokenService,
+            DoorAccessTokenRepository doorAccessTokenRepository,
+            DoorAccessLogService doorAccessLogService,
+            DoorAccessTimePolicy doorAccessTimePolicy,
+            MemberRepository memberRepository,
+            SpaceRepository spaceRepository,
+            Clock clock,
+            ReservationRepository reservationRepository,
+            ReservationStatusHistoryRepository reservationStatusHistoryRepository,
+            jakarta.persistence.EntityManager entityManager
+    ) {
+        this.doorAccessTokenService = doorAccessTokenService;
+        this.doorAccessTokenRepository = doorAccessTokenRepository;
+        this.doorAccessLogService = doorAccessLogService;
+        this.doorAccessTimePolicy = doorAccessTimePolicy;
+        this.memberRepository = memberRepository;
+        this.spaceRepository = spaceRepository;
+        this.clock = clock;
+        this.reservationRepository = reservationRepository;
+        this.reservationStatusHistoryRepository = reservationStatusHistoryRepository;
+        this.entityManager = entityManager;
+    }
 
     // 제출된 출입 토큰 검증
     @Transactional

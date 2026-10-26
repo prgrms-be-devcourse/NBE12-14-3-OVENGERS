@@ -252,6 +252,22 @@ class SpaceTest {
         }
 
         @Test
+        @DisplayName("updateStatus에 null 전달 시 status가 null로 갱신되고 version은 불변을 유지한다")
+        void updateStatus_nullStatus_setsNullAndMaintainsVersion() {
+                // given
+                Space space = createDefaultSpace();
+                assertThat(space.getStatus()).isEqualTo(SpaceStatus.ACTIVE);
+                int initialVersion = space.getVersion();
+
+                // when
+                space.updateStatus(null);
+
+                // then
+                assertThat(space.getStatus()).isNull();
+                assertThat(space.getVersion()).isEqualTo(initialVersion);
+        }
+
+        @Test
         @DisplayName("validateOperatingHours는 null, 시간 순서 오류 또는 30분 경계가 아닌 시각에 예외를 발생시킨다")
         void validateOperatingHours_throwsException() {
                 assertThatThrownBy(() -> Space.validateOperatingHours(null, LocalTime.of(18, 0)))
@@ -277,5 +293,54 @@ class SpaceTest {
                 assertThatThrownBy(() -> Space.validateOperatingHours(LocalTime.of(9, 0), LocalTime.of(18, 30, 1)))
                                 .isInstanceOf(BusinessException.class)
                                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_OPERATING_HOURS);
+        }
+
+        @Test
+        @DisplayName("Java no-arg 생성자 호출 시 참조 필드는 null이고 version은 0이다")
+        void noArgConstructor_referenceFieldsNullAndVersionZero() {
+                Space space = new Space();
+                assertThat(space.getId()).isNull();
+                assertThat(space.getName()).isNull();
+                assertThat(space.getLocation()).isNull();
+                assertThat(space.getDescription()).isNull();
+                assertThat(space.getCapacity()).isNull();
+                assertThat(space.getPricePerSlot()).isNull();
+                assertThat(space.getImagePath()).isNull();
+                assertThat(space.getOpeningTime()).isNull();
+                assertThat(space.getClosingTime()).isNull();
+                assertThat(space.getStatus()).isNull();
+                assertThat(space.getVersion()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("Java builder에 null 필드를 넘겨도 정상 생성되고 boxed Long/Integer 및 int version 계약을 유지한다")
+        void builder_nullableAndBoxedTypeCompatibility() {
+                Space space = Space.builder()
+                                .id(null)
+                                .name(null)
+                                .location(null)
+                                .description(null)
+                                .capacity(null)
+                                .pricePerSlot(null)
+                                .imagePath(null)
+                                .openingTime(null)
+                                .closingTime(null)
+                                .status(null)
+                                .build();
+
+                assertThat(space.getId()).isNull();
+                assertThat(space.getCapacity()).isNull();
+                assertThat(space.getPricePerSlot()).isNull();
+                assertThat(space.getVersion()).isEqualTo(0);
+
+                Long boxedId = space.getId();
+                Integer boxedCapacity = space.getCapacity();
+                Long boxedPrice = space.getPricePerSlot();
+                int primitiveVersion = space.getVersion();
+
+                assertThat(boxedId).isNull();
+                assertThat(boxedCapacity).isNull();
+                assertThat(boxedPrice).isNull();
+                assertThat(primitiveVersion).isEqualTo(0);
         }
 }

@@ -245,7 +245,7 @@ class AuthController(
         @AuthenticationPrincipal principal: AuthPrincipal,
         @Valid @RequestBody request: MemberWithdrawalRequest,
     ): ResponseEntity<Void> {
-        memberWithdrawalService.withdraw(principal.memberId(), request.currentPassword)
+        memberWithdrawalService.withdraw(principal.memberId, request.currentPassword)
         return ResponseEntity
             .noContent()
             .header(HttpHeaders.SET_COOKIE, deleteRefreshCookie().toString())

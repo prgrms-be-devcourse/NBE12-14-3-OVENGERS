@@ -1,0 +1,5 @@
+{
+  "status" : "FAIL",
+  "code" : "VALIDATION_FAILED",
+  "message" : "오피스 ID는 필수 입니다."
+}

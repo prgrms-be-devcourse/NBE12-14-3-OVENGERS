@@ -144,7 +144,7 @@ class AdminSpaceController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = adminSpaceService.createSpace(request, authPrincipal!!.memberId())
+        val response = adminSpaceService.createSpace(request, authPrincipal!!.memberId)
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response))
     }
 
@@ -189,7 +189,7 @@ class AdminSpaceController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = adminSpaceService.updateSpace(spaceId, request, authPrincipal!!.memberId())
+        val response = adminSpaceService.updateSpace(spaceId, request, authPrincipal!!.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 
@@ -270,7 +270,7 @@ class AdminSpaceController(
         @AuthenticationPrincipal authPrincipal: AuthPrincipal?,
     ): ResponseEntity<ApiResponse<SpaceDetailResponse>> {
         spaceAuthorizationService.validateCanManageSpace(authPrincipal)
-        val response = spaceImageService.uploadAndAttachSpaceImage(spaceId, file, authPrincipal!!.memberId())
+        val response = spaceImageService.uploadAndAttachSpaceImage(spaceId, file, authPrincipal!!.memberId)
         return ResponseEntity.ok(ApiResponse.success(response))
     }
 }

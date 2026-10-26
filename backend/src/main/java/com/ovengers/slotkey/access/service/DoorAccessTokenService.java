@@ -12,7 +12,6 @@ import com.ovengers.slotkey.global.error.ErrorCode;
 import com.ovengers.slotkey.reservation.entity.Reservation;
 import com.ovengers.slotkey.reservation.entity.ReservationStatus;
 import com.ovengers.slotkey.reservation.repository.ReservationRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DoorAccessTokenService {
 
@@ -33,6 +31,24 @@ public class DoorAccessTokenService {
     private final AccessTokenGenerator accessTokenGenerator;
     private final AccessTokenHasher accessTokenHasher;
     private final Clock clock;
+
+    public DoorAccessTokenService(
+            DoorAccessTokenRepository doorAccessTokenRepository,
+            ReservationRepository reservationRepository,
+            DoorAccessAuthorizationService doorAccessAuthorizationService,
+            DoorAccessTimePolicy doorAccessTimePolicy,
+            AccessTokenGenerator accessTokenGenerator,
+            AccessTokenHasher accessTokenHasher,
+            Clock clock
+    ) {
+        this.doorAccessTokenRepository = doorAccessTokenRepository;
+        this.reservationRepository = reservationRepository;
+        this.doorAccessAuthorizationService = doorAccessAuthorizationService;
+        this.doorAccessTimePolicy = doorAccessTimePolicy;
+        this.accessTokenGenerator = accessTokenGenerator;
+        this.accessTokenHasher = accessTokenHasher;
+        this.clock = clock;
+    }
 
     // 새로운 출입 토큰 생성 (issue 내부 전용)
     private DoorAccessToken create(

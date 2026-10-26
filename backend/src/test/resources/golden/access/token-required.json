@@ -1,0 +1,5 @@
+{
+  "status" : "FAIL",
+  "code" : "VALIDATION_FAILED",
+  "message" : "출입 토큰은 필수입니다."
+}
