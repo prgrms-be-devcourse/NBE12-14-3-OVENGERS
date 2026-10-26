@@ -2,16 +2,35 @@
 
 ## 1. 범위·판정
 
-- 역할: 구현자(implementer). 구현자 자체 실행 결과인 **자기검증**이며 독립 검증자 검토는 대기다.
+- 역할: 구현자(implementer). 이 문서는 구현자 자체 실행 결과인 **자기검증**이다. 독립 검증은 완료됐다: [step-3-verification.md](step-3-verification.md)(통과).
 - 브랜치: `dev`에서 생성한 `test/golden-survey-step3`. 기준 HEAD: `5555e47fc32383ec75087296da5c868267c57fbb`.
 - 대상: reservation, credit 충전·웹훅, waitlist, outbox, notification의 요청된 누락 사례만 추가했다.
 - **Java `a380133` 기준 골든 JSON 21개와 Kotlin 비교 테스트 21건(6클래스)을 추가했다.** 항목마다 Java 통과 → Kotlin 통과를 순서대로 확인했다. 기존 테스트 15건을 재사용한 웹훅 실행을 포함하면 각 언어의 항목별 성공 실행 합계는 36건이다.
 - 운영 코드·기존 테스트·기존 골든·설정·의존성·마이그레이션·API 명세를 수정하지 않았다. 커밋·stage·push는 하지 않았다.
-- 이번 항목의 보류: 없음. 전체 테스트 1,353건 및 테스트 소스 lint 통과(5절). 독립 검증·CI는 이번 구현자 실행과 별개다.
+- 이번 항목의 보류: 없음. 전체 테스트 1,353건 및 테스트 소스 lint 통과(5절). 독립 검증은 별도 문서에 있고, CI는 PR #170에서 확인했다.
 
 ## 2. Java 기준 근거와 재현
 
-### 기준 작업 트리
+### 기준 작업 트리와 재현 방법
+
+작업 당시 Java 작업 트리는 스크래치 디렉터리의 임시 worktree였고 검증 후 제거했다. 아래 경로의 `/private/tmp/...`는 당시 위치이며 지금은 없다. 같은 기준은 다음 순서로 다시 만든다.
+
+```bash
+# 1) 순수 Java 기준 커밋을 별도 작업 공간으로 연다 (저장소 루트에서)
+git worktree add --detach <새 경로> a380133082fc323ed52d933799aa040ad2107b49
+cd <새 경로>
+# 2) 2단계에서 쓴 기존 Java 골든 테스트와 golden/reservation/*.json은 61f7cd2에서 같은 경로로 복사한다
+# 3) 재현 패치를 적용한다 (테스트 파일 8개 추가, 운영 코드 변경 없음)
+git apply <저장소>/docs/testing/golden-survey/step-3-java-baseline.patch
+# 4) 현재 저장소의 신규 골든 21개를 같은 상대 경로(backend/src/test/resources/golden/)로 복사한 뒤 Java 테스트를 실행한다
+cd backend && ./gradlew cleanTest test --tests '*ChargeOrderSupplementGoldenTest' --tests '*PgWebhookResultGoldenTest' \
+  --tests '*WaitlistCancelledGoldenTest' --tests '*NotificationReadGoldenTest' --tests '*OutboxPayloadGoldenTest' \
+  --tests '*ReservationHttpSupplementGoldenTest'
+# 5) 끝나면 worktree를 정리한다
+git worktree remove --force <새 경로>
+```
+
+당시 사용한 작업 트리 경로(참고용, 지금은 없음):
 
 ```text
 /private/tmp/claude-501/-Users-admin-NBE12-14-3-OVENGERS/101f6dba-b7ed-4b03-b823-1b102a02dce3/scratchpad/wt-61f7cd2
@@ -148,7 +167,7 @@ docs/testing/golden-survey/step-3.md
 - Outbox 테스트는 실제 recorder·트랜잭션·MySQL JSON 컬럼을 검증한다. Kafka relay/브로커 전달·컨슈머 처리까지의 새 end-to-end 골든은 범위 밖이다. 기존 관련 테스트 결과는 전체 회귀 검사와 구분해 본다.
 - 예약 HTTP는 실제 인증 세션/JWT·컨트롤러·서비스·DB로 실행했다. HTTP의 동적 DB ID만 필드별로 검증한다. 실제 HTTP 서버 소켓은 띄우지 않고 Spring MockMvc를 사용한다.
 - 외부 PG 호출은 새 테스트에 없다. 결제 표시값은 `recordPaymentMethod`의 로컬 입력이며 실제 Toss 응답/공식 필드의 근거라고 주장하지 않는다. PG 기능 검증은 기존 Fake/테스트 대역 범위다. 새 외부 API 엔드포인트·필드·헤더·에러 코드를 설계하지 않아 공식 MCP 조회를 적용할 항목이 없다.
-- 이번 결과는 구현자 자기검증이다. 독립 검증자는 전체 테스트를 직접 실행하고 아래 체크리스트 및 Java 재현 패치를 검토해야 한다. CI·사람 확인 전 merge/배포 완료를 주장하지 않는다.
+- 이 문서의 결과는 구현자 자기검증이다. 독립 검증자가 전체 테스트를 직접 실행하고 체크리스트·재현 패치를 검토해 통과로 판정했다([step-3-verification.md](step-3-verification.md)). 배포는 하지 않았다.
 
 ## 8. 관련 decision 문서
 
