@@ -86,11 +86,18 @@ pitest {
     targetClasses = [
         'com.ovengers.slotkey.reservation.policy.ReservationTimePolicy',
         'com.ovengers.slotkey.reservation.policy.ReservationRefundPolicy',
-        'com.ovengers.slotkey.reservation.service.PricingService'
+        'com.ovengers.slotkey.reservation.service.PricingService',
+        'com.ovengers.slotkey.credit.entity.ChargeOrder',
+        'com.ovengers.slotkey.credit.entity.ChargeOrder$*'
     ]
     targetTests = [
         'com.ovengers.slotkey.reservation.policy.*',
-        'com.ovengers.slotkey.reservation.service.PricingServiceTest'
+        'com.ovengers.slotkey.reservation.service.PricingServiceTest',
+        'com.ovengers.slotkey.credit.entity.ChargeOrderMutationTest',
+        'com.ovengers.slotkey.credit.service.ChargeOrderServiceTest',
+        'com.ovengers.slotkey.credit.service.ChargeOrderConfirmServiceTest',
+        'com.ovengers.slotkey.credit.scheduler.ChargeOrderRecoverySchedulerTest',
+        'com.ovengers.slotkey.credit.webhook.PgWebhookEventSchedulerTest'
     ]
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
