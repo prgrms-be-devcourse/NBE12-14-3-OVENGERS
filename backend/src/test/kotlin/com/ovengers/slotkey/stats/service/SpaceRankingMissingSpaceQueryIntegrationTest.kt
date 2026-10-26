@@ -26,7 +26,6 @@ import java.time.ZonedDateTime
 
 @Import(SettableClockConfig::class)
 class SpaceRankingMissingSpaceQueryIntegrationTest : IntegrationTestSupport() {
-
     @Autowired
     private lateinit var queryService: SpaceRankingQueryService
 
@@ -75,16 +74,17 @@ class SpaceRankingMissingSpaceQueryIntegrationTest : IntegrationTestSupport() {
         assertThat(spaceRepository.findById(missingSpaceId)).isEmpty
 
         // FK가 없는 독립 집계 테이블이므로 참조 공간이 없더라도 스냅샷 행이 정상 적재 가능함을 입증
-        val orphanSnapshot = SpaceRankingSnapshot(
-            testPeriod,
-            testDate,
-            missingSpaceId,
-            "서울 강남",
-            50000L,
-            5,
-            10,
-            computedAt,
-        )
+        val orphanSnapshot =
+            SpaceRankingSnapshot(
+                testPeriod,
+                testDate,
+                missingSpaceId,
+                "서울 강남",
+                50000L,
+                5,
+                10,
+                computedAt,
+            )
         snapshotRepository.save(orphanSnapshot)
         assertThat(snapshotRepository.findByPeriodTypeAndPeriodStart(testPeriod, testDate)).hasSize(1)
 
@@ -105,38 +105,42 @@ class SpaceRankingMissingSpaceQueryIntegrationTest : IntegrationTestSupport() {
     @DisplayName("대조군: 참조 공간이 실제 spaces 테이블에 온전히 존재하는 경우 NullPointerException 없이 정상적으로 랭킹 응답이 반환된다")
     fun getSpaceRanking_whenReferencedSpaceExists_succeeds() {
         // 실제 공간 엔티티 생성 및 저장
-        val realSpace = Space.builder()
-            .name("실제 존재하는 회의실")
-            .description("테스트 공간 설명")
-            .location("서울 강남")
-            .capacity(10)
-            .pricePerSlot(5000L)
-            .status(SpaceStatus.ACTIVE)
-            .openingTime(LocalTime.of(9, 0))
-            .closingTime(LocalTime.of(22, 0))
-            .build()
+        val realSpace =
+            Space
+                .builder()
+                .name("실제 존재하는 회의실")
+                .description("테스트 공간 설명")
+                .location("서울 강남")
+                .capacity(10)
+                .pricePerSlot(5000L)
+                .status(SpaceStatus.ACTIVE)
+                .openingTime(LocalTime.of(9, 0))
+                .closingTime(LocalTime.of(22, 0))
+                .build()
         val savedSpace = spaceRepository.save(realSpace)
         val validSpaceId = savedSpace.id!!
 
-        val validSnapshot = SpaceRankingSnapshot(
-            testPeriod,
-            testDate,
-            validSpaceId,
-            "서울 강남",
-            100000L,
-            10,
-            20,
-            computedAt,
-        )
+        val validSnapshot =
+            SpaceRankingSnapshot(
+                testPeriod,
+                testDate,
+                validSpaceId,
+                "서울 강남",
+                100000L,
+                10,
+                20,
+                computedAt,
+            )
         snapshotRepository.save(validSnapshot)
 
-        val response = queryService.getSpaceRanking(
-            testPeriod,
-            testDate,
-            RankingMetric.NET_REVENUE,
-            null,
-            10,
-        )
+        val response =
+            queryService.getSpaceRanking(
+                testPeriod,
+                testDate,
+                RankingMetric.NET_REVENUE,
+                null,
+                10,
+            )
 
         assertThat(response).isNotNull
         assertThat(response.items).hasSize(1)

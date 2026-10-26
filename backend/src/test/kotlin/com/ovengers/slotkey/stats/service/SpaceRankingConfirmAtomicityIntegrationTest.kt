@@ -28,7 +28,6 @@ import java.time.ZonedDateTime
 
 @Import(SettableClockConfig::class)
 class SpaceRankingConfirmAtomicityIntegrationTest : IntegrationTestSupport() {
-
     @Autowired
     private lateinit var confirmService: SpaceRankingConfirmService
 
@@ -73,26 +72,28 @@ class SpaceRankingConfirmAtomicityIntegrationTest : IntegrationTestSupport() {
     fun confirm_whenDbFlushFailsAfterDeleteByPeriod_rollsBackAndPreservesOriginalRows() {
         // given: 기존 확정 스냅샷 2건을 미리 커밋 상태로 적재
         val initialComputedAt = LocalDateTime.of(2026, 3, 11, 0, 1, 0)
-        val initialRow1 = SpaceRankingSnapshot(
-            testPeriodType,
-            periodStart,
-            101L,
-            "서울 강남",
-            50000L,
-            5,
-            10,
-            initialComputedAt,
-        )
-        val initialRow2 = SpaceRankingSnapshot(
-            testPeriodType,
-            periodStart,
-            102L,
-            "서울 서초",
-            30000L,
-            3,
-            6,
-            initialComputedAt,
-        )
+        val initialRow1 =
+            SpaceRankingSnapshot(
+                testPeriodType,
+                periodStart,
+                101L,
+                "서울 강남",
+                50000L,
+                5,
+                10,
+                initialComputedAt,
+            )
+        val initialRow2 =
+            SpaceRankingSnapshot(
+                testPeriodType,
+                periodStart,
+                102L,
+                "서울 서초",
+                30000L,
+                3,
+                6,
+                initialComputedAt,
+            )
         val savedInitial1 = snapshotRepository.save(initialRow1)
         val savedInitial2 = snapshotRepository.save(initialRow2)
 
@@ -103,10 +104,11 @@ class SpaceRankingConfirmAtomicityIntegrationTest : IntegrationTestSupport() {
         // 위반하는 동일 spaceId 중복 집계 데이터를 반환하도록 설정.
         // 이는 saveAll 진입 전 단순 doThrow가 아니라, saveAll에서 실제 DB INSERT(IDENTITY) 실행 시
         // MySQL InnoDB 엔진 레벨의 DataIntegrityViolationException(Duplicate entry)을 유발한다.
-        val conflictingAggregates = listOf(
-            SpaceRankingAggregate(101L, "서울 강남 신규", 80000L, 8, 16),
-            SpaceRankingAggregate(101L, "서울 강남 중복키", 80000L, 8, 16),
-        )
+        val conflictingAggregates =
+            listOf(
+                SpaceRankingAggregate(101L, "서울 강남 신규", 80000L, 8, 16),
+                SpaceRankingAggregate(101L, "서울 강남 중복키", 80000L, 8, 16),
+            )
         doReturn(conflictingAggregates).`when`(aggregationRepository).aggregate(anyDateTime(), anyDateTime())
 
         // when & then: confirm 호출 시 deleteByPeriod가 먼저 실행된 후, DB saveAll 단계에서 실제 DB 제약조건 위반 예외 발생
@@ -146,24 +148,26 @@ class SpaceRankingConfirmAtomicityIntegrationTest : IntegrationTestSupport() {
     @DisplayName("대조군: 재확정 중 정상적인 새 집계가 반환되면 기존 행이 삭제되고 새 행으로 온전히 교체 커밋된다")
     fun confirm_whenSuccess_replacesOldRowsCleanly() {
         // given: 기존 행 1건 존재
-        val initialRow = SpaceRankingSnapshot(
-            testPeriodType,
-            periodStart,
-            101L,
-            "서울 강남 과거",
-            10000L,
-            1,
-            2,
-            LocalDateTime.of(2026, 3, 11, 0, 1, 0),
-        )
+        val initialRow =
+            SpaceRankingSnapshot(
+                testPeriodType,
+                periodStart,
+                101L,
+                "서울 강남 과거",
+                10000L,
+                1,
+                2,
+                LocalDateTime.of(2026, 3, 11, 0, 1, 0),
+            )
         snapshotRepository.save(initialRow)
         assertThat(snapshotRepository.findByPeriodTypeAndPeriodStart(testPeriodType, periodStart)).hasSize(1)
 
         // 새 정상 집계 반환
-        val newAggregates = listOf(
-            SpaceRankingAggregate(101L, "서울 강남 갱신", 70000L, 7, 14),
-            SpaceRankingAggregate(103L, "서울 송파 신규", 40000L, 4, 8),
-        )
+        val newAggregates =
+            listOf(
+                SpaceRankingAggregate(101L, "서울 강남 갱신", 70000L, 7, 14),
+                SpaceRankingAggregate(103L, "서울 송파 신규", 40000L, 4, 8),
+            )
         doReturn(newAggregates).`when`(aggregationRepository).aggregate(anyDateTime(), anyDateTime())
 
         // when: 정상 confirm 실행

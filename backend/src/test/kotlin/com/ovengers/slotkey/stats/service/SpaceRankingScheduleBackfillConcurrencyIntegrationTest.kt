@@ -31,14 +31,12 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
 @Import(SettableClockConfig::class)
 class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegrationTestSupport() {
-
     @Autowired
     private lateinit var scheduler: SpaceRankingScheduler
 
@@ -133,16 +131,21 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
             val periodType = invocation.getArgument<RankingPeriodType>(0)
             val dateInPeriod = invocation.getArgument<LocalDate>(1)
 
-            val callerName = if (Thread.currentThread().name.contains("scheduler", ignoreCase = true)) {
-                "scheduler"
-            } else if (Thread.currentThread().name.contains("backfill", ignoreCase = true)) {
-                "backfill"
-            } else {
-                val stack = Thread.currentThread().stackTrace
-                if (stack.any { it.className.contains("SpaceRankingScheduler") }) "scheduler"
-                else if (stack.any { it.className.contains("SpaceRankingBackfillService") }) "backfill"
-                else "unknown-${Thread.currentThread().name}"
-            }
+            val callerName =
+                if (Thread.currentThread().name.contains("scheduler", ignoreCase = true)) {
+                    "scheduler"
+                } else if (Thread.currentThread().name.contains("backfill", ignoreCase = true)) {
+                    "backfill"
+                } else {
+                    val stack = Thread.currentThread().stackTrace
+                    if (stack.any { it.className.contains("SpaceRankingScheduler") }) {
+                        "scheduler"
+                    } else if (stack.any { it.className.contains("SpaceRankingBackfillService") }) {
+                        "backfill"
+                    } else {
+                        "unknown-${Thread.currentThread().name}"
+                    }
+                }
 
             val isTarget = (periodType == targetPeriod && periodType.startOf(dateInPeriod) == targetDate)
 
@@ -211,23 +214,33 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
             }
         }.`when`(confirmService).confirm(anyPeriodType(), anyLocalDate())
 
-        val executor = Executors.newFixedThreadPool(2) { runnable ->
-            val threadName = if (arrivalSequence.get() == 0 && !Thread.currentThread().name.contains("pool")) "scheduler-worker" else "backfill-worker"
-            Thread(runnable, threadName)
-        }
+        val executor =
+            Executors.newFixedThreadPool(2) { runnable ->
+                val threadName =
+                    if (arrivalSequence.get() == 0 &&
+                        !Thread.currentThread().name.contains("pool")
+                    ) {
+                        "scheduler-worker"
+                    } else {
+                        "backfill-worker"
+                    }
+                Thread(runnable, threadName)
+            }
 
         try {
             // Caller 1: 스케줄러 runDaily() 실행
-            val future1 = executor.submit {
-                Thread.currentThread().name = "scheduler-thread"
-                scheduler.runDaily()
-            }
+            val future1 =
+                executor.submit {
+                    Thread.currentThread().name = "scheduler-thread"
+                    scheduler.runDaily()
+                }
 
             // Caller 2: 백필 서비스 backfillMissing() 실행
-            val future2 = executor.submit {
-                Thread.currentThread().name = "backfill-thread"
-                backfillService.backfillMissing()
-            }
+            val future2 =
+                executor.submit {
+                    Thread.currentThread().name = "backfill-thread"
+                    backfillService.backfillMissing()
+                }
 
             // 두 작업의 Future 모두 유한 시간(15초) 내에 안전하게 회수 (첫 future 실패 시에도 나머지 회수 보장)
             var f1Exception: Throwable? = null
@@ -259,9 +272,10 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
         assertThat(barrier.isBroken).isFalse()
 
         // 2. 대상 기간(2026-10-15 DAILY)에 대한 양측 호출의 완료 및 반환 검증
-        val targetCompletions = completionRecords.filter {
-            it.periodType == targetPeriod && it.periodType.startOf(it.dateInPeriod) == targetDate
-        }
+        val targetCompletions =
+            completionRecords.filter {
+                it.periodType == targetPeriod && it.periodType.startOf(it.dateInPeriod) == targetDate
+            }
         assertThat(targetCompletions).hasSize(2)
         val successfulCallers = targetCompletions.filter { it.success }.map { it.caller }
         assertThat(successfulCallers).containsExactlyInAnyOrder("scheduler", "backfill")
@@ -284,8 +298,7 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
                     "관측된 완료 기록: %s, 예외 목록: %s",
                 completionRecords,
                 capturedExceptions.map { "${it.javaClass.simpleName}: ${it.message}" },
-            )
-            .isEmpty()
+            ).isEmpty()
     }
 
     @Test
@@ -316,40 +329,42 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
 
         try {
             // Thread A: 부모 트랜잭션 내에서 confirm 호출 후 afterCompletion 콜백 등록 및 커밋 직전 대기
-            val futureA = executor.submit(
-                java.util.concurrent.Callable {
-                    Thread.currentThread().name = "thread-a"
-                    transactionTemplate.execute {
-                        TransactionSynchronizationManager.registerSynchronization(
-                            object : TransactionSynchronization {
-                                override fun afterCompletion(status: Int) {
-                                    events.add("A_TX_AFTER_COMPLETION:$status")
-                                }
-                            },
-                        )
-                        confirmService.confirm(targetPeriod, targetDate)
-                        events.add("A_CONFIRM_RETURNED")
-                        latchAConfirmReturned.countDown()
+            val futureA =
+                executor.submit(
+                    java.util.concurrent.Callable {
+                        Thread.currentThread().name = "thread-a"
+                        transactionTemplate.execute {
+                            TransactionSynchronizationManager.registerSynchronization(
+                                object : TransactionSynchronization {
+                                    override fun afterCompletion(status: Int) {
+                                        events.add("A_TX_AFTER_COMPLETION:$status")
+                                    }
+                                },
+                            )
+                            confirmService.confirm(targetPeriod, targetDate)
+                            events.add("A_CONFIRM_RETURNED")
+                            latchAConfirmReturned.countDown()
 
-                        // 부모 트랜잭션 커밋 허용 신호 대기
-                        val ok = latchReleaseACommit.await(10, TimeUnit.SECONDS)
-                        if (!ok) throw IllegalStateException("latchReleaseACommit timed out")
-                        true
-                    }
-                },
-            )
+                            // 부모 트랜잭션 커밋 허용 신호 대기
+                            val ok = latchReleaseACommit.await(10, TimeUnit.SECONDS)
+                            if (!ok) throw IllegalStateException("latchReleaseACommit timed out")
+                            true
+                        }
+                    },
+                )
 
             // Thread A의 confirm() 반환 확인
             val aReturned = latchAConfirmReturned.await(10, TimeUnit.SECONDS)
             assertThat(aReturned).isTrue()
 
             // Thread B 시작: Thread A가 아직 커밋 전이므로 lock 획득 시도 시 WAITING 상태로 블록되어야 함
-            val futureB = executor.submit(
-                java.util.concurrent.Callable {
-                    Thread.currentThread().name = "thread-b"
-                    confirmService.confirm(targetPeriod, targetDate)
-                },
-            )
+            val futureB =
+                executor.submit(
+                    java.util.concurrent.Callable {
+                        Thread.currentThread().name = "thread-b"
+                        confirmService.confirm(targetPeriod, targetDate)
+                    },
+                )
 
             // Thread B가 doAnswer의 B_BEFORE_CONFIRM에 도달했는지 확인
             val bInvoked = latchBInvokedConfirm.await(10, TimeUnit.SECONDS)
@@ -412,9 +427,10 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
         // 트랜잭션 종료 후 다른 스레드가 즉시 락을 획득하고 confirm을 성공적으로 수행할 수 있어야 함
         val executor = Executors.newSingleThreadExecutor()
         try {
-            val future = executor.submit<Int> {
-                confirmService.confirm(targetPeriod, targetDate)
-            }
+            val future =
+                executor.submit<Int> {
+                    confirmService.confirm(targetPeriod, targetDate)
+                }
             val result = future.get(5, TimeUnit.SECONDS)
             assertThat(result).isEqualTo(1)
         } finally {
@@ -450,9 +466,10 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
         // 롤백 이후 다른 스레드(또는 후속 호출)가 락 대기 없이 정상적으로 confirm 수행 가능해야 함
         val executor = Executors.newSingleThreadExecutor()
         try {
-            val future = executor.submit<Int> {
-                confirmService.confirm(targetPeriod, targetDate)
-            }
+            val future =
+                executor.submit<Int> {
+                    confirmService.confirm(targetPeriod, targetDate)
+                }
             val result = future.get(5, TimeUnit.SECONDS)
             assertThat(result).isEqualTo(1)
         } finally {
@@ -467,7 +484,11 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
 
     // ---------- helpers ----------
 
-    private fun insertReservation(status: ReservationStatus, start: LocalDateTime, end: LocalDateTime): Long {
+    private fun insertReservation(
+        status: ReservationStatus,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): Long {
         val startTs = Timestamp.valueOf(start)
         jdbcTemplate.update(
             """
@@ -476,8 +497,18 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
                 checked_out_at, cancelled_at, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            memberId, spaceId, startTs, Timestamp.valueOf(end), status.name, 5000, 10000,
-            null, startTs, Timestamp.valueOf(end), null, Timestamp.valueOf(start.minusDays(1)),
+            memberId,
+            spaceId,
+            startTs,
+            Timestamp.valueOf(end),
+            status.name,
+            5000,
+            10000,
+            null,
+            startTs,
+            Timestamp.valueOf(end),
+            null,
+            Timestamp.valueOf(start.minusDays(1)),
         )
         return jdbcTemplate.queryForObject(
             "SELECT MAX(id) FROM reservation WHERE space_id = ?",
@@ -486,13 +517,22 @@ class SpaceRankingScheduleBackfillConcurrencyIntegrationTest : ReservationIntegr
         )
     }
 
-    private fun charge(reservationId: Long, amount: Int, at: LocalDateTime) {
+    private fun charge(
+        reservationId: Long,
+        amount: Int,
+        at: LocalDateTime,
+    ) {
         jdbcTemplate.update(
             """
             INSERT INTO credit_transaction (member_id, amount, type, reservation_id, balance_after, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            memberId, -amount, "RESERVATION_CHARGE", reservationId, 0, Timestamp.valueOf(at),
+            memberId,
+            -amount,
+            "RESERVATION_CHARGE",
+            reservationId,
+            0,
+            Timestamp.valueOf(at),
         )
     }
 

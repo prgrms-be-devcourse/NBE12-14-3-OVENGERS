@@ -18,7 +18,6 @@ import org.springframework.transaction.support.TransactionTemplate
 
 @Import(FixedClockConfig::class)
 class AuditLogParentRollbackIntegrationTest : IntegrationTestSupport() {
-
     @Autowired
     private lateinit var auditLogService: AuditLogService
 
