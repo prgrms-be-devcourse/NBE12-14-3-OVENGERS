@@ -55,7 +55,7 @@
 - 위 테스트가 **보호하는 범위**만 Java 기준이 확인된 것이다. 1단계 4절의 빠진 곳(충전 FAILED·값이 채워진 이력 응답, 웹훅 결과 enum 전 값, 대기 CANCELLED, 알림 `read=true`, Outbox payload, `/pay`·extend·force-cancel 응답과 409)은 여전히 골든이 없다.
 - `a380133`이 "전환 직전의 마지막 순수 Java"라는 점은 파일 수와 대상 클래스 확장자로만 확인했다. 이후 커밋에서 DTO 동작을 바꾼 변경이 없는지는 골든이 같은 값으로 통과하는 사실로 간접 확인했다.
 - 통합 테스트 중 동시성·복구 계열(`PgWebhookEventProcessorIntegrationTest` 등)은 이번에 실행하지 않았다.
-- worktree 3개(`wt-8f47467`, `wt-020492a`, `wt-61f7cd2`)는 스크래치 디렉터리에 남아 있다. 3단계에서 재사용하거나 사용자 확인 후 `git worktree remove`로 정리한다.
+- worktree 3개(`wt-8f47467`, `wt-020492a`, `wt-61f7cd2`)는 3단계 검증 후 사용자 승인으로 제거했다. 같은 기준이 필요하면 `git worktree add --detach <경로> a380133`으로 다시 만든다.
 
 ## 5. 3단계 제안 (사용자 "다음" 후)
 
