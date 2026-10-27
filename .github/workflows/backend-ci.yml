@@ -24,6 +24,7 @@ jobs:
           python3 check_api_spec.py ../..
           python3 check_erd.py ../..
           python3 -m unittest test_check_api_spec test_check_erd
+
         working-directory: .github/scripts
       - run: chmod +x gradlew
       - run: ./gradlew build
