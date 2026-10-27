@@ -99,6 +99,55 @@ class SpaceTest {
         }
 
         @Test
+        @DisplayName("이름·인원만 수정하면 요청이 null인 위치·설명·가격·이미지·운영시간·상태가 보존되고 version은 유지된다")
+        void updateDetail_partialNonPriceFields_preservesNullRequestFields() {
+                // given
+                Space space = createDefaultSpace();
+                SpaceUpdateRequest request = new SpaceUpdateRequest(
+                                null, "회의실 C", null, null, 10,
+                                null, null, null, null, null);
+
+                // when
+                space.updateDetail(request);
+
+                // then
+                assertThat(space.getName()).isEqualTo("회의실 C");
+                assertThat(space.getCapacity()).isEqualTo(10);
+                assertThat(space.getLocation()).isEqualTo("강남역 1번 출구");
+                assertThat(space.getDescription()).isEqualTo("조용하고 쾌적한 6인 회의실");
+                assertThat(space.getPricePerSlot()).isEqualTo(5000L);
+                assertThat(space.getImagePath()).isEqualTo("/images/room-a.jpg");
+                assertThat(space.getOpeningTime()).isEqualTo(LocalTime.of(9, 0));
+                assertThat(space.getClosingTime()).isEqualTo(LocalTime.of(18, 0));
+                assertThat(space.getStatus()).isEqualTo(SpaceStatus.ACTIVE);
+                assertThat(space.getVersion()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("가격과 설명만 수정하면 요청이 null인 이름·위치·이미지·운영시간·상태가 보존되고 version만 1 증가한다")
+        void updateDetail_partialPriceChange_preservesNullRequestFieldsAndImageRule() {
+                // given
+                Space space = createDefaultSpace();
+                SpaceUpdateRequest request = new SpaceUpdateRequest(
+                                null, null, null, "새로운 설명", null,
+                                6000L, null, null, null, null);
+
+                // when
+                space.updateDetail(request);
+
+                // then
+                assertThat(space.getPricePerSlot()).isEqualTo(6000L);
+                assertThat(space.getDescription()).isEqualTo("새로운 설명");
+                assertThat(space.getVersion()).isEqualTo(1);
+                assertThat(space.getName()).isEqualTo("회의실 A");
+                assertThat(space.getLocation()).isEqualTo("강남역 1번 출구");
+                assertThat(space.getImagePath()).isEqualTo("/images/room-a.jpg");
+                assertThat(space.getOpeningTime()).isEqualTo(LocalTime.of(9, 0));
+                assertThat(space.getClosingTime()).isEqualTo(LocalTime.of(18, 0));
+                assertThat(space.getStatus()).isEqualTo(SpaceStatus.ACTIVE);
+        }
+
+        @Test
         @DisplayName("updateImagePath로 대표 사진 변경 시 imagePath가 변경되고 version은 유지된다")
         void updateImagePath_imagePathChanged_versionMaintained() {
                 // given

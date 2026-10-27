@@ -17,6 +17,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq
@@ -39,6 +42,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Optional
+import java.util.stream.Stream
 
 @ExtendWith(MockitoExtension::class)
 class AdminSpaceServiceTest {
@@ -635,5 +639,203 @@ class AdminSpaceServiceTest {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SPACE_OPERATING_HOURS_CONFLICT)
 
         verifyNoInteractions(auditLogService)
+    }
+
+    @ParameterizedTest(name = "한쪽만 축소: {0}")
+    @MethodSource("oneSidedShrinkCandidates")
+    @DisplayName("오픈만 늦추거나 마감만 앞당기면 후보 전체 범위·spaceId·고정 now로 충돌을 검사하고, 충돌 시 원본 상태와 version을 보존한다")
+    fun updateSpace_oneSidedShrinkConflict_preservesOriginalState(
+        @Suppress("UNUSED_PARAMETER") caseName: String,
+        request: SpaceUpdateRequest,
+        expectedOpening: LocalTime,
+        expectedClosing: LocalTime,
+    ) {
+        // given
+        val spaceId = 1L
+        val existingSpace = existingSpaceWithWideHours()
+        val zone = ZoneId.of("Asia/Seoul")
+        val fixedNow = LocalDateTime.of(2026, 9, 21, 10, 0)
+        given(clock.instant()).willReturn(fixedNow.atZone(zone).toInstant())
+        given(clock.zone).willReturn(zone)
+        given(spaceRepository.findByIdForUpdate(spaceId)).willReturn(Optional.of(existingSpace))
+        given(
+            occupiedSlotProvider.hasOccupiedSlotsOutsideHours(
+                eq(spaceId),
+                eq(expectedOpening),
+                eq(expectedClosing),
+                eq(fixedNow),
+            ),
+        ).willReturn(true)
+
+        // when & then
+        assertThatThrownBy { adminSpaceService.updateSpace(spaceId, request, 100L) }
+            .isInstanceOf(BusinessException::class.java)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SPACE_OPERATING_HOURS_CONFLICT)
+
+        verify(spaceRepository).findByIdForUpdate(spaceId)
+        verify(occupiedSlotProvider).hasOccupiedSlotsOutsideHours(
+            eq(spaceId),
+            eq(expectedOpening),
+            eq(expectedClosing),
+            eq(fixedNow),
+        )
+        assertOriginalWideHoursState(existingSpace)
+        verify(spaceRepository, never()).save(any<Space>())
+        verifyNoInteractions(auditLogService)
+    }
+
+    @ParameterizedTest(name = "한쪽만 축소·무충돌: {0}")
+    @MethodSource("oneSidedShrinkCandidates")
+    @DisplayName("한쪽 축소가 점유 슬롯과 충돌하지 않으면 후보 운영시간만 갱신하고 감사 로그를 남긴다")
+    fun updateSpace_oneSidedShrinkWithoutConflict_updatesCandidateAndLogs(
+        @Suppress("UNUSED_PARAMETER") caseName: String,
+        request: SpaceUpdateRequest,
+        expectedOpening: LocalTime,
+        expectedClosing: LocalTime,
+    ) {
+        // given
+        val spaceId = 1L
+        val adminMemberId = 100L
+        val existingSpace = existingSpaceWithWideHours()
+        val zone = ZoneId.of("Asia/Seoul")
+        val fixedNow = LocalDateTime.of(2026, 9, 21, 10, 0)
+        given(clock.instant()).willReturn(fixedNow.atZone(zone).toInstant())
+        given(clock.zone).willReturn(zone)
+        given(spaceRepository.findByIdForUpdate(spaceId)).willReturn(Optional.of(existingSpace))
+        given(
+            occupiedSlotProvider.hasOccupiedSlotsOutsideHours(
+                eq(spaceId),
+                eq(expectedOpening),
+                eq(expectedClosing),
+                eq(fixedNow),
+            ),
+        ).willReturn(false)
+
+        // when
+        val response = adminSpaceService.updateSpace(spaceId, request, adminMemberId)
+
+        // then
+        assertThat(response.openingTime).isEqualTo(expectedOpening)
+        assertThat(response.closingTime).isEqualTo(expectedClosing)
+        assertThat(response.name).isEqualTo("기존 공간")
+        assertThat(response.imagePath).isEqualTo("/images/existing.jpg")
+        assertThat(response.pricePerSlot).isEqualTo(3000L)
+        assertThat(response.version).isEqualTo(3)
+
+        verify(occupiedSlotProvider).hasOccupiedSlotsOutsideHours(
+            eq(spaceId),
+            eq(expectedOpening),
+            eq(expectedClosing),
+            eq(fixedNow),
+        )
+        verify(auditLogService).log(
+            eq(adminMemberId),
+            eq(AuditAction.MODIFY_SPACE),
+            eq(AuditTargetType.SPACE),
+            eq(spaceId),
+            any(),
+            any(),
+        )
+    }
+
+    @ParameterizedTest(name = "운영시간 확장: {0}")
+    @MethodSource("expansionCandidates")
+    @DisplayName("운영시간이 축소되지 않으면 충돌 조회 없이 갱신과 감사 로그를 수행한다")
+    fun updateSpace_expandedHours_skipsConflictQuery(
+        @Suppress("UNUSED_PARAMETER") caseName: String,
+        request: SpaceUpdateRequest,
+        expectedOpening: LocalTime,
+        expectedClosing: LocalTime,
+    ) {
+        // given
+        val spaceId = 1L
+        val adminMemberId = 100L
+        val existingSpace = existingSpaceWithWideHours()
+        given(spaceRepository.findByIdForUpdate(spaceId)).willReturn(Optional.of(existingSpace))
+
+        // when (확장·유지 경로는 clock을 사용하지 않으므로 고정 stubbing을 추가하지 않는다)
+        val response = adminSpaceService.updateSpace(spaceId, request, adminMemberId)
+
+        // then
+        assertThat(response.openingTime).isEqualTo(expectedOpening)
+        assertThat(response.closingTime).isEqualTo(expectedClosing)
+        assertThat(response.name).isEqualTo("기존 공간")
+        assertThat(response.version).isEqualTo(3)
+
+        verify(occupiedSlotProvider, never()).hasOccupiedSlotsOutsideHours(any(), any(), any(), any())
+        verify(auditLogService).log(
+            eq(adminMemberId),
+            eq(AuditAction.MODIFY_SPACE),
+            eq(AuditTargetType.SPACE),
+            eq(spaceId),
+            any(),
+            any(),
+        )
+    }
+
+    private fun existingSpaceWithWideHours(): Space =
+        Space
+            .builder()
+            .id(1L)
+            .name("기존 공간")
+            .location("기존 위치")
+            .description("기존 설명")
+            .capacity(4)
+            .pricePerSlot(3000L)
+            .imagePath("/images/existing.jpg")
+            .openingTime(LocalTime.of(9, 0))
+            .closingTime(LocalTime.of(22, 0))
+            .status(SpaceStatus.ACTIVE)
+            .version(3)
+            .build()
+
+    private fun assertOriginalWideHoursState(space: Space) {
+        assertThat(space.id).isEqualTo(1L)
+        assertThat(space.name).isEqualTo("기존 공간")
+        assertThat(space.location).isEqualTo("기존 위치")
+        assertThat(space.description).isEqualTo("기존 설명")
+        assertThat(space.capacity).isEqualTo(4)
+        assertThat(space.pricePerSlot).isEqualTo(3000L)
+        assertThat(space.imagePath).isEqualTo("/images/existing.jpg")
+        assertThat(space.openingTime).isEqualTo(LocalTime.of(9, 0))
+        assertThat(space.closingTime).isEqualTo(LocalTime.of(22, 0))
+        assertThat(space.status).isEqualTo(SpaceStatus.ACTIVE)
+        assertThat(space.version).isEqualTo(3)
+    }
+
+    companion object {
+        @JvmStatic
+        fun oneSidedShrinkCandidates(): Stream<Arguments> =
+            Stream.of(
+                Arguments.of(
+                    "오픈만 09:00 -> 10:00",
+                    SpaceUpdateRequest(null, null, null, null, null, null, null, LocalTime.of(10, 0), null, null),
+                    LocalTime.of(10, 0),
+                    LocalTime.of(22, 0),
+                ),
+                Arguments.of(
+                    "마감만 22:00 -> 20:00",
+                    SpaceUpdateRequest(null, null, null, null, null, null, null, null, LocalTime.of(20, 0), null),
+                    LocalTime.of(9, 0),
+                    LocalTime.of(20, 0),
+                ),
+            )
+
+        @JvmStatic
+        fun expansionCandidates(): Stream<Arguments> =
+            Stream.of(
+                Arguments.of(
+                    "오픈만 09:00 -> 08:00",
+                    SpaceUpdateRequest(null, null, null, null, null, null, null, LocalTime.of(8, 0), null, null),
+                    LocalTime.of(8, 0),
+                    LocalTime.of(22, 0),
+                ),
+                Arguments.of(
+                    "마감만 22:00 -> 23:00",
+                    SpaceUpdateRequest(null, null, null, null, null, null, null, null, LocalTime.of(23, 0), null),
+                    LocalTime.of(9, 0),
+                    LocalTime.of(23, 0),
+                ),
+            )
     }
 }
