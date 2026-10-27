@@ -21,10 +21,10 @@ import java.time.LocalTime
 
 @Service
 class AdminSpaceService(
-    private val spaceRepository: SpaceRepository?,
-    private val auditLogService: AuditLogService?,
-    private val occupiedSlotProvider: OccupiedSlotProvider?,
-    private val clock: Clock?,
+    private val spaceRepository: SpaceRepository,
+    private val auditLogService: AuditLogService,
+    private val occupiedSlotProvider: OccupiedSlotProvider,
+    private val clock: Clock,
 ) {
     @Transactional(readOnly = true)
     fun getSpaces(
@@ -33,7 +33,7 @@ class AdminSpaceService(
         pageable: Pageable?,
     ): Page<SpaceDetailResponse> {
         val normalizedKeyword = normalize(keyword)
-        return spaceRepository!!
+        return spaceRepository
             .searchSpacesByNameOrDescription(normalizedKeyword, status, pageable)
             .map(SpaceDetailResponse::from)
     }
@@ -48,7 +48,7 @@ class AdminSpaceService(
 
     @Transactional(readOnly = true)
     fun getSpaceDetailById(spaceId: Long): Space =
-        spaceRepository!!
+        spaceRepository
             .findById(spaceId)
             .orElseThrow { BusinessException(ErrorCode.SPACE_NOT_FOUND) }
 
@@ -58,12 +58,12 @@ class AdminSpaceService(
         adminMemberId: Long?,
     ): SpaceDetailResponse {
         val space = request!!.toEntity()
-        val savedSpace = spaceRepository!!.save(space)
+        val savedSpace = spaceRepository.save(space)
 
         val response = SpaceDetailResponse.from(savedSpace)
 
         // 감사 로그 기록
-        auditLogService!!.log(
+        auditLogService.log(
             adminMemberId,
             AuditAction.REGISTER_SPACE,
             AuditTargetType.SPACE,
@@ -82,7 +82,7 @@ class AdminSpaceService(
         adminMemberId: Long?,
     ): SpaceDetailResponse {
         val space =
-            spaceRepository!!
+            spaceRepository
                 .findByIdForUpdate(spaceId)
                 .orElseThrow { BusinessException(ErrorCode.SPACE_NOT_FOUND) }
 
@@ -99,9 +99,9 @@ class AdminSpaceService(
             candidateOpening!!.isAfter(space.openingTime!!) ||
                 candidateClosing!!.isBefore(space.closingTime!!)
         if (isHoursShrunk) {
-            val now = LocalDateTime.now(clock!!)
+            val now = LocalDateTime.now(clock)
             val hasConflict =
-                occupiedSlotProvider!!.hasOccupiedSlotsOutsideHours(
+                occupiedSlotProvider.hasOccupiedSlotsOutsideHours(
                     spaceId,
                     candidateOpening,
                     candidateClosing,
@@ -119,7 +119,7 @@ class AdminSpaceService(
         val afterSnapshot = SpaceDetailResponse.from(space)
 
         // 감사 로그 기록 (수정 전후 스냅샷 비교)
-        auditLogService!!.log(
+        auditLogService.log(
             adminMemberId,
             AuditAction.MODIFY_SPACE,
             AuditTargetType.SPACE,
