@@ -6,9 +6,9 @@
 
 - [2026-09-24 테스트 기록](../../testing/test-results.md)의 57개 클래스·354개 통과와 2026-10-15 CI 실패는 과거 스냅샷이다. 현재 기준선은 2026-10-20 `d1a15ec`의 **1,048/1,048 통과**(실패 0·오류 0·스킵 0)이며, 상세 환경·명령은 [테스트 결과 §0-0](../../testing/test-results.md)에 있다.
 - 테스트 Java 소스는 **148개 파일 = 실행 스위트 135 + `@Test`가 없는 빈 클래스 5 + 지원·픽스처 8**이다. `find`/`grep` 파일 수를 실행 클래스 수로 세지 않고, 실행 수는 `backend/build/test-results/test/TEST-*.xml`로 집계한다.
-- [`AdminInquiryControllerTest`](../../../backend/src/test/java/com/ovengers/slotkey/inquiry/controller/AdminInquiryControllerTest.java)에 `@Test` 11개가 있다. 실제 보안 필터를 포함한 WebMvcTest로 관리자 목록·필터·기본 페이징·상세/404·답변 위임과 인증/권한을 확인한다. 서비스가 MockBean이므로 영속성 검증은 아니다.
-- 빈 테스트 5개는 여전히 `SlotKeyApplicationTests`, `AuthServiceTest`, `MemberAuthorizationServiceTest`, `MockPaymentGatewayTest`, `PaymentServiceTest`다. 뒤의 두 파일은 기존 `payment` 패키지의 빈 클래스이며, 현재 `credit/pg`의 PG 구현·`FakePgClient`·충전 테스트와 구분해 정리 여부를 판단한다. PG 미도입으로 설명하지 않는다. *(2026-10-27 갱신: `SlotKeyApplicationTests`, `MockPaymentGatewayTest`, `PaymentServiceTest` 3개는 빈 클래스여서 삭제했다. 빈 테스트는 `AuthServiceTest`, `MemberAuthorizationServiceTest` 2개가 남아 있다. 위 148개 집계는 2026-10-20 기준 스냅샷이다.)*
-- 문의 대상: [`InquiryController`](../../../backend/src/main/java/com/ovengers/slotkey/inquiry/controller/InquiryController.java), [`AdminInquiryController`](../../../backend/src/main/java/com/ovengers/slotkey/inquiry/controller/AdminInquiryController.java), [`InquiryService`](../../../backend/src/main/java/com/ovengers/slotkey/inquiry/service/InquiryService.java), [`Inquiry`](../../../backend/src/main/java/com/ovengers/slotkey/inquiry/entity/Inquiry.java).
+- [`AdminInquiryControllerTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/inquiry/controller/AdminInquiryControllerTest.kt)에 `@Test` 11개가 있다. 실제 보안 필터를 포함한 WebMvcTest로 관리자 목록·필터·기본 페이징·상세/404·답변 위임과 인증/권한을 확인한다. 서비스가 MockBean이므로 영속성 검증은 아니다.
+- 빈 테스트 5개는 여전히 `SlotKeyApplicationTests`, `AuthServiceTest`, `MemberAuthorizationServiceTest`, `MockPaymentGatewayTest`, `PaymentServiceTest`다. 뒤의 두 파일은 기존 `payment` 패키지의 빈 클래스이며, 현재 `credit/pg`의 PG 구현·`FakePgClient`·충전 테스트와 구분해 정리 여부를 판단한다. PG 미도입으로 설명하지 않는다. *(2026-10-27 갱신: `SlotKeyApplicationTests`, `MockPaymentGatewayTest`, `PaymentServiceTest` 3개는 빈 클래스여서 삭제했다. 남아 있던 `AuthServiceTest`, `MemberAuthorizationServiceTest`도 auth·member 테스트 Kotlin 전환 때 삭제해 빈 테스트는 없다. 위 148개 집계는 2026-10-20 기준 스냅샷이다.)*
+- 문의 대상: [`InquiryController`](../../../backend/src/main/kotlin/com/ovengers/slotkey/inquiry/controller/InquiryController.kt), [`AdminInquiryController`](../../../backend/src/main/kotlin/com/ovengers/slotkey/inquiry/controller/AdminInquiryController.kt), [`InquiryService`](../../../backend/src/main/kotlin/com/ovengers/slotkey/inquiry/service/InquiryService.kt), [`Inquiry`](../../../backend/src/main/kotlin/com/ovengers/slotkey/inquiry/entity/Inquiry.kt).
 
 ## `16b9ead..d1a15ec` 추가·보강 테스트
 
@@ -16,8 +16,8 @@
 
 | 영역 | 신규 클래스 | 확인하는 계약 |
 | --- | --- | --- |
-| Auth V2·세션 | [`AuthSessionMigrationIntegrationTest`](../../../backend/src/test/java/com/ovengers/slotkey/auth/migration/AuthSessionMigrationIntegrationTest.java), [`LoginRateLimitIntegrationTest`](../../../backend/src/test/java/com/ovengers/slotkey/auth/ratelimit/LoginRateLimitIntegrationTest.java) | 기존 RT의 세션 연결·마이그레이션, 로그인 10회/15분 제한과 429 `Retry-After`. |
-| 관리자 회원 | [`AdminMemberDetailControllerTest`](../../../backend/src/test/java/com/ovengers/slotkey/member/controller/AdminMemberDetailControllerTest.java), [`AdminMemberDetailServiceTest`](../../../backend/src/test/java/com/ovengers/slotkey/member/service/AdminMemberDetailServiceTest.java) | 상세·크레딧·예약·상태 이력 조회, 404/403, 요약 통계. |
+| Auth V2·세션 | [`AuthSessionMigrationIntegrationTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/auth/migration/AuthSessionMigrationIntegrationTest.kt), [`LoginRateLimitIntegrationTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/auth/ratelimit/LoginRateLimitIntegrationTest.kt) | 기존 RT의 세션 연결·마이그레이션, 로그인 10회/15분 제한과 429 `Retry-After`. |
+| 관리자 회원 | [`AdminMemberDetailControllerTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/member/controller/AdminMemberDetailControllerTest.kt), [`AdminMemberDetailServiceTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/member/service/AdminMemberDetailServiceTest.kt) | 상세·크레딧·예약·상태 이력 조회, 404/403, 요약 통계. |
 | 비활성 회원 출입 | [`InactiveMemberAccessIntegrationTest`](../../../backend/src/test/java/com/ovengers/slotkey/access/service/InactiveMemberAccessIntegrationTest.java), [`InactiveMemberAccessFilterTest`](../../../backend/src/test/java/com/ovengers/slotkey/global/security/InactiveMemberAccessFilterTest.java) | 비활성 회원 출입 거절과 `REQUIRES_NEW` 거절 로그. |
 | 기타 계약 | [`GlobalExceptionHandlerTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/global/error/GlobalExceptionHandlerTest.kt), [`ReservationControllerTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/reservation/controller/ReservationControllerTest.kt), [`CreditTransactionRepositoryTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/credit/repository/CreditTransactionRepositoryTest.kt), [`ReservationMemberCountRepositoryTest`](../../../backend/src/test/kotlin/com/ovengers/slotkey/reservation/repository/ReservationMemberCountRepositoryTest.kt) | 오류 응답 매핑, 예약 결제 멱등키·검증, 원장·예약 인원 집계 쿼리. |
 
@@ -39,7 +39,7 @@
 | Outbox·대기·알림 | `OutboxRecordIntegrationTest`, `OutboxRelayIntegrationTest`, `WaitlistApplyConcurrencyTest`, `WaitlistEntryLostUpdateTest`, `SlotReleasedListenerTest`, `SlotReleasedHandlerTest`, `SlotReleasedHandlerConcurrencyTest`, `NotificationReadIntegrationTest` | 취소/이벤트 동반 롤백, 중복 처리, 알림 읽음, nullable active와 lost update 검증을 재사용한다. 기존 payload→전환 후 코드 호환 사례를 고정한다. |
 | 통계 | `SpaceRankingConfirmServiceIntegrationTest`, `SpaceRankingQueryServiceIntegrationTest`, `SpaceRankingBackfillServiceIntegrationTest`, `StatsControllerIntegrationTest`, `AdminStatsControllerIntegrationTest` | 기간/자정·00:01 경계, long 순매출/JDBC 결과, 재확정·지역 스냅샷을 재사용한다. 일반/관리자 응답을 구분한다. |
 
-클래스는 모두 `backend/src/test/java/com/ovengers/slotkey/` 아래에 있다. 추가·보강이 필요한지는 [02](02-money-and-concurrency.md)·[03](03-api-contract.md)·[06](06-jpa-and-proxies.md)의 계약별로 판정하고, 이미 존재하는 테스트를 신규 작성 수에 넣지 않는다.
+클래스는 `backend/src/test/java/com/ovengers/slotkey/` 또는 Kotlin으로 옮긴 경우 `backend/src/test/kotlin/com/ovengers/slotkey/` 아래에 있다. *(2026-10-27 확인: 인증·Auth V2·관리자 회원·문의 행의 클래스는 모두 Kotlin으로 옮겨 `src/test/kotlin`에 있다.)* 추가·보강이 필요한지는 [02](02-money-and-concurrency.md)·[03](03-api-contract.md)·[06](06-jpa-and-proxies.md)의 계약별로 판정하고, 이미 존재하는 테스트를 신규 작성 수에 넣지 않는다.
 
 ## 2026-10-22 합의: 새 기준선과 테스트 수 자동 검사
 
@@ -57,7 +57,7 @@
 
 1. **환경과 결과 고정.** 2026-10-20 `d1a15ec` 기준선은 완료됐다(1,048/1,048). 이후 전환 PR마다 Docker가 실행 중인 JDK 21 환경에서 `cd backend && ./gradlew clean build`를 다시 실행하고 날짜·커밋·테스트 건수·실패 원인을 새 기록으로 남긴다. 로컬 셸에 `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD`, `VERIFICATION_MAIL_FROM`, `SLOTKEY_KAFKA_ENABLED`가 있으면 테스트 프로필 기본값을 덮어쓰므로 해제하고 실행한다(§0-0 재현 조건). [`backend-ci.yml`](../../../.github/workflows/backend-ci.yml)의 `build` 작업 결과는 로컬과 나란히 기록하고, `deploy`의 `-x test`를 테스트 통과 증거로 세지 않는다.
 2. **기존 테스트와 빈 클래스 판정.** 위 대응표에서 재실행/보강/신규 작성 목록을 확정한다. 빈 클래스는 기존 검증과 중복되는지 확인해 목적을 보강하거나 제거한다. 현재 PG 테스트를 빈 payment 클래스와 함께 지우지 않는다. 테스트 수만 늘리기 위한 형식적 메서드는 추가하지 않는다.
-3. **문의 검증 보강.** 기존 관리자 WebMvcTest를 재사용하고 `backend/src/test/java/com/ovengers/slotkey/inquiry/`에 빠진 회원 HTTP/보안·서비스/DB 검증을 추가한다. 실 DB 테스트는 기존 `IntegrationTestSupport` 또는 `@ActiveProfiles("test")`와 `MySqlTestContainerConfig`를 사용한다. 답변 시각에는 고정 `Clock`을 사용한다.
+3. **문의 검증 보강.** *(2026-10-27 확인: 아직 미완료. 문의 테스트는 관리자 WebMvcTest인 `AdminInquiryControllerTest` 1개뿐이며, 회원용 HTTP·서비스/DB 테스트는 없다.)* 기존 관리자 WebMvcTest를 재사용하고 `backend/src/test/kotlin/com/ovengers/slotkey/inquiry/`에 빠진 회원 HTTP/보안·서비스/DB 검증을 추가한다. 실 DB 테스트는 기존 `IntegrationTestSupport` 또는 `@ActiveProfiles("test")`와 `MySqlTestContainerConfig`를 사용한다. 답변 시각에는 고정 `Clock`을 사용한다.
 4. **응답과 DB 상태를 함께 확인.** `MockMvc`에서 인증·권한·`ApiResponse`를 확인하고, 커밋 후 DB를 재조회한다. 거절된 요청은 저장 부작용이 없어야 한다.
 5. **기록 갱신.** 새 테스트의 시나리오를 `docs/testing/test-strategy.md`에 연결하고 전체 실행 결과를 `docs/testing/test-results.md`에 추가한다. 로컬과 CI 결과를 구분한다.
 
