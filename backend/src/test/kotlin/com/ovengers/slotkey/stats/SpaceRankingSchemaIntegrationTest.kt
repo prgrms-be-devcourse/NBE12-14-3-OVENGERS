@@ -26,8 +26,15 @@ class SpaceRankingSchemaIntegrationTest : IntegrationTestSupport() {
             )
 
         assertThat(columns).containsExactly(
-            "id", "period_type", "period_start", "space_id", "location",
-            "net_revenue", "reservation_count", "slot_count", "computed_at",
+            "id",
+            "period_type",
+            "period_start",
+            "space_id",
+            "location",
+            "net_revenue",
+            "reservation_count",
+            "slot_count",
+            "computed_at",
         )
     }
 

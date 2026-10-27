@@ -74,7 +74,8 @@ class SpaceRankingSchedulerTest {
     @DisplayName("한 기간의 확정이 실패해도 나머지 기간과 보충은 계속 실행되고 예외는 밖으로 나가지 않는다")
     fun oneFailureDoesNotStopTheRest() {
         doThrow(IllegalStateException("db down"))
-            .`when`(confirmService).confirm(RankingPeriodType.DAILY, LocalDate.of(2026, 5, 31))
+            .`when`(confirmService)
+            .confirm(RankingPeriodType.DAILY, LocalDate.of(2026, 5, 31))
 
         assertThatCode { schedulerAt(2026, 6, 1).runDaily() }.doesNotThrowAnyException()
 
