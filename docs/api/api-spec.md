@@ -222,7 +222,7 @@
 - 승인 요청 시 회원이 `ACTIVE`가 아니면 `PENDING` 유지, PG 미호출, `ACCOUNT_INACTIVE`(403).
 - PG 승인은 확인됐지만 DB 2가 실패하면 원인을 로그로 남긴다. 최종 주문이 `CONFIRMING`이면 202로 후속 복구를 기다리고, 다른 처리와 경합해 이미 `PAID`면 200을 반환하며, `FAILED` 등 그 밖의 상태면 `CHARGE_ORDER_STATE_CONFLICT`(409)를 반환한다. `200 + FAILED` 응답은 허용하지 않는다.
 - 복구 스케줄러는 `CONFIRMING` 전이 후 1분 이상 24시간 미만인 주문을 저장된 `paymentKey`로 조회한다. 전송 실패·타임아웃·5xx·404로 Payment 객체를 받지 못하면 사실 없는 `UNKNOWN`으로 1분 뒤 재시도한다. Payment 객체를 받았으면 `paymentKey`·`orderId`·금액·상태·`currency=KRW`가 모두 맞을 때만 `PAID`/`FAILED`를 반영하고, 필수 필드 누락이나 불일치는 즉시 수동 처리 대상으로 표시한다. 정확히 24시간부터는 자동 조회를 중단한다. 수동 처리 표시와 PG 승인/로컬 `FAILED` 경합은 시스템 작업(`actorMemberId=null`)으로 `CHARGE_RECOVERY_MANUAL_REVIEW` 감사 로그를 남기며 기존 관리자 감사 로그 API에서 조회할 수 있다.
-- 오류: `IDEMPOTENCY_KEY_REQUIRED`(400), `CHARGE_ORDER_AMOUNT_MISMATCH`(400), `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `ACCOUNT_INACTIVE`(403), `CHARGE_ORDER_NOT_FOUND`(404), `CHARGE_ORDER_STATE_CONFLICT`(409), `IDEMPOTENCY_KEY_REUSED`(409), `PAYMENT_DECLINED`(422), `PG_CONFIRMATION_ERROR`(500).
+- 오류: `IDEMPOTENCY_KEY_REQUIRED`(400), `VALIDATION_FAILED`(400, 본문 필수 필드 누락, 그리고 충전 후 잔액이 `int` 상한을 넘는 경우), `CHARGE_ORDER_AMOUNT_MISMATCH`(400), `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `ACCOUNT_INACTIVE`(403), `CHARGE_ORDER_NOT_FOUND`(404), `CHARGE_ORDER_STATE_CONFLICT`(409), `IDEMPOTENCY_KEY_REUSED`(409), `PAYMENT_DECLINED`(422), `PG_CONFIRMATION_ERROR`(500).
 
 ### 5-0-3. 토스페이먼츠 웹훅 수신 — `POST /webhooks/tosspayments`
 
@@ -355,13 +355,13 @@
 `Idempotency-Key` 불필요(이 단계는 결제가 없음). 처리 순서:
 
 1. 시간 및 요청 형식 검증: 30분 단위, 운영시간 내, 당일 내 종료 여부 검증 (위반 시 `INVALID_RESERVATION_TIME`(400) 또는 `VALIDATION_FAILED`(400))
-2. 공간 상태 검증: 공간 존재 여부(`SPACE_NOT_FOUND`(404)) 및 ACTIVE 여부 확인 (`SPACE_INACTIVE`(422)). *(참고: `ReservationHoldService`에서는 회원 ACTIVE 상태를 별도 재검사하지 않음)*
+2. 공간 상태 검증: 공간 존재 여부(`SPACE_NOT_FOUND`(404)) 및 ACTIVE 여부 확인 (`SPACE_INACTIVE`(422)). *(참고: `ReservationHoldService`는 회원을 잠금 조회해 존재하지 않으면 `AUTHENTICATION_REQUIRED`(401), `WITHDRAWN`이면 `ACCOUNT_WITHDRAWN`(401)으로 거절한다. `SUSPENDED`는 이 서비스에서 검사하지 않으며 인증 필터가 먼저 `INVALID_ACCESS_TOKEN`(401)으로 막는다. 탈퇴 회원도 필터가 먼저 막으므로 `ACCOUNT_WITHDRAWN`은 필터 통과 직후 탈퇴가 경합한 경우에만 나온다)*
 3. 대상 슬롯의 만료된 HELD를 조건부 UPDATE로 EXPIRED 전이 + 슬롯 삭제(즉시 정리)
 4. `price_per_slot × 슬롯 수`로 `totalAmount` 계산
 5. 슬롯 유니크 INSERT 시도 → 충돌 시 `RESERVATION_SLOT_CONFLICT`(409)
 6. `Reservation` 생성(`HELD`, `holdExpiresAt` = now + 10분) 및 상태 이력 저장. 응답에 `totalAmount`, `spaceVersion`, `holdExpiresAt` 반환
 
-오류: `VALIDATION_FAILED`(400), `INVALID_RESERVATION_TIME`(400), `AUTHENTICATION_REQUIRED`(401), `SPACE_NOT_FOUND`(404), `RESERVATION_SLOT_CONFLICT`(409), `SPACE_INACTIVE`(422)
+오류: `VALIDATION_FAILED`(400), `INVALID_RESERVATION_TIME`(400), `AUTHENTICATION_REQUIRED`(401), `ACCOUNT_WITHDRAWN`(401), `SPACE_NOT_FOUND`(404), `RESERVATION_SLOT_CONFLICT`(409), `SPACE_INACTIVE`(422)
 
 ### 5-2. 결제 확인 및 확정 — `POST /reservations/{id}/pay`
 
@@ -401,7 +401,7 @@
 1. 조건부 UPDATE: `WHERE id=:id AND status='CONFIRMED' AND :now < start_time` → `CANCELLED`(`cancelled_at`=now). 영향 행 0이면 409
 2. (같은 트랜잭션) 슬롯 삭제 + 활성 토큰 revoke + 크레딧 환급(`REFUND` 전액, 필요시 `PENALTY` 위약금을 **두 줄로 분리 기록**) + 상태 이력 저장
 
-오류: `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `RESERVATION_STATE_CONFLICT`(409)
+오류: `AUTHENTICATION_REQUIRED`(401), `ACCOUNT_WITHDRAWN`(401, §5-1 참고), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `RESERVATION_STATE_CONFLICT`(409)
 
 > 취소와 환불이 같은 DB의 한 트랜잭션이므로 "취소는 됐는데 환불은 실패"하는 중간 상태가 구조적으로 없다. 별도의 환불 재처리 큐는 필요 없다.
 
@@ -417,7 +417,7 @@
 5. **슬롯 확보 및 크레딧 차감**: 추가 슬롯 INSERT(`secureSlots`, 충돌 시 409). 원 예약의 `price_per_slot_snapshot` 기준으로 추가 금액 크레딧 차감.
 6. **조건부 UPDATE**: `extendIfEndTimeMatches`로 종료 시각과 총액 갱신. 영향 행 0이면 409 롤백.
 
-오류: `VALIDATION_FAILED`(400), `INVALID_RESERVATION_TIME`(400), `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `SPACE_NOT_FOUND`(404), `RESERVATION_SLOT_CONFLICT`(409), `RESERVATION_STATE_CONFLICT`(409), `RESERVATION_EXTEND_NOT_ALLOWED`(422), `INSUFFICIENT_BALANCE`(422)
+오류: `VALIDATION_FAILED`(400), `INVALID_RESERVATION_TIME`(400), `AUTHENTICATION_REQUIRED`(401), `ACCOUNT_WITHDRAWN`(401, §5-1 참고), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `SPACE_NOT_FOUND`(404), `RESERVATION_SLOT_CONFLICT`(409), `RESERVATION_STATE_CONFLICT`(409), `RESERVATION_EXTEND_NOT_ALLOWED`(422), `INSUFFICIENT_BALANCE`(422)
 
 > 실패해도 원 예약은 무손상(기존 슬롯을 건드리지 않음).
 
@@ -434,8 +434,8 @@
 ## 6. [관리자] 예약 관리
 
 - `GET /admin/reservations?page=&size=&date=&spaceId=&status=` (ADMIN): 취소 예약도 목록 포함. 응답 `ApiResponse<PageResponse<AdminReservationResponse>>` (공통 `PageResponse` 형태. 필드: `page`, `size`, `totalElements`, `totalPages`, `content[]` 원소: `{ reservationId, memberId, memberEmail, spaceId, spaceName, startTime, endTime, status, totalAmount, createdAt }`). `date`(YYYY-MM-DD 형식, 해당 날짜 [00:00:00, 다음날 00:00:00) 범위 검색), `spaceId`(양수), `status` 필터 쿼리 파라미터를 지원하며, 잘못된 형식(유효하지 않은 날짜, 음수 spaceId, 알 수 없는 enum 등)은 400 `VALIDATION_FAILED`로 거절된다. 존재하지 않는 양수 spaceId는 빈 목록(200 OK)을 반환한다.
-- `GET /admin/reservations/{reservationId}` (ADMIN): 관리자 예약 상세 조회. 응답 `ApiResponse<AdminReservationDetailResponse>` (목록 필드 + `pricePerSlotSnapshot`, `holdExpiresAt`, `checkedInAt`, `checkedOutAt`, `cancelledAt`, `statusHistory[]`, `accessLogs[]`). 오류: `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `RESERVATION_NOT_FOUND`(404)
-- `POST /admin/reservations/{reservationId}/force-cancel` (ADMIN): 바디 `{ "reason": "..." }` 1~500자 필수, 응답 `ApiResponse<AdminReservationResponse>`. 취소 가능 상태는 `HELD`/`CONFIRMED`/`IN_USE`(그 외 종료 상태는 409). 조회 시점 상태 기준 조건부 UPDATE(`WHERE id=:id AND status=:조회 시점 상태`) → 같은 트랜잭션에서 상태 이력(사유 포함) + 슬롯 삭제 + 활성 토큰 revoke + **크레딧 환불(`CONFIRMED`/`IN_USE`는 `total_amount` 전액 `REFUND`, 위약금 없음 / `HELD`는 환불 없음)** + audit_log 기록. 오류: `VALIDATION_FAILED`(400), `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `RESERVATION_NOT_FOUND`(404), `RESERVATION_STATE_CONFLICT`(409). **관리자도 이 API 외의 경로로 타인 예약을 취소하거나 도어 토큰을 발급받을 수 없다** (핵심 차별점)
+- `GET /admin/reservations/{reservationId}` (ADMIN): 관리자 예약 상세 조회. 응답 `ApiResponse<AdminReservationDetailResponse>` (목록 필드 + `pricePerSlotSnapshot`, `checkedInAt`, `checkedOutAt`, `cancelledAt`, `statusHistory[]`, `accessLogs[]`). 오류: `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `RESERVATION_NOT_FOUND`(404)
+- `POST /admin/reservations/{reservationId}/force-cancel` (ADMIN): 바디 `{ "reason": "..." }` 1~500자 필수, 응답 `ApiResponse<AdminReservationResponse>`. 취소 가능 상태는 `HELD`/`CONFIRMED`/`IN_USE`(그 외 종료 상태는 409). 조회 시점 상태 기준 조건부 UPDATE(`WHERE id=:id AND status=:조회 시점 상태`) → 같은 트랜잭션에서 상태 이력(사유 포함) + 슬롯 삭제 + 활성 토큰 revoke + **크레딧 환불(`CONFIRMED`/`IN_USE`는 `total_amount` 전액 `REFUND`, 위약금 없음 / `HELD`는 환불 없음)** + audit_log 기록. 오류: `VALIDATION_FAILED`(400), `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `RESERVATION_NOT_FOUND`(404), `SPACE_NOT_FOUND`(404, `HELD` 예약의 공간 잠금 조회 실패), `RESERVATION_STATE_CONFLICT`(409). **관리자도 이 API 외의 경로로 타인 예약을 취소하거나 도어 토큰을 발급받을 수 없다** (핵심 차별점)
 
 ## 7. 출입 (Door Access)
 
@@ -452,7 +452,7 @@
 
 ### 인증 통과 후 출입 API
 
-- `POST /reservations/{reservationId}/door-token` (예약자 본인만): **발급에는 시간 제한이 없다** — `CONFIRMED` 또는 `IN_USE`이고 `now < end_time`이면 예약 확정 직후부터 언제든 발급 가능(발급은 입장 권한이 아니라 신분증을 받는 것일 뿐, `start` 전엔 문이 열리지 않는다). 기존 활성 토큰은 먼저 폐기 후 재발급. 응답: 201 `ApiResponse<DoorAccessTokenResponse>` (`reservationId`, `token`, `issuedAt`). 오류: `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `RESERVATION_STATE_CONFLICT`(409, 동시 발급 경합)
+- `POST /reservations/{reservationId}/door-token` (예약자 본인만): **발급에는 시간 제한이 없다** — `CONFIRMED` 또는 `IN_USE`이고 `now < end_time`이면 예약 확정 직후부터 언제든 발급 가능(발급은 입장 권한이 아니라 신분증을 받는 것일 뿐, `start` 전엔 문이 열리지 않는다). 기존 활성 토큰은 먼저 폐기 후 재발급. 응답: 201 `ApiResponse<DoorAccessTokenResponse>` (`reservationId`, `token`, `issuedAt`). 오류: `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `RESERVATION_STATE_CONFLICT`(409 — 예약이 `CONFIRMED`·`IN_USE`가 아니거나 이미 종료됐거나 동시 발급 경합으로 활성 토큰 UNIQUE가 충돌한 경우)
 - `PATCH /reservations/{reservationId}/access-token/revoke` (예약자 본인만): 해당 예약에 발급된 활성 출입 토큰을 즉시 폐기. 응답: 200 `ApiResponse<Void>` (Java 상으로는 `data: null`이나, `@JsonInclude(NON_NULL)`로 인해 실제 HTTP JSON 직렬화 시 `"data"` 필드가 생략되어 `{ "status": "SUCCESS", "code": "OK", "message": "요청이 성공적으로 처리되었습니다." }` 형태로 반환됨). 오류: `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404), `ACTIVE_ACCESS_TOKEN_NOT_FOUND`(404)
 - `GET /reservations/{reservationId}/access-logs` (예약자 본인만): 해당 예약의 출입 기록 목록 조회. 응답: 200 `ApiResponse<List<DoorAccessLogResponse>>` (`accessLogId`, `attemptedAt`, `requestedSpaceName`, `result`, `reasonCode`). 오류: `AUTHENTICATION_REQUIRED`(401), `FORBIDDEN_NOT_OWNER`(403), `RESERVATION_NOT_FOUND`(404)
 - `POST /door-access/verify` (인증 필요): 요청 바디 `{ spaceId, token }`. 응답: 200 `ApiResponse<DoorAccessVerifyResponse>` (`result: "ALLOW" | "DENY"`, `reasonCode`, `spaceName`, `firstCheckIn`, `attemptedAt`). 검증 순서:
