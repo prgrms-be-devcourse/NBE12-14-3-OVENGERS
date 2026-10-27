@@ -91,7 +91,18 @@ pitest {
         'com.ovengers.slotkey.credit.entity.ChargeOrder$*',
         'com.ovengers.slotkey.space.policy.SpaceOperatingHoursPolicy',
         'com.ovengers.slotkey.credit.service.CreditServiceImpl',
-        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicy'
+        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicy',
+        // #191: space/audit/stats 핵심 로직 확장. Space$Companion은 검증 로직을 담고 있어
+        // 상위 Space 패턴만으로는 포함되지 않으므로 별도로 지정한다.
+        'com.ovengers.slotkey.space.entity.Space',
+        'com.ovengers.slotkey.space.entity.Space$Companion',
+        'com.ovengers.slotkey.space.service.AdminSpaceService',
+        'com.ovengers.slotkey.space.service.SpaceQueryService',
+        'com.ovengers.slotkey.space.service.SpaceSlotAvailabilityService',
+        'com.ovengers.slotkey.audit.service.AuditLogService',
+        'com.ovengers.slotkey.audit.service.AuditLogQueryService',
+        'com.ovengers.slotkey.stats.entity.RankingPeriodType*',
+        'com.ovengers.slotkey.stats.repository.SpaceRankingAggregate'
     ]
     targetTests = [
         'com.ovengers.slotkey.reservation.policy.*',
@@ -105,7 +116,20 @@ pitest {
         'com.ovengers.slotkey.space.service.SpaceSlotAvailabilityServiceTest',
         'com.ovengers.slotkey.credit.service.CreditServiceImplTest',
         'com.ovengers.slotkey.credit.service.CreditServiceImplMutationTest',
-        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicyTest'
+        'com.ovengers.slotkey.access.policy.DoorAccessTimePolicyTest',
+        // #191: 확장한 space/audit/stats 대상의 대응 단위 테스트.
+        'com.ovengers.slotkey.space.entity.SpaceTest',
+        'com.ovengers.slotkey.space.service.AdminSpaceServiceTest',
+        'com.ovengers.slotkey.space.service.SpaceQueryServiceTest',
+        'com.ovengers.slotkey.audit.service.AuditLogQueryServiceTest',
+        'com.ovengers.slotkey.audit.service.AuditLogServiceTest',
+        'com.ovengers.slotkey.stats.entity.RankingPeriodTypeTest',
+        'com.ovengers.slotkey.stats.repository.SpaceRankingAggregateTest',
+        // #191: 생존 변이로 확인된 업무 규칙 공백을 새 파일로 고정한다.
+        'com.ovengers.slotkey.space.service.AdminSpaceServiceMutationTest',
+        'com.ovengers.slotkey.space.entity.SpaceMutationTest',
+        'com.ovengers.slotkey.audit.service.AuditLogQueryServiceMutationTest',
+        'com.ovengers.slotkey.audit.service.AuditLogServiceMutationTest'
     ]
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
