@@ -153,9 +153,9 @@ related: [waitlist.md, outbox-kafka.md, notification-ui.md, pg-charge.md, reserv
 | `credit/pg/PgConfirmationResult.java`, `credit/pg/TossPaymentsPgClient.java` | 승인 응답의 method·easyPay.provider 전달 |
 | `credit/service/ChargeOrderConfirmService.java`, `ChargeOrderConfirmTransactionService.java` | 승인 뒤 결제수단 기록(`recordPaymentMethod`, 실패 무시) |
 
-### 백엔드 테스트 (`backend/src/test/java/com/ovengers/slotkey/`)
+### 백엔드 테스트 (`backend/src/test/kotlin/com/ovengers/slotkey/`)
 
-`reservation/service/ReservationCancelServiceTest.java`, `reservation/service/OutboxRecordIntegrationTest.java`, `credit/service/ChargeOrderServiceTest.java`, `credit/controller/ChargeOrderControllerTest.java`, `credit/repository/ChargeOrderRepositoryTest.java`
+`reservation/service/ReservationCancelServiceTest.kt`, `reservation/service/OutboxRecordIntegrationTest.kt`, `credit/service/ChargeOrderServiceTest.kt`, `credit/controller/ChargeOrderControllerTest.kt`, `credit/repository/ChargeOrderRepositoryTest.kt`
 
 ### 프론트 (`frontend/src/`)
 
