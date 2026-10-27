@@ -351,7 +351,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
             // 토큰은 강제 취소로 폐기됨
             val reloadedToken = doorAccessTokenRepository.findById(token.id!!).orElseThrow()
-            assertThat(reloadedToken.isRevoked()).isTrue()
+            assertThat(reloadedToken.isRevoked).isTrue()
 
             // 출입 로그: ALLOW 로그 0건, DENY 로그 1건
             val logs = doorAccessLogRepository.findAll()
@@ -572,7 +572,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
             // 토큰 폐기 확인 (AUTO_CHECK_OUT)
             val reloadedToken = doorAccessTokenRepository.findById(token.id!!).orElseThrow()
-            assertThat(reloadedToken.isRevoked()).isTrue()
+            assertThat(reloadedToken.isRevoked).isTrue()
             assertThat(reloadedToken.revokeReason).isEqualTo("AUTO_CHECK_OUT")
 
             // 상태 이력: AUTO_CHECK_OUT 1건
@@ -686,7 +686,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.IN_USE)
 
             val reloadedOldToken = doorAccessTokenRepository.findById(oldToken.id!!).orElseThrow()
-            assertThat(reloadedOldToken.isRevoked()).isTrue()
+            assertThat(reloadedOldToken.isRevoked).isTrue()
             assertThat(reloadedOldToken.revokeReason).isEqualTo("REISSUED")
 
             // 출입 로그: ALLOW 로그 0건, DENY 로그 1건 (TOKEN_REVOKED)
@@ -800,7 +800,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
             // 토큰 폐기 확인
             val reloadedOldToken = doorAccessTokenRepository.findById(oldToken.id!!).orElseThrow()
-            assertThat(reloadedOldToken.isRevoked()).isTrue()
+            assertThat(reloadedOldToken.isRevoked).isTrue()
             assertThat(reloadedOldToken.revokeReason).isEqualTo("USER_CANCELLED_TOKEN")
 
             // 상태 이력: 상태 전이가 실행되지 않았으므로 0건
@@ -1043,7 +1043,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
                 // 공통 취소 상태 단언: 슬롯 0개, 토큰 폐기, 감사 로그 1건
                 assertThat(finalSlots).isEmpty()
-                assertThat(finalToken.isRevoked()).isTrue()
+                assertThat(finalToken.isRevoked).isTrue()
                 assertThat(auditLogs).hasSize(1)
                 assertThat(auditLogs.get(0).action).isEqualTo(AuditAction.FORCE_CANCEL_RESERVATION)
 
@@ -1082,7 +1082,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
                 // 공통 IN_USE 상태 단언
                 assertThat(finalSlots).hasSize(2)
-                assertThat(finalToken.isRevoked()).isFalse()
+                assertThat(finalToken.isRevoked).isFalse()
                 assertThat(auditLogs).isEmpty()
                 assertThat(histories).hasSize(1)
                 assertThat(histories.get(0).fromStatus).isEqualTo(ReservationStatus.CONFIRMED)
@@ -1222,7 +1222,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             val tokens = doorAccessTokenRepository.findAll()
             assertThat(tokens).hasSize(1)
             assertThat(tokens.get(0).id!!).isEqualTo(oldToken.id!!)
-            assertThat(tokens.get(0).isRevoked()).isTrue()
+            assertThat(tokens.get(0).isRevoked).isTrue()
             assertThat(tokens.get(0).revokeReason).isEqualTo("ADMIN_FORCE_CANCEL")
 
             // 감사 로그: 1건
@@ -1290,7 +1290,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             assertThat(allTokens).hasSize(2)
 
             val reloadedToken1 = doorAccessTokenRepository.findById(token1.id!!).orElseThrow()
-            assertThat(reloadedToken1.isRevoked()).isTrue()
+            assertThat(reloadedToken1.isRevoked).isTrue()
             assertThat(reloadedToken1.revokeReason).isEqualTo("REISSUED")
 
             val reloadedToken2 =
@@ -1299,7 +1299,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
                     .filter({ t -> !t.id!!.equals(token1.id!!) })
                     .findFirst()
                     .orElseThrow()
-            assertThat(reloadedToken2.isRevoked()).isTrue()
+            assertThat(reloadedToken2.isRevoked).isTrue()
             assertThat(reloadedToken2.revokeReason).isEqualTo("ADMIN_FORCE_CANCEL")
 
             // 감사 로그: 1건
@@ -1516,7 +1516,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             assertThat(reservationSlotRepository.count()).isZero()
 
             val reloadedToken = doorAccessTokenRepository.findById(token.id!!).orElseThrow()
-            assertThat(reloadedToken.isRevoked()).isTrue()
+            assertThat(reloadedToken.isRevoked).isTrue()
 
             val histories = statusHistoryRepository.findAllByReservationIdOrderByChangedAtAsc(reservationId)
             assertThat(histories).hasSize(2)
