@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Optional
@@ -265,6 +266,22 @@ class SpaceQueryServiceTest {
     }
 
     @Test
+    @DisplayName("minPrice 없이 maxPrice만 음수이면 다른 가격 검증과 무관하게 VALIDATION_FAILED 예외가 발생한다")
+    fun getSpacesPage_onlyNegativeMaxPrice_throwsValidationFailedWithoutSideEffects() {
+        // given
+        val pageable: Pageable = PageRequest.of(0, 10)
+        val condition = SpaceSearchCondition(null, null, null, -1L, null, null, null)
+
+        // when & then
+        assertThatThrownBy { spaceQueryService.getSpacesPage(pageable, condition) }
+            .isInstanceOf(BusinessException::class.java)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.VALIDATION_FAILED)
+
+        verifyNoInteractions(spaceRepository)
+        verifyNoInteractions(occupiedSlotProvider)
+    }
+
+    @Test
     @DisplayName("minPrice가 maxPrice보다 크면 VALIDATION_FAILED 예외가 발생한다")
     fun getSpacesPage_minPriceGreaterThanMaxPrice_throwsException() {
         // given
@@ -408,6 +425,119 @@ class SpaceQueryServiceTest {
         )
     }
 
+    @ParameterizedTest(name = "정상 30분 경계: start={0}, end={1}")
+    @MethodSource("halfHourAlignedFilters")
+    @DisplayName("시작 또는 종료가 :30이어도 검색되고 전달된 시간 범위와 현재 시각이 정확하다")
+    fun getSpacesPage_halfHourBoundary_succeeds(
+        start: LocalTime,
+        end: LocalTime,
+    ) {
+        // given
+        val pageable: Pageable = PageRequest.of(0, 10)
+        val date = LocalDate.of(2026, 9, 23)
+        val condition = SpaceSearchCondition(null, null, null, null, date, start, end)
+
+        val fixedClock =
+            Clock.fixed(Instant.parse("2026-09-23T05:30:00Z"), ZoneId.of("Asia/Seoul"))
+        given(clock.zone).willReturn(fixedClock.zone)
+        given(clock.instant()).willReturn(fixedClock.instant())
+
+        given(occupiedSlotProvider.getOccupiedSpaceIds(any(), any(), any()))
+            .willReturn(setOf(9L, 10L))
+
+        val expectedSpace = createSpace(7L, "경계 회의실")
+        val expectedPage: Page<Space> = PageImpl(listOf(expectedSpace), pageable, 1L)
+        given(
+            spaceRepository.searchSpaces(
+                eq(SpaceStatus.ACTIVE),
+                isNull(),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(start),
+                eq(end),
+                any(),
+                eq(pageable),
+            ),
+        ).willReturn(expectedPage)
+
+        // when
+        val actualPage = spaceQueryService.getSpacesPage(pageable, condition)
+
+        // then
+        assertThat(actualPage.content).containsExactly(expectedSpace)
+        assertThat(actualPage.totalElements).isEqualTo(1L)
+
+        verify(occupiedSlotProvider).getOccupiedSpaceIds(
+            LocalDateTime.of(date, start),
+            LocalDateTime.of(date, end),
+            LocalDateTime.of(2026, 9, 23, 14, 30),
+        )
+        verify(spaceRepository).searchSpaces(
+            eq(SpaceStatus.ACTIVE),
+            isNull(),
+            isNull(),
+            isNull(),
+            isNull(),
+            eq(start),
+            eq(end),
+            argThatContainsExactlyInAnyOrder(9L, 10L),
+            eq(pageable),
+        )
+    }
+
+    @Test
+    @DisplayName(":30 경계 시간대에 점유 공간이 없으면 제외 sentinel로 검색된다")
+    fun getSpacesPage_halfHourBoundaryWithoutOccupiedSpaces_usesNoExclusionSentinel() {
+        // given
+        val pageable: Pageable = PageRequest.of(0, 10)
+        val date = LocalDate.of(2026, 9, 23)
+        val startTime = LocalTime.of(14, 30)
+        val endTime = LocalTime.of(15, 30)
+        val condition = SpaceSearchCondition(null, null, null, null, date, startTime, endTime)
+
+        val fixedClock =
+            Clock.fixed(Instant.parse("2026-09-23T05:30:00Z"), ZoneId.of("Asia/Seoul"))
+        given(clock.zone).willReturn(fixedClock.zone)
+        given(clock.instant()).willReturn(fixedClock.instant())
+
+        given(occupiedSlotProvider.getOccupiedSpaceIds(any(), any(), any()))
+            .willReturn(emptySet())
+
+        val expectedSpace = createSpace(8L, "빈 시간대 회의실")
+        val expectedPage: Page<Space> = PageImpl(listOf(expectedSpace), pageable, 1L)
+        given(
+            spaceRepository.searchSpaces(
+                eq(SpaceStatus.ACTIVE),
+                isNull(),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(startTime),
+                eq(endTime),
+                eq(noExclusion),
+                eq(pageable),
+            ),
+        ).willReturn(expectedPage)
+
+        // when
+        val actualPage = spaceQueryService.getSpacesPage(pageable, condition)
+
+        // then
+        assertThat(actualPage.content).containsExactly(expectedSpace)
+        verify(spaceRepository).searchSpaces(
+            eq(SpaceStatus.ACTIVE),
+            isNull(),
+            isNull(),
+            isNull(),
+            isNull(),
+            eq(startTime),
+            eq(endTime),
+            eq(noExclusion),
+            eq(pageable),
+        )
+    }
+
     private fun argThatContainsExactlyInAnyOrder(vararg ids: Long): List<Long>? =
         argThat<List<Long>?> { list ->
             list != null && list.size == ids.size && list.containsAll(ids.toList())
@@ -456,6 +586,14 @@ class SpaceQueryServiceTest {
                 Arguments.of(LocalDate.of(2026, 10, 1), LocalTime.of(10, 0), null),
                 Arguments.of(LocalDate.of(2026, 10, 1), null, LocalTime.of(12, 0)),
                 Arguments.of(null, LocalTime.of(10, 0), LocalTime.of(12, 0)),
+            )
+
+        @JvmStatic
+        fun halfHourAlignedFilters(): Stream<Arguments> =
+            Stream.of(
+                Arguments.of(LocalTime.of(14, 30), LocalTime.of(15, 0)),
+                Arguments.of(LocalTime.of(14, 0), LocalTime.of(15, 30)),
+                Arguments.of(LocalTime.of(14, 30), LocalTime.of(15, 30)),
             )
 
         @JvmStatic
