@@ -9,8 +9,8 @@ data class DoorAccessTokenResponse(
     val token: String?,
     val issuedAt: LocalDateTime?,
 ) {
-    // 아직 Java인 출입 서비스·테스트의 getter 호출을 유지한다.
-    // TODO: 출입 서비스·테스트의 Kotlin 전환 후 프로퍼티 접근으로 바꾸고 호환용 getter를 제거한다.
+    // 남아 있는 Java 호출부·테스트와의 getter 호환성을 유지한다.
+    // TODO: getter 호출부를 정리하고 JSON 호환성을 확인한 뒤 호환용 getter 제거를 검토한다.
     fun getReservationId(): Long? = reservationId
 
     fun getToken(): String? = token

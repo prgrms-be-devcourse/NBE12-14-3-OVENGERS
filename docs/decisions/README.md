@@ -43,6 +43,7 @@
 | [`kotlin-data-class-scope.md`](kotlin-data-class-scope.md) | 기술 선택 | `data class`는 DTO·이벤트 페이로드·불변 값 객체에 한정하고, Java record 접근자 경계는 `@JvmRecord` 또는 같은 PR의 호출부 전환으로 맞춘다. | 채택 (구현 전) |
 | [`step-up-auth.md`](step-up-auth.md) | 기능 | 크레딧 사용·계정 변경 같은 고위험 행위에 2차 비밀번호 재인증을 요구한다. | 3차 범위 |
 | [`mutation-testing.md`](mutation-testing.md) | 기술 선택 | AI가 쓴 테스트가 틀렸는데 통과하거나 누락된 곳을 찾기 위해, 핵심 도메인 로직에 한정해 PIT 뮤테이션 테스트를 도입한다. | 채택 (0~6단계 구현·검증 완료, 2026-10-26) |
+| [`doc-code-consistency-checks.md`](doc-code-consistency-checks.md) | 기술 선택 | 문서가 코드와 어긋나는 것을 잡기 위해 엔드포인트·에러 코드·스키마는 스크립트로 CI에서 대조하고, 규칙-테스트 대응·오류 목록·DTO는 범위를 좁혀 근거와 함께 단계별로 대조한다. | 채택 (PR #179~#182 구현 반영, 규칙 4 테스트 인계 대기) |
 
 > Kotlin 마이그레이션 결정 4건은 [Kotlin 마이그레이션 계획](../plans/kotlin-migration/00-kotlin-migration-plan.md)의 P1~P5와 연결되며, 모두 `status: 채택`·"구현 전"이다. 검증 게이트는 각 문서의 5~6번과 [코드 전환 계획](../plans/kotlin-migration/07-code-migration.md)의 `step-0`~`step-6`에 있다.
 

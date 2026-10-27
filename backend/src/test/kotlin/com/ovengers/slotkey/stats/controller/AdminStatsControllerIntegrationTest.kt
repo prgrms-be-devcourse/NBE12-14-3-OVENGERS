@@ -135,6 +135,29 @@ class AdminStatsControllerIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
+    @DisplayName("참조 공간이 삭제된 스냅샷은 관리자 랭킹에서도 순위·지표·순매출을 보존하고 삭제된 공간/INACTIVE로 표시한다")
+    fun missingSpaceKeepsRankAndMetrics() {
+        val present = saveSpace("판교 A룸", "판교")
+        val missingSpaceId = 999_999_992L
+        snap(RankingPeriodType.DAILY, LocalDate.of(2026, 10, 14), present, "판교", 100L, 1, 1)
+        snap(RankingPeriodType.DAILY, LocalDate.of(2026, 10, 14), missingSpaceId, "판교", 5000L, 3, 6)
+
+        spaceRanking("period", "DAILY", "date", "2026-10-14")
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
+            .andExpect(jsonPath("$.data.items.length()").value(2))
+            .andExpect(jsonPath("$.data.items[0].rank").value(1))
+            .andExpect(jsonPath("$.data.items[0].spaceId").value(missingSpaceId))
+            .andExpect(jsonPath("$.data.items[0].spaceName").value("삭제된 공간"))
+            .andExpect(jsonPath("$.data.items[0].spaceStatus").value("INACTIVE"))
+            .andExpect(jsonPath("$.data.items[0].location").value("판교"))
+            .andExpect(jsonPath("$.data.items[0].netRevenue").value(5000))
+            .andExpect(jsonPath("$.data.items[0].reservationCount").value(3))
+            .andExpect(jsonPath("$.data.items[0].slotCount").value(6))
+            .andExpect(jsonPath("$.data.items[1].spaceId").value(present))
+    }
+
+    @Test
     @DisplayName("지역 랭킹은 api-spec §14의 items 필드(location, spaceCount, 세 지표)를 내려준다")
     fun locationRankingResponseShape() {
         val a = saveSpace("A", "판교")
