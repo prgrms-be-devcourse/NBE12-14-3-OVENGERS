@@ -296,13 +296,13 @@
 
 ---
 
-## 2. 빈 테스트 클래스 (2026-10-27 갱신: 미실행 2개)
+## 2. 빈 테스트 클래스 (2026-10-27 갱신: 모두 삭제)
 
-2026-09-24 실측 당시 소스 코드가 존재하지만 내부 `@Test` 메서드가 없는 빈 클래스(`public class ... {}`)가 5개 있었고, JUnit 5 실행 대상에서 제외되어 XML 결과가 생성되지 않았습니다. 2026-10-27에 이 중 3개를 삭제했습니다(동작·테스트 수 변화 없음, 아래 "삭제됨" 표시). 남은 2개는 팀원 담당 영역이라 그대로 둡니다.
+2026-09-24 실측 당시 소스 코드가 존재하지만 내부 `@Test` 메서드가 없는 빈 클래스(`public class ... {}`)가 5개 있었고, JUnit 5 실행 대상에서 제외되어 XML 결과가 생성되지 않았습니다. 2026-10-27에 5개를 모두 삭제했습니다(동작·테스트 수 변화 없음, 아래 "삭제됨" 표시). 남아 있던 2개는 auth·member 테스트 Kotlin 전환 때 함께 삭제했습니다.
 
 1. `com.ovengers.slotkey.SlotKeyApplicationTests`: 스프링 부트 기본 컨텍스트 로드 테스트 클래스 (미작성 상태) — **삭제됨(2026-10-27).** 컨텍스트 로드는 `IntegrationTestSupport`를 쓰는 통합 테스트들이 이미 검증한다.
-2. `com.ovengers.slotkey.auth.service.AuthServiceTest`: 인증 서비스 단위 테스트 (통합 컨트롤러 테스트 `AuthControllerTest`에서 대체 검증 중)
-3. `com.ovengers.slotkey.member.authorization.MemberAuthorizationServiceTest`: 회원 인가 서비스 단위 테스트
+2. `com.ovengers.slotkey.auth.service.AuthServiceTest`: 인증 서비스 단위 테스트 (통합 컨트롤러 테스트 `AuthControllerTest`에서 대체 검증 중) — **삭제됨(2026-10-27).** 인증 흐름은 `AuthControllerTest`, `V2SecurityRedTest`가 검증한다.
+3. `com.ovengers.slotkey.member.authorization.MemberAuthorizationServiceTest`: 회원 인가 서비스 단위 테스트 — **삭제됨(2026-10-27).** `MemberAuthorizationService`는 관리자 회원 WebMvcTest에서 실제 빈으로 검증한다.
 4. `com.ovengers.slotkey.payment.gateway.MockPaymentGatewayTest`: PG 연동 모의 테스트 — **삭제됨(2026-10-27).** 대응하는 `payment` 운영 패키지가 없고, PG는 `credit/pg`의 구현과 `FakePgClient`로 검증한다.
 5. `com.ovengers.slotkey.payment.service.PaymentServiceTest`: 결제 서비스 단위 테스트 — **삭제됨(2026-10-27).** 위와 같은 이유.
 

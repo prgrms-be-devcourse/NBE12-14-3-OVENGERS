@@ -62,7 +62,7 @@
 
 | 영역 | 기능 |
 | --- | --- |
-| 회원 | 이메일·비밀번호 기반 회원가입(가입 크레딧 자동 지급), 로그인/로그아웃, 토큰 재발급, 본인 정보 조회 |
+| 회원 | 이메일 인증번호 확인 후 회원가입(가입 크레딧 자동 지급), 로그인/로그아웃(이메일별 로그인 요청 제한), 토큰 재발급(Refresh Token 회전), 이메일 인증 기반 비밀번호 재설정, 본인 정보 조회·닉네임 수정, 회원탈퇴 |
 | 공간 | 공간 목록(지역/가격/시간 필터 지원)·상세 조회, 날짜별 30분 단위 예약 가능 시간 확인, 공개 공간 사진 조회 |
 | 예약 | 30분 단위 예약(HOLD → 결제 확정), 본인 예약 조회·취소·연장, 체크아웃(이용 완료) |
 | 크레딧 충전 | 토스페이먼츠 주문서형 결제위젯으로 크레딧 충전(1,000~100,000원, 100원 단위), 충전 주문 상태 조회, 결과가 불분명한 주문의 자동 복구, 예약 결제 시 잔액 부족이면 충전 안내 |
@@ -171,7 +171,8 @@ flowchart TD
 
 | 엔터티 / 테이블 | 역할 |
 | --- | --- |
-| `member` | 회원의 로그인 정보, 역할(`USER`, `ADMIN`), 현재 계정 상태(`ACTIVE`, `SUSPENDED`, `WITHDRAWN`), 잔액(`balance`) 관리 |
+| `member` | 회원의 이메일·닉네임, 역할(`USER`, `ADMIN`), 현재 계정 상태(`ACTIVE`, `SUSPENDED`, `WITHDRAWN`), 잔액(`balance`) 관리. 비밀번호 해시는 `local_credential`에 둔다(V14) |
+| `local_credential` | 회원의 비밀번호 해시와 변경 시각 관리. `member_id`를 PK로 공유하는 1:1 (V14) |
 | `spaces` | 공간 정보, 운영시간, 수용 인원, 시간당 요금, 상태(`ACTIVE`, `INACTIVE`), 대표 사진 경로(`image_path`), 낙관적 버전 관리 |
 | `reservation` | 예약자, 공간, 이용 시간, 요금 스냅샷, 확정 금액, 예약 상태(HOLD 포함 7단계) 관리 |
 | `reservation_slot` | 예약이 점유한 30분 단위 슬롯과 중복 예약 방지 (`UNIQUE(space_id, slot_start)`) |
@@ -179,7 +180,8 @@ flowchart TD
 | `credit_transaction` | 회원별 크레딧 지급·차감·환급 원장(부호 있는 금액, `payment` 테이블 대체) 관리. PG 충전은 `TOP_UP` 유형으로 기록하며 `charge_order`와 1:1(UNIQUE)로 연결 |
 | `door_access_token` | 예약에 따른 출입 토큰 발급·폐기 이력 관리 (`UNIQUE(active_reservation_id)`) |
 | `door_access_log` | 모든 출입 허용·거절 결과(`ALLOW`, `DENY`)와 사유 코드 기록 |
-| `refresh_token` | 로그인 연장 토큰의 발급, 만료, 폐기 관리 |
+| `auth_session` | 로그인 1회당 서버 세션(24시간 고정 만료). Access Token의 `sid`로 보호 API마다 폐기·만료·회원 상태를 확인 (V24) |
+| `refresh_token` | 세션에 연결된 토큰 재발급용 토큰의 해시·만료·폐기·소비 시각 관리. 재발급마다 새 행으로 회전하며 소비된 토큰 재사용 시 세션을 폐기 (V24·V25) |
 | `audit_logs` | 공간 수정, 회원 정지/복구, 관리자 강제 취소, 크레딧 수동 지급 등 관리자 작업 기록 |
 | `idempotency_key` | 결제 확정(`POST /reservations/{id}/pay`) 요청의 중복 처리 방지 및 멱등 응답 캐싱 (V7) |
 | `inquiries` | 사용자 1:1 문의 및 관리자 단일 답변(`WAITING`, `ANSWERED`) 관리 (V10) |
@@ -189,6 +191,9 @@ flowchart TD
 erDiagram
     member ||--o{ reservation : owns
     member ||--o{ refresh_token : owns
+    member ||--o| local_credential : has
+    member ||--o{ auth_session : logs_in
+    auth_session ||--o{ refresh_token : issues
     member ||--o{ inquiries : writes
     spaces ||--o{ reservation : receives
 
@@ -381,7 +386,7 @@ Access JWT의 서명·만료와 `id`, `email`, `role`, `sid`를 검증하고, �
 
 **Base URL:** `/api/v1`
 
-인증이 필요한 API는 다음 헤더를 사용합니다. 로그인 시 발급된 Refresh Token은 HttpOnly 쿠키(`Path=/api/v1/auth`, `maxAge=1일`)로 관리되며, 토큰 재발급·로그아웃 요청 시 쿠키로 자동 전달됩니다.
+인증이 필요한 API는 다음 헤더를 사용합니다. 로그인 시 발급된 Refresh Token은 HttpOnly 쿠키(`Path=/api/v1/auth`, `Max-Age`=남은 세션 수명으로 로그인 직후 약 1일)로 관리되며, 토큰 재발급·로그아웃 요청 시 쿠키로 자동 전달됩니다.
 
 ```
 Authorization: Bearer {accessToken}
@@ -391,10 +396,13 @@ Authorization: Bearer {accessToken}
 
 | 영역 | Method | Endpoint | 설명 |
 | --- | --- | --- | --- |
-| 인증 | `POST` | `/auth/signup` | 회원가입 및 기본 크레딧 자동 지급 |
+| 인증 | `POST` | `/auth/verification/issue` | 이메일 인증번호 발급 (`SIGNUP` / `PASSWORD_RESET`) |
+| 인증 | `POST` | `/auth/verification/check` | 인증번호 확인 및 가입·재설정용 일회성 증표(grant) 발급 |
+| 인증 | `POST` | `/auth/signup` | 회원가입(SIGNUP 증표 필수) 및 기본 크레딧 자동 지급 |
+| 인증 | `POST` | `/auth/password-reset` | 비밀번호 재설정 (PASSWORD_RESET 증표 필수, 회원의 모든 세션 폐기) |
 | 인증 | `POST` | `/auth/login` | 로그인 (Access Token 본문, Refresh Token 쿠키 반환) |
-| 인증 | `POST` | `/auth/refresh` | 토큰 재발급 (Refresh Token 쿠키 검증 후 새 Access Token 발급) |
-| 인증 | `POST` | `/auth/logout` | 로그아웃 (Refresh Token DB 폐기 및 쿠키 만료) |
+| 인증 | `POST` | `/auth/refresh` | 토큰 재발급 (Refresh Token 쿠키 검증 후 새 Access Token과 새 Refresh Token 쿠키 발급, 기존 토큰은 소비) |
+| 인증 | `POST` | `/auth/logout` | 로그아웃 (해당 로그인 세션과 세션의 Refresh Token 폐기, 쿠키 만료) |
 | 인증 | `POST` | `/auth/withdraw` | 회원 탈퇴 (현재 비밀번호 확인, 진행 중 예약이 없을 때만) |
 | 회원 | `GET` | `/members/me` | 본인 정보 및 크레딧 잔액 조회 |
 | 회원 | `PATCH` | `/members/me` | 본인 닉네임 수정 |

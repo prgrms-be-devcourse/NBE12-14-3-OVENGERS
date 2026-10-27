@@ -4,7 +4,7 @@
 
 ## 현재 경계
 
-2026-10-20 / `d1a15ec`의 운영 Java **293개 중 88개 파일**이 Lombok을 import한다. [`Space`](../../../backend/src/main/java/com/ovengers/slotkey/space/entity/Space.java), [`Reservation`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/entity/Reservation.java), [`Inquiry`](../../../backend/src/main/java/com/ovengers/slotkey/inquiry/entity/Inquiry.java)는 builder·getter·무인자 생성자에 의존한다. [`SpaceResponse`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/response/SpaceResponse.java)는 `record`이지만 Lombok builder를 사용한다. 서비스/컨트롤러의 `@RequiredArgsConstructor`와 테스트의 `@InjectMocks`도 호출 형태에 영향을 준다.
+2026-10-20 / `d1a15ec`의 운영 Java **293개 중 88개 파일**이 Lombok을 import한다. [`Space`](../../../backend/src/main/java/com/ovengers/slotkey/space/entity/Space.java), [`Reservation`](../../../backend/src/main/java/com/ovengers/slotkey/reservation/entity/Reservation.java), [`Inquiry`](../../../backend/src/main/kotlin/com/ovengers/slotkey/inquiry/entity/Inquiry.kt)는 builder·getter·무인자 생성자에 의존한다. [`SpaceResponse`](../../../backend/src/main/java/com/ovengers/slotkey/space/dto/response/SpaceResponse.java)는 `record`이지만 Lombok builder를 사용한다. 서비스/컨트롤러의 `@RequiredArgsConstructor`와 테스트의 `@InjectMocks`도 호출 형태에 영향을 준다.
 
 추가된 PG·Outbox·대기/알림·통계 영역에는 수동 생성자/getter도 섞여 있다. `ChargeOrder`, `WaitlistEntry`, `SpaceRankingSnapshot`, `SlotReleasedHandler` 등의 명시적 API와, `LocalCredential`·인증 엔티티의 Lombok API를 파일별로 구분한다. “추가 파일 전체가 Lombok 의존”이라고 가정하지 않는다.
 

@@ -157,7 +157,7 @@
 - **처리**: 회원 비관적 잠금 → 역할·상태 및 현재 비밀번호 검증 → `HELD`·`CONFIRMED`·`IN_USE` 예약 존재 시 거절 → 잔여 크레딧 소멸(`WITHDRAWAL_EXPIRATION`) → 회원 `WITHDRAWN`·탈퇴 시각 기록 → 전체 로그인 세션·RT와 활성 출입 키 폐기. 하나의 트랜잭션이며 예약을 자동 취소하지 않는다.
 - **응답**: 204 No Content, RT 쿠키 삭제(`Max-Age=0`). 폐기된 세션의 기존 AT는 이후 인증에서 401로 거절된다. `HELD`는 직접 취소하거나 만료 정리 후 다시 탈퇴할 수 있다.
 - **오류**: `VALIDATION_FAILED`(400), `CURRENT_PASSWORD_MISMATCH`(400), `AUTHENTICATION_REQUIRED`·`INVALID_ACCESS_TOKEN`(401), `FORBIDDEN_ROLE`(403), `WITHDRAWAL_ACTIVE_RESERVATION`(409). 비활성 회원의 보호 요청은 필터에서 먼저 차단되며, 서비스 내부의 `ACCOUNT_INACTIVE`·`ACCOUNT_WITHDRAWN` 검사와 구분한다.
-- 기능 동결 코드의 탈퇴 Swagger 설명에 남아 있는 “기존 액세스 토큰은 만료까지 유효” 문구는 현재 세션 폐기 동작과 다르다. 이번 이슈는 프로덕션 코드 변경을 제외하므로 주석 정정은 별도 과제로 남긴다. 정책 상세는 [회원탈퇴 정책](../decisions/member-withdrawal-policy.md)을 따른다.
+- 기능 동결 코드의 탈퇴 Swagger 설명에 남아 있는 “기존 액세스 토큰은 만료까지 유효” 문구는 현재 세션 폐기 동작과 다르다. 같은 취지의 “이미 발급된 액세스 토큰은 즉시 무효화되지 않고 만료까지 유효” 문구가 로그아웃(`POST /auth/logout`) Swagger 설명에도 남아 있다(2026-10-27 Kotlin `AuthController` 확인). 이번 이슈는 프로덕션 코드 변경을 제외하므로 주석 정정은 별도 과제로 남긴다. 정책 상세는 [회원탈퇴 정책](../decisions/member-withdrawal-policy.md)을 따른다.
 
 ## 3. 회원 (Member)
 
@@ -499,7 +499,7 @@
 
 - `GET /admin/inquiries` (ADMIN): 전체 문의 목록. 쿼리 파라미터 `status` (`WAITING` / `ANSWERED`, 선택), `page`, `size`. 응답: 200 `ApiResponse<PageResponse<InquiryResponse>>`. 오류: `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403)
 - `GET /admin/inquiries/{inquiryId}` (ADMIN): 문의 상세. 응답: 200 `ApiResponse<InquiryResponse>`. 오류: `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `INQUIRY_NOT_FOUND`(404)
-- `POST /admin/inquiries/{inquiryId}/answer` (ADMIN): 답변 등록. 요청 `{ content }` (최대 2000자, 필수). 성공 시 `status`가 `ANSWERED`로 전이. 응답: 200 `ApiResponse<InquiryResponse>`. 오류: `VALIDATION_FAILED`(400), `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `INQUIRY_NOT_FOUND`(404)
+- `POST /admin/inquiries/{inquiryId}/answer` (ADMIN): 답변 등록. 요청 `{ content }` (최대 2000자, 필수). 성공 시 `status`가 `ANSWERED`로 전이. 이미 `ANSWERED`인 문의에 다시 요청해도 거절하지 않고 `answerContent`·`answeredByMemberId`·`answeredAt`을 새 값으로 덮어쓴다(2026-10-27 `Inquiry.answer` 확인, 재답변 차단 코드 없음). 응답: 200 `ApiResponse<InquiryResponse>`. 오류: `VALIDATION_FAILED`(400), `AUTHENTICATION_REQUIRED`(401), `ACCESS_DENIED`(403), `INQUIRY_NOT_FOUND`(404)
 
 ### 응답 필드 (`InquiryResponse`)
 
