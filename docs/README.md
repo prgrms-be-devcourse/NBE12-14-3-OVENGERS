@@ -12,7 +12,7 @@
 | [`api/`](api/) | API 명세와 연동 계약 | [REST API 명세](api/api-spec.md) · [프론트 결제 API 계약](api/FRONTEND2_PAYMENT_API.md) · [관리자 공간 대표 사진](api/admin-space-image-upload.md) |
 | [`decisions/`](decisions/) | 기능별 의사결정 기록 | [결정 상태표](decisions/README.md) |
 | [`operations/`](operations/) | 배포와 장애 대응 | [배포·CI/CD](operations/deploy-cicd.md) · [트러블슈팅](operations/troubleshooting.md) · [Gmail SMTP 설정](operations/gmail-smtp-setup.md) |
-| [`testing/`](testing/) | 테스트 전략과 실행 결과 | [테스트 전략](testing/test-strategy.md), [테스트 결과](testing/test-results.md), [뮤테이션 테스트 결정](decisions/mutation-testing.md), [V3 인증 실험 결과](testing/auth-v3-experiment-results.md) |
+| [`testing/`](testing/) | 테스트 전략과 실행 결과 | [테스트 전략](testing/test-strategy.md), [테스트 결과](testing/test-results.md), [뮤테이션 테스트 결정](decisions/mutation-testing.md), [V3 인증 실험 결과](testing/auth-v3-experiment-results.md), [Java → Kotlin 골든 가이드](testing/java-kotlin-golden-guide.md)(도메인별 확보 기록: [골든 1~5단계](testing/golden-survey/step-1.md)) |
 | [`plans/`](plans/) | 진행 예정 계획 시리즈 | [Kotlin 마이그레이션 문서 안내](plans/kotlin-migration/README.md) · [인증 고도화](plans/auth/README.md) · [뮤테이션 테스트 계획](plans/mutation-testing/00-mutation-testing-plan.md) |
 
 ## 루트에 두는 문서

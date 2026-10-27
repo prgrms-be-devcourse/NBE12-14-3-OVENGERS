@@ -1,0 +1,8 @@
+{
+  "transactionId" : 501,
+  "type" : "ADMIN_GRANT",
+  "amount" : 5000,
+  "balanceAfter" : 305000,
+  "reason" : "이벤트 보상",
+  "createdAt" : "2026-10-20T09:30:15"
+}

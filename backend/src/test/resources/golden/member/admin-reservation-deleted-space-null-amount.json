@@ -1,0 +1,10 @@
+{
+  "reservationId" : 302,
+  "spaceId" : 99,
+  "spaceName" : "삭제된 공간",
+  "startTime" : "2026-10-23T10:00:00",
+  "endTime" : "2026-10-23T10:30:00",
+  "status" : "CANCELLED",
+  "totalAmount" : null,
+  "createdAt" : "2026-10-20T10:30:15"
+}

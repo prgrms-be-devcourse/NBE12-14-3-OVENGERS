@@ -1,0 +1,119 @@
+diff --git a/backend/src/test/java/com/ovengers/slotkey/golden/AuthMemberInquiryJavaGoldenCapture.java b/backend/src/test/java/com/ovengers/slotkey/golden/AuthMemberInquiryJavaGoldenCapture.java
+new file mode 100644
+index 0000000..8bf4371
+--- /dev/null
++++ b/backend/src/test/java/com/ovengers/slotkey/golden/AuthMemberInquiryJavaGoldenCapture.java
+@@ -0,0 +1,113 @@
++package com.ovengers.slotkey.golden;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.ovengers.slotkey.audit.entity.AuditAction;
++import com.ovengers.slotkey.auth.dto.response.LoginResponse;
++import com.ovengers.slotkey.auth.dto.response.SignupResponse;
++import com.ovengers.slotkey.auth.dto.response.VerificationCheckResponse;
++import com.ovengers.slotkey.auth.dto.response.VerificationIssueResponse;
++import com.ovengers.slotkey.credit.entity.CreditTransactionType;
++import com.ovengers.slotkey.inquiry.dto.response.InquiryResponse;
++import com.ovengers.slotkey.inquiry.entity.Inquiry;
++import com.ovengers.slotkey.member.dto.response.AdminMemberCreditTransactionResponse;
++import com.ovengers.slotkey.member.dto.response.AdminMemberDetailResponse;
++import com.ovengers.slotkey.member.dto.response.AdminMemberReservationResponse;
++import com.ovengers.slotkey.member.dto.response.AdminMemberResponse;
++import com.ovengers.slotkey.member.dto.response.AdminMemberStatusHistoryResponse;
++import com.ovengers.slotkey.member.dto.response.MemberResponse;
++import com.ovengers.slotkey.member.dto.response.MemberStatusChangeResponse;
++import com.ovengers.slotkey.member.entity.Member;
++import com.ovengers.slotkey.member.entity.MemberStatus;
++import com.ovengers.slotkey.reservation.entity.ReservationStatus;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.json.JsonTest;
++import org.springframework.test.util.ReflectionTestUtils;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.time.LocalDateTime;
++
++/**
++ * Java f2273a5 기준 auth·member·inquiry 응답 DTO의 골든 JSON을 생성한다.
++ * 실제 저장소에는 추가하지 않는 기준 확보용 테스트다.
++ */
++@JsonTest
++class AuthMemberInquiryJavaGoldenCapture {
++
++    private static final LocalDateTime BASE = LocalDateTime.of(2026, 10, 20, 9, 30, 15);
++
++    @Autowired
++    private ObjectMapper objectMapper;
++
++    @Test
++    void capture() throws Exception {
++        Path out = Path.of(System.getenv("GOLDEN_OUT"));
++
++        // auth
++        write(out, "auth/signup-response", new SignupResponse(member()));
++        write(out, "auth/login-response", new LoginResponse("header.payload.signature"));
++        write(out, "auth/verification-issue-response",
++                new VerificationIssueResponse(41L, BASE.plusMinutes(3), BASE.plusSeconds(30)));
++        write(out, "auth/verification-check-response",
++                new VerificationCheckResponse("Zm9vYmFyLWdyYW50LXRva2VuLWJhc2U2NHVybA", BASE.plusMinutes(5)));
++
++        // member
++        write(out, "member/member-response", new MemberResponse(member()));
++        Member suspended = member();
++        suspended.updateStatus(MemberStatus.SUSPENDED);
++        write(out, "member/status-change-suspended",
++                MemberStatusChangeResponse.of(suspended, "반복된 노쇼", BASE.plusDays(1)));
++        AdminMemberResponse withoutChange = AdminMemberResponse.of(member(), null, null);
++        write(out, "member/admin-member-without-status-change", withoutChange);
++        write(out, "member/admin-member-with-status-change",
++                AdminMemberResponse.of(suspended, BASE.plusDays(1), "반복된 노쇼"));
++        write(out, "member/admin-member-detail", new AdminMemberDetailResponse(withoutChange, 12L, 2L));
++        write(out, "member/admin-reservation-confirmed",
++                new AdminMemberReservationResponse(301L, 11L, "판교 A룸",
++                        BASE.plusDays(2).withHour(14).withMinute(0).withSecond(0),
++                        BASE.plusDays(2).withHour(15).withMinute(30).withSecond(0),
++                        ReservationStatus.CONFIRMED, 15000, BASE));
++        write(out, "member/admin-reservation-deleted-space-null-amount",
++                new AdminMemberReservationResponse(302L, 99L, "삭제된 공간",
++                        BASE.plusDays(3).withHour(10).withMinute(0).withSecond(0),
++                        BASE.plusDays(3).withHour(10).withMinute(30).withSecond(0),
++                        ReservationStatus.CANCELLED, null, BASE.plusHours(1)));
++        write(out, "member/admin-credit-transaction-admin-grant",
++                new AdminMemberCreditTransactionResponse(501L, CreditTransactionType.ADMIN_GRANT,
++                        5000, 305000, "이벤트 보상", BASE));
++        write(out, "member/admin-credit-transaction-null-reason",
++                new AdminMemberCreditTransactionResponse(502L, CreditTransactionType.PENALTY,
++                        -7500, 297500, null, BASE.plusHours(2)));
++        write(out, "member/admin-status-history-system-lock",
++                new AdminMemberStatusHistoryResponse(701L, AuditAction.LOCK_MEMBER_BY_VERIFICATION,
++                        null, "이메일 인증 3차 실패", "ACTIVE", "SUSPENDED", BASE.plusMinutes(10)));
++
++        // inquiry
++        write(out, "inquiry/inquiry-waiting", InquiryResponse.from(inquiry()));
++        Inquiry answered = inquiry();
++        answered.answer(1L, "확인 후 환불 처리했습니다.", BASE.plusHours(3));
++        write(out, "inquiry/inquiry-answered", InquiryResponse.from(answered));
++    }
++
++    private static Member member() {
++        Member member = new Member("golden.user@example.com", "골든회원");
++        ReflectionTestUtils.setField(member, "id", 7L);
++        ReflectionTestUtils.setField(member, "balance", 300000);
++        ReflectionTestUtils.setField(member, "createdAt", BASE);
++        return member;
++    }
++
++    private static Inquiry inquiry() {
++        Inquiry inquiry = Inquiry.create(7L, "환불 문의", "예약 취소 후 환불이 아직 안 됐어요.");
++        ReflectionTestUtils.setField(inquiry, "id", 21L);
++        ReflectionTestUtils.setField(inquiry, "createdAt", BASE);
++        return inquiry;
++    }
++
++    private void write(Path out, String name, Object value) throws Exception {
++        Path file = out.resolve(name + ".json");
++        Files.createDirectories(file.getParent());
++        Files.writeString(file, objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(value) + "\n");
++    }
++}

@@ -1,0 +1,9 @@
+{
+  "historyId" : 701,
+  "action" : "LOCK_MEMBER_BY_VERIFICATION",
+  "actorMemberId" : null,
+  "reason" : "이메일 인증 3차 실패",
+  "beforeValue" : "ACTIVE",
+  "afterValue" : "SUSPENDED",
+  "changedAt" : "2026-10-20T09:40:15"
+}

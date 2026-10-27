@@ -1,0 +1,11 @@
+{
+  "memberId" : 7,
+  "email" : "golden.user@example.com",
+  "nickname" : "골든회원",
+  "role" : "USER",
+  "status" : "ACTIVE",
+  "balance" : 300000,
+  "createdAt" : "2026-10-20T09:30:15",
+  "lastStatusChangedAt" : null,
+  "lastStatusChangeReason" : null
+}
