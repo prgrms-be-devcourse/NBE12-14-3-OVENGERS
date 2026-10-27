@@ -12,10 +12,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoInteractions
-import org.mockito.Mockito.`when`
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.whenever
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -33,7 +33,7 @@ class MemberControllerTest {
 
     @BeforeEach
     fun setUp() {
-        memberService = mock(MemberService::class.java)
+        memberService = mock()
         mockMvc =
             MockMvcBuilders
                 .standaloneSetup(MemberController(memberService))
@@ -77,7 +77,7 @@ class MemberControllerTest {
     @Test
     fun validNicknameIsTrimmedAndResponseIsPreserved() {
         val response = MemberResponse(1L, "member@example.com", "새닉네임", MemberRole.USER, 5000, LocalDateTime.of(2026, 10, 1, 0, 0))
-        `when`(memberService.updateNickname(1L, "새닉네임")).thenReturn(response)
+        whenever(memberService.updateNickname(1L, "새닉네임")).thenReturn(response)
         mockMvc
             .perform(
                 patch("/api/v1/members/me")
@@ -92,7 +92,7 @@ class MemberControllerTest {
 
     @Test
     fun missingMemberPreservesAuthenticationError() {
-        `when`(memberService.updateNickname(1L, "새닉네임"))
+        whenever(memberService.updateNickname(1L, "새닉네임"))
             .thenThrow(BusinessException(ErrorCode.AUTHENTICATION_REQUIRED))
         mockMvc
             .perform(
