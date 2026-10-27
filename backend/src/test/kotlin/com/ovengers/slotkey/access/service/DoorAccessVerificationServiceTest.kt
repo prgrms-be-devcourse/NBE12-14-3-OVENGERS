@@ -412,8 +412,8 @@ class DoorAccessVerificationServiceTest {
     }
 
     private fun givenRequestContext() {
-        given(request.getSpaceId()).willReturn(SPACE_ID)
-        given(request.getToken()).willReturn(RAW_TOKEN)
+        given(request.spaceId).willReturn(SPACE_ID)
+        given(request.token).willReturn(RAW_TOKEN)
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(actorMember))
         given(spaceRepository.findById(SPACE_ID)).willReturn(Optional.of(requestedSpace))
     }

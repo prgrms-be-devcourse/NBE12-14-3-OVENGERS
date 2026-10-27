@@ -22,6 +22,7 @@ import com.ovengers.slotkey.global.security.CurrentMemberArgumentResolver
 import com.ovengers.slotkey.global.security.jwt.JwtProvider
 import com.ovengers.slotkey.global.security.jwt.JwtUtil
 import com.ovengers.slotkey.member.entity.MemberRole
+import com.ovengers.slotkey.support.FixedClockConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -40,9 +42,12 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.nio.charset.StandardCharsets
+import java.time.Clock
 import java.time.LocalDateTime
 
 /**
@@ -55,6 +60,7 @@ import java.time.LocalDateTime
 @Import(
     SecurityConfig::class,
     ClockConfig::class,
+    FixedClockConfig::class,
     JwtProvider::class,
     WebMvcConfig::class,
     CurrentMemberArgumentResolver::class,
@@ -66,6 +72,9 @@ class DoorAccessGoldenTest {
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
+
+    @Autowired
+    private lateinit var clock: Clock
 
     @Value("\${custom.jwt.secret-key}")
     private lateinit var secretKey: String
@@ -103,6 +112,8 @@ class DoorAccessGoldenTest {
                     "role" to MemberRole.USER.name,
                     "sid" to "access-golden-session",
                 ),
+                null,
+                clock,
             )
     }
 
@@ -122,6 +133,62 @@ class DoorAccessGoldenTest {
 
         assertMatchesGolden(result, "token-issued.json")
         verify(doorAccessTokenService).issue(1L, 101L)
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 예약의 토큰 발급은 기존 404 오류 JSON을 유지한다")
+    fun missingReservationOnIssueMatchesGolden() {
+        given(doorAccessTokenService.issue(1L, 404L))
+            .willThrow(BusinessException(ErrorCode.RESERVATION_NOT_FOUND))
+
+        val result =
+            mockMvc
+                .perform(
+                    post("/api/v1/reservations/404/door-token")
+                        .header(HttpHeaders.AUTHORIZATION, authorization),
+                ).andExpect(status().isNotFound)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn()
+
+        assertMatchesGolden(result, "reservation-not-found.json")
+        verify(doorAccessTokenService).issue(1L, 404L)
+    }
+
+    @Test
+    @DisplayName("발급할 수 없는 예약 상태는 기존 409 오류 JSON을 유지한다")
+    fun invalidReservationStateOnIssueMatchesGolden() {
+        given(doorAccessTokenService.issue(1L, 101L))
+            .willThrow(BusinessException(ErrorCode.RESERVATION_STATE_CONFLICT))
+
+        val result =
+            mockMvc
+                .perform(
+                    post("/api/v1/reservations/101/door-token")
+                        .header(HttpHeaders.AUTHORIZATION, authorization),
+                ).andExpect(status().isConflict)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn()
+
+        assertMatchesGolden(result, "reservation-state-conflict.json")
+        verify(doorAccessTokenService).issue(1L, 101L)
+    }
+
+    @Test
+    @DisplayName("출입 토큰 폐기는 200·data 없는 성공 JSON과 회원·예약·시각·사유 전달을 유지한다")
+    fun revokedTokenMatchesGolden() {
+        val result =
+            mockMvc
+                .perform(
+                    patch("/api/v1/reservations/101/access-token/revoke")
+                        .header(HttpHeaders.AUTHORIZATION, authorization),
+                ).andExpect(status().isOk)
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn()
+
+        assertMatchesGolden(result, "success-without-data.json", directory = "common-response")
+        verify(doorAccessTokenService).revokeByReservationId(1L, 101L, FixedClockConfig.FIXED_DATE_TIME, "사용자 요청")
+        verifyNoMoreInteractions(doorAccessTokenService)
+        verifyNoInteractions(doorAccessLogService, doorAccessVerificationService)
     }
 
     @Test
@@ -258,11 +325,12 @@ class DoorAccessGoldenTest {
     private fun assertMatchesGolden(
         result: MvcResult,
         filename: String,
+        directory: String = "access",
     ) {
         val actual = objectMapper.readTree(result.response.getContentAsString(StandardCharsets.UTF_8))
         val golden =
-            requireNotNull(javaClass.getResourceAsStream("/golden/access/$filename")) {
-                "출입 골든 파일이 존재해야 한다: $filename"
+            requireNotNull(javaClass.getResourceAsStream("/golden/$directory/$filename")) {
+                "출입 골든 파일이 존재해야 한다: $directory/$filename"
             }
         assertThat(actual).isEqualTo(objectMapper.readTree(golden))
     }

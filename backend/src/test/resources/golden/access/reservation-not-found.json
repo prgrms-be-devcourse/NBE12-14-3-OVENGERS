@@ -1,0 +1,5 @@
+{
+  "status": "FAIL",
+  "code": "RESERVATION_NOT_FOUND",
+  "message": "존재하지 않는 예약입니다."
+}

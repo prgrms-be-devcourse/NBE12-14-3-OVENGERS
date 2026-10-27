@@ -1,0 +1,5 @@
+{
+  "status": "FAIL",
+  "code": "RESERVATION_STATE_CONFLICT",
+  "message": "현재 예약 상태에서는 처리할 수 없는 요청입니다."
+}
