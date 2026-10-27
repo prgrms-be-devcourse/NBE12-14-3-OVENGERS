@@ -26,9 +26,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.argThat
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -130,20 +127,19 @@ class DoorAccessGoldenTest {
     @Test
     @DisplayName("최초 체크인 허용 응답은 ALLOW·true·null 거절 사유를 유지한다")
     fun firstCheckInMatchesGolden() {
-        given(doorAccessVerificationService.verify(eq(1L), any(DoorAccessVerifyRequest::class.java)))
+        val request = DoorAccessVerifyRequest(spaceId = 10L, token = "fixed-door-token")
+        given(doorAccessVerificationService.verify(1L, request))
             .willReturn(DoorAccessVerifyResponse.allow("회의실 A", true, attemptedAt))
 
         assertMatchesGolden(verifyDoor("""{"spaceId":10,"token":"fixed-door-token"}"""), "first-check-in-allowed.json")
-        verify(doorAccessVerificationService).verify(
-            eq(1L),
-            argThat { request -> request.spaceId == 10L && request.token == "fixed-door-token" },
-        )
+        verify(doorAccessVerificationService).verify(1L, request)
     }
 
     @Test
     @DisplayName("재입장 허용 응답은 최초 체크인 여부 false를 유지한다")
     fun reentryMatchesGolden() {
-        given(doorAccessVerificationService.verify(eq(1L), any(DoorAccessVerifyRequest::class.java)))
+        val request = DoorAccessVerifyRequest(spaceId = 10L, token = "fixed-door-token")
+        given(doorAccessVerificationService.verify(1L, request))
             .willReturn(DoorAccessVerifyResponse.allow("회의실 A", false, attemptedAt))
 
         assertMatchesGolden(verifyDoor("""{"spaceId":10,"token":"fixed-door-token"}"""), "reentry-allowed.json")
@@ -152,7 +148,8 @@ class DoorAccessGoldenTest {
     @Test
     @DisplayName("출입 거절은 HTTP 200이며 DENY·사유·중첩 null 필드를 유지한다")
     fun deniedAccessMatchesGolden() {
-        given(doorAccessVerificationService.verify(eq(1L), any(DoorAccessVerifyRequest::class.java)))
+        val request = DoorAccessVerifyRequest(spaceId = 10L, token = "revoked-token")
+        given(doorAccessVerificationService.verify(1L, request))
             .willReturn(DoorAccessVerifyResponse.deny(AccessDenyReason.TOKEN_REVOKED, attemptedAt))
 
         assertMatchesGolden(verifyDoor("""{"spaceId":10,"token":"revoked-token"}"""), "access-denied.json")
