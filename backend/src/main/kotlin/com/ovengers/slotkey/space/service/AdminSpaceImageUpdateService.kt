@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class AdminSpaceImageUpdateService(
-    private val spaceRepository: SpaceRepository?,
-    private val auditLogService: AuditLogService?,
+    private val spaceRepository: SpaceRepository,
+    private val auditLogService: AuditLogService,
 ) {
     @Transactional
     fun updateSpaceImage(
@@ -30,7 +30,7 @@ class AdminSpaceImageUpdateService(
         adminMemberId: Long?,
     ): ImageUpdateResult {
         val space: Space =
-            spaceRepository!!
+            spaceRepository
                 .findByIdForUpdate(spaceId)
                 .orElseThrow { BusinessException(ErrorCode.SPACE_NOT_FOUND) }
 
@@ -42,7 +42,7 @@ class AdminSpaceImageUpdateService(
         val afterSnapshot: SpaceDetailResponse = SpaceDetailResponse.from(space)
 
         // 감사 로그 기록 (수정 전후 스냅샷 비교)
-        auditLogService!!.log(
+        auditLogService.log(
             adminMemberId,
             AuditAction.MODIFY_SPACE,
             AuditTargetType.SPACE,
