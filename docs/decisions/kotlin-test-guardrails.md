@@ -9,7 +9,8 @@ related: [kotlin-ktlint.md, kotlin-data-class-scope.md, mutation-testing.md]
 
 # 테스트는 코드와 함께 Kotlin으로 옮기되 테스트 수 하한과 골든 파일로 약해지지 않게 지킨다
 
-> **상태:** 채택 (2026-10-22, 사용자 확인: grill 세션). 아직 구현 전이다. 새 기준선 숫자는 CI 실행 후 [테스트 결과](../testing/test-results.md)에 기록한다.
+> **상태:** 채택 (2026-10-22, 사용자 확인: grill 세션). 새 기준선 숫자는 CI 실행 후 [테스트 결과](../testing/test-results.md)에 기록한다.
+> **구현 확인 (2026-10-27):** 테스트 수 하한 검사는 #6(`a908483`)에서 [`backend-ci.yml`](../../.github/workflows/backend-ci.yml)의 `Check test count against baseline` 단계와 [`check_test_count.py`](../../.github/scripts/check_test_count.py)로 반영됐고, 하한은 [`backend/test-baseline.txt`](../../backend/test-baseline.txt)에 둔다. 골든 파일은 도메인별로 `backend/src/test/resources/golden/<domain>/`에 있다(절차: [골든 가이드](../testing/java-kotlin-golden-guide.md)).
 
 ## 한 줄 요약
 
@@ -49,10 +50,15 @@ related: [kotlin-ktlint.md, kotlin-data-class-scope.md, mutation-testing.md]
 
 **검증 계획:** (1) CI 단계가 테스트를 일부러 하나 줄였을 때 실패하는지, 스킵을 넣었을 때 실패하는지 확인한다. (2) 골든 파일 테스트는 Java 코드에서 통과한 뒤, Kotlin 전환 후에도 같은 파일로 통과해야 한다. 결과는 구현 후 이 절에 적는다.
 
+**결과 (도메인별 기록):**
+
+- 인증·회원·문의(2026-10-27): DTO 전환 직전 Java 커밋 `f2273a5`에서 응답 DTO 골든 16건을 생성하고, 같은 입력의 Kotlin 테스트(`AuthGoldenTest` 4, `MemberGoldenTest` 10, `InquiryGoldenTest` 2)가 같은 파일로 통과했다. 골든 파일에서 null 필드 하나를 지우면 테스트가 실패하는 것도 확인했다. 하한은 1322 → 1338로 올렸다. 상세는 [골든 5단계](../testing/golden-survey/step-5.md).
+- 그 밖의 도메인 골든 확보·비교 기록은 [골든 1~4단계](../testing/golden-survey/step-1.md)와 각 도메인 PR을 따른다. (1)의 CI 실패 확인 결과는 아직 이 절에 기록되지 않았다.
+
 ## 6. 한계와 재검토 조건
 
 - 테스트 수가 같아도 단언이 약해진 경우는 이 검사가 잡지 못한다. 리뷰에서 판정 줄 변경 여부를 확인한다. 이 한계는 [뮤테이션 테스트](mutation-testing.md)로 보완했다(핵심 도메인 로직 한정, 수동 실행, 2026-10-26).
-- 서비스 파라미터가 Kotlin non-null이 되면 Mockito 매처(`any()`, `eq()`, `capture()`는 `null`을 반환)가 호출 시점에 NPE를 낸다(2026-10-24 step-05 전체 빌드에서 8건). 서비스 파라미터를 nullable로 느슨하게 하지 않고 테스트 쪽에서 값을 그대로 돌려주는 헬퍼(`eqNonNull`, `captureNonNull` 등)로 고친다. 직접 대응 테스트만 돌리면 놓치므로 변환한 클래스를 참조하는 테스트 전체를 실행한다. 같은 문제가 여러 파일에서 반복되면 mockito-kotlin 도입을 재검토한다.
+- 서비스 파라미터가 Kotlin non-null이 되면 Mockito 매처(`any()`, `eq()`, `capture()`는 `null`을 반환)가 호출 시점에 NPE를 낸다(2026-10-24 step-05 전체 빌드에서 8건). 서비스 파라미터를 nullable로 느슨하게 하지 않고 테스트 쪽에서 값을 그대로 돌려주는 헬퍼(`eqNonNull`, `captureNonNull` 등)로 고친다. 직접 대응 테스트만 돌리면 놓치므로 변환한 클래스를 참조하는 테스트 전체를 실행한다. 같은 문제가 여러 파일에서 반복되면 mockito-kotlin 도입을 재검토한다. *(2026-10-27: 인증·회원·문의 테스트 Kotlin 전환에서 같은 NPE가 반복돼 `org.mockito.kotlin:mockito-kotlin:5.4.0`을 `testImplementation`으로 추가했다. 이 세 도메인 테스트는 mockito-kotlin의 `any()`·`eq()`·`whenever`·`argumentCaptor`를 쓰고, 다른 도메인의 헬퍼 방식은 그대로 둔다.)*
 - 전환이 끝난 뒤 골든 파일을 계속 유지할지, 일반 계약 테스트로 흡수할지 재검토한다.
 
 ## 면접·발표용 정리 (구현 후)

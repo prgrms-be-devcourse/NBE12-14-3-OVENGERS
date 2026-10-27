@@ -1,0 +1,11 @@
+{
+  "id" : 21,
+  "memberId" : 7,
+  "title" : "환불 문의",
+  "content" : "예약 취소 후 환불이 아직 안 됐어요.",
+  "status" : "ANSWERED",
+  "answerContent" : "확인 후 환불 처리했습니다.",
+  "answeredByMemberId" : 1,
+  "answeredAt" : "2026-10-20T12:30:15",
+  "createdAt" : "2026-10-20T09:30:15"
+}

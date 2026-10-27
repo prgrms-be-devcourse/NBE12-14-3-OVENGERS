@@ -1,0 +1,11 @@
+{
+  "id" : 21,
+  "memberId" : 7,
+  "title" : "환불 문의",
+  "content" : "예약 취소 후 환불이 아직 안 됐어요.",
+  "status" : "WAITING",
+  "answerContent" : null,
+  "answeredByMemberId" : null,
+  "answeredAt" : null,
+  "createdAt" : "2026-10-20T09:30:15"
+}
