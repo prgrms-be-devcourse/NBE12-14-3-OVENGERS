@@ -39,7 +39,7 @@
 | Outbox·대기·알림 | `OutboxRecordIntegrationTest`, `OutboxRelayIntegrationTest`, `WaitlistApplyConcurrencyTest`, `WaitlistEntryLostUpdateTest`, `SlotReleasedListenerTest`, `SlotReleasedHandlerTest`, `SlotReleasedHandlerConcurrencyTest`, `NotificationReadIntegrationTest` | 취소/이벤트 동반 롤백, 중복 처리, 알림 읽음, nullable active와 lost update 검증을 재사용한다. 기존 payload→전환 후 코드 호환 사례를 고정한다. |
 | 통계 | `SpaceRankingConfirmServiceIntegrationTest`, `SpaceRankingQueryServiceIntegrationTest`, `SpaceRankingBackfillServiceIntegrationTest`, `StatsControllerIntegrationTest`, `AdminStatsControllerIntegrationTest` | 기간/자정·00:01 경계, long 순매출/JDBC 결과, 재확정·지역 스냅샷을 재사용한다. 일반/관리자 응답을 구분한다. |
 
-클래스는 `backend/src/test/java/com/ovengers/slotkey/` 또는 Kotlin으로 옮긴 경우 `backend/src/test/kotlin/com/ovengers/slotkey/` 아래에 있다. *(2026-10-27 확인: 인증·Auth V2·관리자 회원·문의 행의 클래스는 모두 Kotlin으로 옮겨 `src/test/kotlin`에 있다.)* 추가·보강이 필요한지는 [02](02-money-and-concurrency.md)·[03](03-api-contract.md)·[06](06-jpa-and-proxies.md)의 계약별로 판정하고, 이미 존재하는 테스트를 신규 작성 수에 넣지 않는다.
+클래스는 `backend/src/test/java/com/ovengers/slotkey/` 또는 Kotlin으로 옮긴 경우 `backend/src/test/kotlin/com/ovengers/slotkey/` 아래에 있다. *(2026-10-27 확인: 인증·Auth V2·관리자 회원·문의 행의 클래스는 모두 Kotlin으로 옮겨 `src/test/kotlin`에 있다.)* 추가·보강이 필요한지는 [02](02-money-and-concurrency.md)·[03](03-api-contract.md)·[06](06-jpa-and-proxies.md)의 계약별로 판정하고, 이미 존재하는 테스트를 신규 작성 수에 넣지 않는다. *(2026-10-27 확인: 통계 행의 `SpaceRankingConfirmServiceIntegrationTest`, `SpaceRankingBackfillServiceIntegrationTest`는 Kotlin으로 옮겨 `src/test/kotlin`에 있다. 같은 변경에서 `SpaceRankingSchedulerTest`, `SpaceRankingSchemaIntegrationTest`, 공용 `SettableClockConfig`도 옮겼다.)*
 
 ## 2026-10-22 합의: 새 기준선과 테스트 수 자동 검사
 

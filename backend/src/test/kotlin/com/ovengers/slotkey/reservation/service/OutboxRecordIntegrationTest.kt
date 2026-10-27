@@ -19,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.inOrder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.IllegalTransactionStateException
@@ -69,6 +70,57 @@ class OutboxRecordIntegrationTest : ReservationIntegrationTestSupport() {
         assertThat(events(reservation)).isEmpty()
         assertThat(statusOf(reservation)).isEqualTo("CONFIRMED")
         assertThat(countSlots(reservation)).isEqualTo(2)
+    }
+
+    @Test
+    fun penaltyFailureRollsBackRefundAndCancellation() {
+        // given: 부분 환불 대상 예약
+        val member = createMember(3_000)
+        val space = createSpace()
+        val startTime = now().plusMinutes(30)
+
+        val reservation =
+            createReservation(
+                member,
+                space,
+                ReservationStatus.CONFIRMED,
+                startTime,
+                startTime.plusHours(1),
+            )
+
+        val balanceBefore = balanceOf(member)
+
+        // 위약금 처리에서 예외 발생
+        doThrow(IllegalStateException("penalty failure"))
+            .`when`(creditService)
+            .penalize(eqNonNull(member), eqNonNull(reservation), anyInt())
+
+        // when: 취소 요청
+        assertThatThrownBy { cancelService.cancel(member, reservation) }
+            .isInstanceOf(IllegalStateException::class.java)
+            .hasMessage("penalty failure")
+
+        // 환불 이후 위약금 처리가 호출됐는지 검증
+        val order = inOrder(creditService)
+        order.verify(creditService).refund(
+            eqNonNull(member),
+            eqNonNull(reservation),
+            eqNonNull(10_000),
+        )
+        order.verify(creditService).penalize(
+            eqNonNull(member),
+            eqNonNull(reservation),
+            eqNonNull(5_000),
+        )
+
+        // then: 전체 트랜잭션 롤백 검증
+        assertThat(statusOf(reservation)).isEqualTo("CONFIRMED")
+        assertThat(countSlots(reservation)).isEqualTo(2)
+        assertThat(balanceOf(member)).isEqualTo(balanceBefore)
+        assertThat(countLedger(reservation, "REFUND")).isZero()
+        assertThat(countLedger(reservation, "PENALTY")).isZero()
+        assertThat(countHistory(reservation, "CANCELLED")).isZero()
+        assertThat(events(reservation)).isEmpty()
     }
 
     @Test

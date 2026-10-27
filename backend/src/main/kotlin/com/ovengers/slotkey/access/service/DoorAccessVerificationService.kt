@@ -52,13 +52,11 @@ class DoorAccessVerificationService(
             memberRepository.findByIdOrNull(requireNotNull(loginMemberId) { "The given id must not be null" })
                 ?: throw BusinessException(ErrorCode.AUTHENTICATION_REQUIRED)
 
-        // 요청 DTO getter에 맞춘 기존 Mockito 스텁과 호출 호환성을 유지한다.
-        // TODO: 요청 DTO를 프로퍼티 접근으로 변경할 때 Mockito 스텁도 함께 변경한다.
         val requestedSpace =
-            spaceRepository.findByIdOrNull(requireNotNull(request.getSpaceId()) { "The given id must not be null" })
+            spaceRepository.findByIdOrNull(requireNotNull(request.spaceId) { "The given id must not be null" })
 
         val accessToken =
-            doorAccessTokenService.findByRawTokenOrNull(request.getToken())
+            doorAccessTokenService.findByRawTokenOrNull(request.token)
                 ?: return deny(actorMember, null, requestedSpace, AccessDenyReason.TOKEN_NOT_FOUND, attemptedAt)
 
         val reservation = accessToken.reservation!!
@@ -80,7 +78,7 @@ class DoorAccessVerificationService(
         }
 
         // 요청한 공간과 예약 공간이 같은지 확인
-        if (reservation.getSpaceId() != request.getSpaceId()) {
+        if (reservation.getSpaceId() != request.spaceId) {
             return deny(actorMember, reservation, requestedSpace, AccessDenyReason.SPACE_MISMATCH, attemptedAt)
         }
 
@@ -120,7 +118,7 @@ class DoorAccessVerificationService(
         }
 
         // 3. 최신 예약 정보로 공간 및 시간 재검증
-        if (latestReservation.getSpaceId() != request.getSpaceId()) {
+        if (latestReservation.getSpaceId() != request.spaceId) {
             return deny(actorMember, latestReservation, requestedSpace, AccessDenyReason.SPACE_MISMATCH, attemptedAt)
         }
 

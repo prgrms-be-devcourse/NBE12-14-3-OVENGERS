@@ -134,6 +134,121 @@ class ReservationCancelBoundaryIntegrationTest : ReservationIntegrationTestSuppo
         assertThat(countOutboxEvents(reservationId)).isZero()
     }
 
+    @Test
+    @DisplayName("동일 예약을 순차적으로 두 번 취소해도 환불과 이력이 중복 생성되지 않는다")
+    fun cancel_twiceSequentially_refundsOnlyOnce() {
+        // given: CONFIRMED 상태의 예약 생성
+        val reservationId = createConfirmedReservation()
+
+        // 예약 시작 정확히 1시간 전으로 시간 설정 (전액 환불 구간)
+        setNow(START_TIME.minusHours(1))
+
+        // when: 첫 번째 취소 요청
+        val firstResponse =
+            reservationCancelService.cancel(memberId, reservationId)
+
+        // then: 첫 번째 취소가 정상 처리됐는지 확인
+        assertThat(firstResponse.status).isEqualTo("CANCELLED")
+        assertThat(firstResponse.refundAmount).isEqualTo(TOTAL_AMOUNT)
+        assertThat(firstResponse.penaltyAmount).isZero()
+
+        // 첫 번째 취소 이후 실제 DB 상태 기록
+        val balanceAfterFirstCancel = balanceOf(memberId)
+        val refundCountAfterFirstCancel = countLedger(reservationId, "REFUND")
+        val refundSumAfterFirstCancel = sumLedger(reservationId, "REFUND")
+        val penaltyCountAfterFirstCancel = countLedger(reservationId, "PENALTY")
+        val historyCountAfterFirstCancel = countHistory(reservationId, "CANCELLED")
+        val outboxCountAfterFirstCancel = countOutboxEvents(reservationId)
+
+        // 첫 번째 취소의 정상 결과 검증
+        assertThat(balanceAfterFirstCancel)
+            .isEqualTo(INITIAL_BALANCE + TOTAL_AMOUNT)
+        assertThat(refundCountAfterFirstCancel).isEqualTo(1)
+        assertThat(refundSumAfterFirstCancel).isEqualTo(TOTAL_AMOUNT)
+        assertThat(penaltyCountAfterFirstCancel).isZero()
+        assertThat(historyCountAfterFirstCancel).isEqualTo(1)
+        assertThat(outboxCountAfterFirstCancel).isEqualTo(1)
+        assertThat(countSlots(reservationId)).isZero()
+
+        // when: 동일 예약에 두 번째 취소 요청
+        // then: 이미 취소된 예약이므로 예외가 발생해야 함
+        assertThatThrownBy { reservationCancelService.cancel(memberId, reservationId) }
+            .isInstanceOf(BusinessException::class.java)
+            .hasFieldOrPropertyWithValue(
+                "errorCode",
+                ErrorCode.RESERVATION_STATE_CONFLICT,
+            )
+
+        // then: 두 번째 취소 이후 DB 상태가 변경되지 않았는지 확인
+        assertThat(statusOf(reservationId)).isEqualTo("CANCELLED")
+
+        // 크레딧 중복 환불 방지
+        assertThat(balanceOf(memberId)).isEqualTo(balanceAfterFirstCancel)
+        assertThat(countLedger(reservationId, "REFUND"))
+            .isEqualTo(refundCountAfterFirstCancel)
+        assertThat(sumLedger(reservationId, "REFUND"))
+            .isEqualTo(refundSumAfterFirstCancel)
+        assertThat(countLedger(reservationId, "PENALTY"))
+            .isEqualTo(penaltyCountAfterFirstCancel)
+
+        // 예약 관련 데이터 중복 처리 방지
+        assertThat(countSlots(reservationId)).isZero()
+        assertThat(countHistory(reservationId, "CANCELLED"))
+            .isEqualTo(historyCountAfterFirstCancel)
+        assertThat(countOutboxEvents(reservationId))
+            .isEqualTo(outboxCountAfterFirstCancel)
+    }
+
+    @Test
+    @DisplayName("부분 환불 후 순차 재취소 시 환불과 위약금이 중복되지 않는다")
+    fun cancel_twiceSequentially_partialRefundDoesNotDuplicate() {
+        // given: 예약 시작 30분 전 (50% 위약금)
+        val reservationId = createConfirmedReservation()
+        setNow(START_TIME.minusMinutes(30))
+
+        // when: 첫 번째 취소
+        val firstResponse = reservationCancelService.cancel(memberId, reservationId)
+
+        // then: 부분 환불이 정상적으로 처리되는지 확인
+        val penalty = TOTAL_AMOUNT / 2
+        val refund = TOTAL_AMOUNT - penalty
+
+        assertThat(firstResponse.status).isEqualTo("CANCELLED")
+        assertThat(firstResponse.refundAmount).isEqualTo(refund)
+        assertThat(firstResponse.penaltyAmount).isEqualTo(penalty)
+
+        assertThat(balanceOf(memberId)).isEqualTo(INITIAL_BALANCE + refund)
+        assertThat(countLedger(reservationId, "REFUND")).isEqualTo(1)
+        assertThat(sumLedger(reservationId, "REFUND")).isEqualTo(TOTAL_AMOUNT)
+        assertThat(countLedger(reservationId, "PENALTY")).isEqualTo(1)
+        assertThat(sumLedger(reservationId, "PENALTY")).isEqualTo(-penalty)
+        assertThat(countSlots(reservationId)).isZero()
+        assertThat(countHistory(reservationId, "CANCELLED")).isEqualTo(1)
+        assertThat(countOutboxEvents(reservationId)).isEqualTo(1)
+
+        // 첫 번째 취소 이후 상태 저장
+        val balanceAfterFirst = balanceOf(memberId)
+
+        // when: 두 번째 취소
+        assertThatThrownBy { reservationCancelService.cancel(memberId, reservationId) }
+            .isInstanceOf(BusinessException::class.java)
+            .hasFieldOrPropertyWithValue(
+                "errorCode",
+                ErrorCode.RESERVATION_STATE_CONFLICT,
+            )
+
+        // then: 두 번째 취소로 데이터가 변경되지 않는지 검증
+        assertThat(statusOf(reservationId)).isEqualTo("CANCELLED")
+        assertThat(balanceOf(memberId)).isEqualTo(balanceAfterFirst)
+        assertThat(countLedger(reservationId, "REFUND")).isEqualTo(1)
+        assertThat(countLedger(reservationId, "PENALTY")).isEqualTo(1)
+        assertThat(sumLedger(reservationId, "REFUND")).isEqualTo(TOTAL_AMOUNT)
+        assertThat(sumLedger(reservationId, "PENALTY")).isEqualTo(-penalty)
+        assertThat(countSlots(reservationId)).isZero()
+        assertThat(countHistory(reservationId, "CANCELLED")).isEqualTo(1)
+        assertThat(countOutboxEvents(reservationId)).isEqualTo(1)
+    }
+
     private fun createConfirmedReservation(): Long =
         createReservation(
             memberId,
