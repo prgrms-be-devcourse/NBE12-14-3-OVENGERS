@@ -71,15 +71,17 @@ class SpaceRankingQueryService(
         val items = ArrayList<SpaceRankingItem>()
         for (i in top.indices) {
             val row = top[i]
-            val space = spaces[row.spaceId]!!
+            // 확정 후 공간이 삭제될 수 있다(FK 없는 독립 집계, #186). 누락 행도 순위·지표를 보존해
+            // 목록에서 빼지 않고, 표시 정보만 대체한다. 순위·limit은 전체 스냅샷 행 기준이다.
+            val space = spaces[row.spaceId]
             items.add(
                 SpaceRankingItem(
                     i + 1,
                     previousRanks[row.spaceId],
                     row.spaceId,
-                    space.name ?: "",
+                    if (space == null) MISSING_SPACE_NAME else space.name ?: "",
                     row.location,
-                    space.status ?: SpaceStatus.INACTIVE,
+                    space?.status ?: SpaceStatus.INACTIVE,
                     row.netRevenue,
                     row.reservationCount,
                     row.slotCount,
@@ -302,5 +304,6 @@ class SpaceRankingQueryService(
 
     companion object {
         private const val MAX_LIMIT = 50
+        private const val MISSING_SPACE_NAME = "삭제된 공간"
     }
 }
