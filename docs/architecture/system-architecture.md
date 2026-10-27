@@ -14,7 +14,7 @@
 | 백엔드 | Spring Boot 3.x, Spring Security 6.x, Spring Data JPA | 단일 모놀리스 애플리케이션 내 도메인별 패키지 분리 |
 | DB | MySQL, Testcontainers 통합 테스트 | 유니크 제약·트랜잭션으로 동시성 검증 |
 | 프론트엔드 | Next.js(App Router) + TypeScript | 조회·예약·결제 확인·출입 검증·문의 화면. 배포 시 정적 export(`output: 'export'`) 지원 |
-| 인프라/배포 | AWS EC2(백엔드) + RDS(MySQL) + S3/CloudFront(프론트엔드 정적 호스팅) | 설계 결정 사항. Railway/Vercel은 검토 후 미채택. 실제 AWS 배포 검증은 별도 과제 |
+| 인프라/배포 | AWS EC2(백엔드) + RDS(MySQL) + S3/CloudFront(프론트엔드 정적 호스팅) | 설계 결정 사항. Railway/Vercel은 검토 후 미채택. 2026-10-28 Kotlin 교체 배포와 수동 기능 확인 기록은 [배포 문서](../operations/deploy-cicd.md) §4-2 |
 | CI/CD | GitHub Actions, Swagger UI | 빌드·테스트 자동화, API 문서 |
 
 ## 전체 흐름 (5-2)
@@ -104,4 +104,4 @@ flowchart TD
 - **설계 결정과 실제 배포 검증의 분리**:
   - 위 AWS 배포 구성(EC2, RDS, S3 + CloudFront, CloudFront Function URL 리라이트)은 프로젝트의 **인프라 설계 결정**이다.
   - 소스 코드 레벨에서 Next.js 빌드 설정(`frontend/next.config.ts`) 및 클라이언트 훅(`useRouteId.ts`)은 정적 export와 rewrites 분기를 모두 지원하도록 구현되어 있다.
-  - 그러나 실제 AWS 클라우드 환경에 인스턴스를 프로비저닝하고 CloudFront Function 및 도메인 라우팅이 정상 동작하는지 확인한 엔드투엔드 배포 실측 결과는 현재 저장소 테스트 범위에 포함되지 않는다(미검증 상태로 유지).
+  - 그러나 실제 AWS 클라우드 환경에 인스턴스를 프로비저닝하고 CloudFront Function 및 도메인 라우팅이 정상 동작하는지 확인한 엔드투엔드 배포 실측 결과는 현재 저장소 테스트 범위에 포함되지 않는다(미검증 상태로 유지). *(2026-10-28 갱신: EC2 교체 배포와 CloudFront 주소에서의 수동 기능 확인은 [배포 문서](../operations/deploy-cicd.md) §4-2에 기록했다. 자동화된 엔드투엔드 검증은 아니다.)*

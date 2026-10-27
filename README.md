@@ -10,14 +10,14 @@
 
 예약은 슬롯 확보(HOLD, 10분)와 결제 확인 두 단계로 처리하고, 출입 요청마다 **회원 식별·예약 소유권·예약 상태·출입 키 활성 여부와 이용 시간**을 확인합니다. 이번 프로젝트는 동시 예약 방지, 트랜잭션 정합성, 역할·소유권·상태·시간을 조합한 인가를 구현하고 검증하는 데 집중합니다.
 
-> 현재 개발 및 테스트 정합화가 완료된 프로젝트입니다. 클라우드 운영 환경 배포 실측 및 E2E 브라우저 자동화는 추후 과제로 관리합니다.
+> 현재 개발 및 테스트 정합화가 완료된 프로젝트입니다. E2E 브라우저 자동화는 추후 과제로 관리합니다. 운영 배포는 2026-10-28에 교체했고 기록은 [배포 문서](docs/operations/deploy-cicd.md)에 있습니다.
 
 | 항목 | 내용 |
 | --- | --- |
 | 팀 | 05팀 · 오벤져스 |
 | 과정 | 백엔드 데브코스 12기 14회차 |
 | 개발 기간 | 2026.09.14 ~ 2026.10.01 |
-| 서비스 URL | AWS 인프라 배포 설계 완료 (실제 운영 클라우드 배포 실측은 미검증) |
+| 서비스 URL | AWS(EC2 + RDS + S3/CloudFront)에 배포 중 (2026-10-28 Kotlin 교체 배포, 상세는 [배포 문서](docs/operations/deploy-cicd.md#4-2-3차kotlin-교체-배포-2026-10-28)) |
 | API 문서 | 로컬 서버 기동 시 `http://localhost:8080/swagger-ui/index.html` 접근 가능 (자동화 테스트 통과) |
 | 시연 영상 | 별도 제공 예정 |
 
@@ -119,7 +119,7 @@
 | Frontend | Next.js 16 (App Router), React 19, TypeScript | 반응형 웹 UI, 정적 export 호스팅 및 로컬 개발용 API 프록시 |
 | Styling | Tailwind CSS, CSS Custom Properties | 디자인 토큰 기반 반응형 스타일링 |
 | API Docs | Springdoc OpenAPI 2.6.0, Swagger UI | REST API 자동 문서화 및 대화형 API 탐색 (`/swagger-ui/index.html`) |
-| Deployment | AWS EC2 + RDS + S3/CloudFront | 클라우드 인프라 배포 아키텍처 설계 (실제 운영 배포 실측은 미실시) |
+| Deployment | AWS EC2 + RDS + S3/CloudFront | 클라우드 인프라 배포 (2026-10-28 Kotlin 3차 JAR 교체 배포, 수동 기능 확인) |
 
 ## 🏗️ 시스템 아키텍처
 
@@ -471,7 +471,7 @@ Authorization: Bearer {accessToken}
 | 프론트엔드 단위 테스트 | Node.js Test Runner (`node --test`) | API 클라이언트 에러 처리, 출입 키 저장/파싱, 유효성 검사 등<br>과거 README 집계: 45개 통과(pass 45, fail 0). 기능 동결 기준의 최신 프론트 실행 수치를 뜻하지 않으며, 이번 문서 수정에서 재실행하지 않음 |
 | 정적 분석 및 컴파일 | ESLint, TypeScript (`tsc`) | 프론트엔드 린트 및 타입 무결성 검증 통과 (`npm run lint`, `npx tsc --noEmit`) |
 | API 문서 자동 검증 | MockMvc, Springdoc OpenAPI | Swagger UI 경로 및 OpenAPI 사양 생성 자동 검증 통과 (`/swagger-ui/index.html`) |
-| 운영 배포 및 E2E 브라우저 | — | AWS 클라우드 배포 실측 및 E2E 브라우저 자동화는 추후 과제 |
+| 운영 배포 및 E2E 브라우저 | GitHub Actions, 수동 확인 | 2026-10-28 EC2 교체 배포와 로그인·예약·충전·도어 토큰 수동 확인. E2E 브라우저 자동화는 추후 과제 |
 
 시간 기반 로직에는 `Clock`을 주입하여 실제 대기 없이 시간대 경계 조건을 밀리초/나노초 단위로 정밀하게 검증합니다.
 

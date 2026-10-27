@@ -2,6 +2,8 @@
 
 > **설정 기준: 기능 동결 커밋 `d1a15ec` / 문서 갱신일: 2026-10-21**. 해당 커밋의 `.github/workflows/backend-ci.yml`·`frontend-ci.yml` 기준이며, 이번 변경은 문서만 최신화한다. 기능 동결 기준은 유지한다. 아래 §4는 2026-09-25 당시 실행 기록이다. 설정 확인과 운영 배포 성공·기능 검증은 구분한다. PG·예약 대기 구현은 기준 커밋에 포함돼 있으며, 이번 문서 작업에서 운영 환경을 실행 검증하지 않았다.
 
+> **2026-10-28 갱신**: Kotlin 전환 완료 후 `DEPLOY_ENABLED=true`로 배포를 켜고, 3차(Kotlin) JAR를 2차와 같은 EC2·RDS에 교체 배포했다. 결과와 서버에서 확인한 항목은 §4-2, 3차 레포 runner는 §3-5에 적었다. 아래 §4-1은 2026-09-25 당시 2차 기록이다.
+
 ## 1. 인프라 구성
 
 | 구성 요소 | 내용 |
@@ -69,6 +71,8 @@ GitHub Actions에서 EC2로 배포하는 방법은 크게 두 가지:
 - systemd 서비스로 등록 (`sudo ./svc.sh install && sudo ./svc.sh start`) → EC2 재부팅 시에도 자동 기동
 - 서비스명 예: `actions.runner.prgrms-be-devcourse-NBE12-14-2-OVENGERS.ip-172-31-46-159.service`
 - 등록 확인: 저장소 Settings → Actions → Runners에서 상태 확인 가능
+- **3차 레포 runner (2026-10-28)**: runner는 레포 단위로 등록되므로 2차 runner는 3차 레포의 deploy job을 받지 못한다. 같은 EC2에 `/home/ubuntu/actions-runner-3`로 3차 레포 runner를 따로 등록하고 서비스(`actions.runner.prgrms-be-devcourse-NBE12-14-3-OVENGERS.<호스트>.service`)로 설치했다. 서비스 사용자는 `ubuntu`다(워크플로가 `sudo systemctl restart slotkey`를 쓴다).
+- **2차 레포 runner는 중지·비활성화했다.** 켜 두면 2차 레포 `dev` push 때 옛 2차 JAR가 3차를 덮어쓴다. 다시 켜야 하면 먼저 서버의 `slotkey.jar`가 어느 버전인지 확인하고 3차 deploy를 끈다(`DEPLOY_ENABLED` 해제).
 
 ### 3-6. 프론트엔드 배포 자동화 (2026-09-30 추가)
 
@@ -87,11 +91,31 @@ GitHub Actions에서 EC2로 배포하는 방법은 크게 두 가지:
   - `AWS_REGION`: S3 버킷 리전(예: `ap-northeast-2`)
   - 프론트 배포 빌드는 Repository Variable `NEXT_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY`도 참조한다. 실제 값은 문서에 기록하지 않는다.
 
-## 4. 검증 기록 (2026-09-25)
+## 4. 검증 기록
+
+### 4-1. 2차 배포 (2026-09-25)
 
 - `dev` push → `build`(3m35s) → `deploy`(1m52s), 총 5m33s 만에 자동 배포 완료 확인
 - 배포 후 `ps aux`로 프로세스 PID가 재기동 시점 기준으로 새로 바뀐 것 확인
 - 외부에서 `curl http://<EC2 퍼블릭 IP>:8080` 호출 시 정상 응답(`AUTHENTICATION_REQUIRED`) 확인 — 서버 및 인증 필터 정상 동작
+
+### 4-2. 3차(Kotlin) 교체 배포 (2026-10-28)
+
+**구성**: 2차와 같은 EC2(c7i, 메모리 3.7GiB)의 `slotkey` 서비스·`/home/ubuntu/slotkey/slotkey.jar`·8080, 같은 RDS `slotkey` 스키마, 같은 `/home/ubuntu/slotkey.env`를 그대로 쓴다. 2차를 동시에 띄우지 않고 교체한 이유는 메모리다(JVM `-Xmx1g` + 같은 호스트의 Kafka). 워크플로 수정은 없다.
+
+**DB 호환**: 기능 동결 커밋 `d1a15ec`와 전환 후 `dev`의 `db/migration`은 diff가 없다(V1~V26). 배포 전 RDS의 `flyway_schema_history` 최대 버전이 26이고 V24~V26이 `success = 1`임을 직접 조회해 확인했다. 그래서 3차 기동이 새 마이그레이션을 적용하지 않는다.
+
+**절차와 결과**
+1. RDS 스냅샷 생성, 2차 JAR를 `slotkey.jar.2nd.bak`으로 보관(롤백용).
+2. 3차 레포에 runner 등록(§3-5), AWS 시크릿 3개와 `NEXT_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY` 변수 등록. S3 버킷과 CloudFront ID는 워크플로 파일에 고정돼 있어 별도 등록이 필요 없다.
+3. `DEPLOY_ENABLED=true` 등록 후 `dev` 실행을 다시 돌렸다. `build` 11분 20초, `deploy` 2분 34초 통과.
+4. 서버 journal에 `Started ... in 13.52 seconds`, `slotkey.jar` 85MB(2차 79MB)로 교체, `curl http://localhost:8080/`가 401(인증 필터 동작). 배포 후 가용 메모리 2.4GiB, 스왑 사용 143MiB.
+5. 2차 runner 서비스 중지·비활성화, 3차 runner `active` 확인.
+6. CloudFront 주소에서 로그인, 예약 HOLD 후 결제, 크레딧 충전(토스 sandbox), 도어 토큰 발급을 사람이 직접 확인했다. 자동화된 E2E 기록은 아니다.
+
+**확인하지 않은 것**: 회원가입부터 이용 완료까지의 전체 흐름 재현, 부하·동시성의 운영 환경 측정, Kafka·Outbox 이벤트 소비의 운영 확인, 보안그룹 외 네트워크 구성. 보안그룹 `slotkey-c7i-sg`는 인바운드가 SSH(22)와 8080 두 개이며 둘 다 접두사 목록 소스다. 9092(Kafka)·3306은 열려 있지 않다.
+
+**롤백**: `slotkey.jar.2nd.bak`을 `slotkey.jar`로 복사하고 `sudo systemctl restart slotkey`. DB가 같은 V26이라 2차 JAR와 호환된다. 스키마가 더 올라간 뒤에는 이 전제가 깨지므로 RDS 스냅샷으로 복구한다.
 
 ## 5. 향후 개선 후보 (이번 사이클에서는 보류)
 
