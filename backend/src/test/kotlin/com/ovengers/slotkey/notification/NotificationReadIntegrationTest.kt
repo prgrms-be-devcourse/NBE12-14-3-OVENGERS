@@ -20,7 +20,7 @@ class NotificationReadIntegrationTest : ReservationIntegrationTestSupport() {
 
     @Autowired private lateinit var jwtProvider: JwtProvider
 
-    @Autowired private lateinit var memberRepository: MemberRepository
+    @Autowired private lateinit var notificationMemberRepository: MemberRepository
 
     @Test
     fun readsOnlyMyUnreadAndKeepsExistingReadTime() {
