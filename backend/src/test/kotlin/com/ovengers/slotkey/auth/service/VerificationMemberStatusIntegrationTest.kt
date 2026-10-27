@@ -71,7 +71,7 @@ internal class VerificationMemberStatusIntegrationTest {
     @BeforeEach fun setUp() {
         currentTime.set(Instant.parse("2026-10-14T00:00:00Z"))
         whenever(clock.zone).thenReturn(ZoneId.of("Asia/Seoul"))
-        whenever(clock.instant()).thenAnswer { invocation -> currentTime.get() }
+        whenever(clock.instant()).thenAnswer { currentTime.get() }
     }
 
     @Test fun 세번째_인증차단이면_기존_ACTIVE_회원을_정지하고_시스템_감사로그를_남긴다() {
@@ -108,7 +108,7 @@ internal class VerificationMemberStatusIntegrationTest {
             )
 
         assertThat(logs.totalElements).isEqualTo(1)
-        val log = logs.content.get(0)
+        val log = logs.content[0]
         assertThat(log.actorMemberId).isNull()
         assertThat(log.beforeValue).isEqualTo("\"ACTIVE\"")
         assertThat(log.afterValue).isEqualTo("\"SUSPENDED\"")
@@ -240,5 +240,5 @@ internal class VerificationMemberStatusIntegrationTest {
             ).grant!!
     }
 
-    private fun newEmail(): String = "status-link-" + UUID.randomUUID() + "@example.com"
+    private fun newEmail(): String = "status-link-${UUID.randomUUID()}@example.com"
 }

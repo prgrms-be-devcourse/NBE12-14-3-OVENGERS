@@ -28,14 +28,14 @@ internal class VerificationSecretHasherTest {
     }
 
     @Test fun 번호와_증표는_같은_원문이라도_검증값이_다르다() {
-        val raw: String = "01234567"
+        val raw = "01234567"
 
         assertThat(hasher.hashGrant(raw))
             .isNotEqualTo(hasher.hashCode(1L, raw))
     }
 
     @Test fun 다른_비밀키로는_번호가_일치하지_않는다() {
-        val anotherKey: ByteArray = ByteArray(32)
+        val anotherKey = ByteArray(32)
         anotherKey[0] = 1
 
         val anotherHasher: VerificationSecretHasher =

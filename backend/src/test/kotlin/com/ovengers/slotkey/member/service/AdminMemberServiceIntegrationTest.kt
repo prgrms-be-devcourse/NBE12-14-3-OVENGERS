@@ -9,7 +9,6 @@ import com.ovengers.slotkey.auth.entity.AuthSession
 import com.ovengers.slotkey.auth.entity.RefreshToken
 import com.ovengers.slotkey.auth.repository.AuthSessionRepository
 import com.ovengers.slotkey.auth.repository.RefreshTokenRepository
-import com.ovengers.slotkey.auth.service.AuthSessionService
 import com.ovengers.slotkey.credit.entity.CreditTransaction
 import com.ovengers.slotkey.credit.entity.CreditTransactionType
 import com.ovengers.slotkey.credit.repository.CreditTransactionRepository
@@ -43,9 +42,6 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
 
     @Autowired
     private lateinit var memberRepository: MemberRepository
-
-    @Autowired
-    private lateinit var authSessionService: AuthSessionService
 
     @Autowired
     private lateinit var authSessionRepository: AuthSessionRepository
@@ -100,7 +96,7 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
     fun suspend_auditLogFails_rollsBackMemberStatus() {
         // given
         val session: AuthSession = authSessionService.create(userMember)
-        val tokenHash: String = "a".repeat(64)
+        val tokenHash = "a".repeat(64)
         refreshTokenRepository.saveAndFlush(
             RefreshToken(
                 userMember,

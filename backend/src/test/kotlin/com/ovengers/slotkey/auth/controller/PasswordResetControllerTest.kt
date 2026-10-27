@@ -54,9 +54,8 @@ internal class PasswordResetControllerTest {
     private lateinit var mailSender: VerificationMailSender
 
     @Test
-    @Throws(Exception::class)
     fun 비로그인_비밀번호_재설정_API가_동작하고_기존_AT는_폐기된다() {
-        val email: String = "reset-http-" + UUID.randomUUID() + "@example.com"
+        val email = "reset-http-${UUID.randomUUID()}@example.com"
         val signupGrant: String = issueGrant(email, VerificationPurpose.SIGNUP)
         memberService.signup(
             email,
@@ -75,16 +74,7 @@ internal class PasswordResetControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "grant",
-                                resetGrant,
-                                "password",
-                                "New1234!",
-                                "passwordConfirm",
-                                "New1234!",
-                            ),
+                            mapOf("email" to email, "grant" to resetGrant, "password" to "New1234!", "passwordConfirm" to "New1234!"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -92,11 +82,10 @@ internal class PasswordResetControllerTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken),
+                    .header("Authorization", "Bearer $accessToken"),
             ).andExpect(status().isUnauthorized())
     }
 
-    @Throws(Exception::class)
     private fun login(
         email: String,
         password: String,
@@ -108,12 +97,7 @@ internal class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(
-                                javaMapOf(
-                                    "email",
-                                    email,
-                                    "password",
-                                    password,
-                                ),
+                                mapOf("email" to email, "password" to password),
                             ),
                         ),
                 ).andExpect(status().isOk())
@@ -127,7 +111,6 @@ internal class PasswordResetControllerTest {
         return accessToken
     }
 
-    @Throws(Exception::class)
     private fun issueGrant(
         email: String,
         purpose: VerificationPurpose,
@@ -147,12 +130,4 @@ internal class PasswordResetControllerTest {
                 deliveredCode.get()!!,
             ).grant!!
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    val result = LinkedHashMap<String, Any?>()
-    for (i in values.indices step 2) result[values[i] as String] = values[i + 1]
-    return result
 }

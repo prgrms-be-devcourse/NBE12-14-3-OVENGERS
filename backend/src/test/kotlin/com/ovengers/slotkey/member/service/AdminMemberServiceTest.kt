@@ -113,7 +113,7 @@ internal class AdminMemberServiceTest {
             ),
         ).thenReturn(
             PageImpl(
-                listOf(),
+                emptyList(),
                 pageable,
                 0,
             ),
@@ -212,7 +212,7 @@ internal class AdminMemberServiceTest {
         // given
         val memberId: Long = 1L
         val adminMemberId: Long = 100L
-        val reason: String = "운영 정책 위반"
+        val reason = "운영 정책 위반"
 
         val member: Member = mock()
 
@@ -275,7 +275,7 @@ internal class AdminMemberServiceTest {
         // given
         val memberId: Long = 1L
         val adminMemberId: Long = 100L
-        val reason: String = "정지 사유 해소"
+        val reason = "정지 사유 해소"
 
         val member: Member = mock()
 
@@ -414,7 +414,7 @@ internal class AdminMemberServiceTest {
         val memberId: Long = 1L
         val adminMemberId: Long = 100L
         val amount: Int = 50000
-        val reason: String = "보상 지급"
+        val reason = "보상 지급"
 
         val beforeMember: Member = mock()
         val updatedMember: Member = mock()

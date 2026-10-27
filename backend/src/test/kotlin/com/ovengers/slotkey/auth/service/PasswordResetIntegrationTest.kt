@@ -246,5 +246,5 @@ internal class PasswordResetIntegrationTest {
         return checked.grant!!
     }
 
-    private fun newEmail(): String = "reset-" + UUID.randomUUID() + "@example.com"
+    private fun newEmail(): String = "reset-${UUID.randomUUID()}@example.com"
 }

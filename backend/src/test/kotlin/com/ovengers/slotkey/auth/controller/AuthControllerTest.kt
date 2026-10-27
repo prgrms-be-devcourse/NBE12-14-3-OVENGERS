@@ -106,13 +106,12 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("회원가입 성공 시 일반 회원으로 저장하고 비밀번호를 해시한다")
-    @Throws(Exception::class)
     fun t1() {
         // 1. 가입할 회원 정보 준비
-        val email: String = "signup-test@example.com"
+        val email = "signup-test@example.com"
         val grant: String = issueSignupGrant(email)
-        val password: String = "Test1234!"
-        val nickname: String = "테스트회원"
+        val password = "Test1234!"
+        val nickname = "테스트회원"
 
         // 2. 회원가입 요청
         val resultActions: ResultActions =
@@ -123,14 +122,13 @@ class AuthControllerTest {
                         .content(
                             """
                             {
-                                "email": "%s",
-                                "password": "%s",
-                                "passwordConfirm": "%s",
-                                "nickname": "%s",
-                                "grant": "%s"
+                                "email": "$email",
+                                "password": "$password",
+                                "passwordConfirm": "$password",
+                                "nickname": "$nickname",
+                                "grant": "$grant"
                             }
-                            
-                            """.trimIndent().formatted(email, password, password, nickname, grant),
+                            """.trimIndent(),
                         ),
                 ).andDo(print())
 
@@ -171,12 +169,11 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("이미 가입된 이메일로 회원가입하면 409를 반환한다")
-    @Throws(Exception::class)
     fun t2() {
         // 1. 이미 가입된 회원을 직접 저장
-        val email: String = "duplicate-test@example.com"
+        val email = "duplicate-test@example.com"
         val grant: String = issueSignupGrant(email)
-        val password: String = "Test1234!"
+        val password = "Test1234!"
 
         val existingMember: Member =
             memberRepository.save(
@@ -197,14 +194,13 @@ class AuthControllerTest {
                         .content(
                             """
                             {
-                                "email": "%s",
-                                "password": "%s",
-                                "passwordConfirm": "%s",
+                                "email": "$email",
+                                "password": "$password",
+                                "passwordConfirm": "$password",
                                 "nickname": "새회원",
-                                "grant": "%s"
+                                "grant": "$grant"
                             }
-                            
-                            """.trimIndent().formatted(email, password, password, grant),
+                            """.trimIndent(),
                         ),
                 ).andDo(print())
 
@@ -232,10 +228,9 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("비밀번호와 비밀번호 확인이 다르면 회원가입을 거절한다")
-    @Throws(Exception::class)
     fun t3() {
         // 1. 서로 다른 비밀번호 준비
-        val email: String = "password-mismatch@example.com"
+        val email = "password-mismatch@example.com"
         val grant: String = issueSignupGrant(email)
         val memberCountBefore: Long = memberRepository.count()
 
@@ -248,14 +243,13 @@ class AuthControllerTest {
                         .content(
                             """
                             {
-                                "email": "%s",
+                                "email": "$email",
                                 "password": "Test1234!",
                                 "passwordConfirm": "Different1234!",
                                 "nickname": "테스트회원",
-                                "grant": "%s"
+                                "grant": "$grant"
                             }
-                            
-                            """.trimIndent().formatted(email, grant),
+                            """.trimIndent(),
                         ),
                 ).andDo(print())
 
@@ -275,7 +269,6 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("로그인하면 액세스 토큰과 24시간 리프레시 쿠키를 발급한다")
-    @Throws(Exception::class)
     fun t4() {
         val result: MvcResult = loginForTest("login-success@example.com")
 
@@ -284,12 +277,7 @@ class AuthControllerTest {
         assertThat(JwtUtil.payloadOrNull(accessToken, secretKey)!!)
             .containsKey("sid")
 
-        val refreshCookie: Cookie =
-            result
-                .response
-                .getCookie("refreshToken")
-
-        assertThat(refreshCookie).isNotNull()
+        val refreshCookie = refreshCookie(result)
         assertThat(refreshCookie.value).isNotBlank()
         assertThat(refreshCookie.isHttpOnly).isTrue()
         assertThat(refreshCookie.path).isEqualTo("/api/v1/auth")
@@ -298,9 +286,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("비밀번호가 틀리면 로그인을 거절하고 쿠키를 발급하지 않는다")
-    @Throws(Exception::class)
     fun t5() {
-        val email: String = "login-failure-" + UUID.randomUUID() + "@example.com"
+        val email = "login-failure-${UUID.randomUUID()}@example.com"
 
         memberRepository.save(
             Member(
@@ -317,11 +304,10 @@ class AuthControllerTest {
                         .content(
                             """
                             {
-                                "email": "%s",
+                                "email": "$email",
                                 "password": "Wrong1234!"
                             }
-                            
-                            """.trimIndent().formatted(email),
+                            """.trimIndent(),
                         ),
                 ).andDo(print())
 
@@ -334,18 +320,12 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("유효한 리프레시 쿠키로 갱신한 액세스 토큰을 사용할 수 있다")
-    @Throws(Exception::class)
     fun t6() {
-        val email: String = "refresh-success@example.com"
+        val email = "refresh-success@example.com"
 
         val loginResult: MvcResult = loginForTest(email)
 
-        val refreshCookie: Cookie =
-            loginResult
-                .response
-                .getCookie("refreshToken")
-
-        assertThat(refreshCookie).isNotNull()
+        val refreshCookie = refreshCookie(loginResult)
 
         val refreshResult: MvcResult =
             mvc
@@ -366,7 +346,7 @@ class AuthControllerTest {
                 get("/api/v1/members/me")
                     .header(
                         "Authorization",
-                        "Bearer " + accessToken,
+                        "Bearer $accessToken",
                     ),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.data.email").value(email))
@@ -374,7 +354,6 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("리프레시 쿠키가 없으면 토큰 갱신을 거절한다")
-    @Throws(Exception::class)
     fun t7() {
         mvc
             .perform(
@@ -386,7 +365,6 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("등록되지 않은 리프레시 토큰으로 갱신하면 거절한다")
-    @Throws(Exception::class)
     fun t8() {
         mvc
             .perform(
@@ -404,17 +382,11 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("로그아웃하면 쿠키를 삭제하고 기존 리프레시 토큰의 갱신을 차단한다")
-    @Throws(Exception::class)
     fun t9() {
         val loginResult: MvcResult =
             loginForTest("logout-test@example.com")
 
-        val refreshCookie: Cookie =
-            loginResult
-                .response
-                .getCookie("refreshToken")
-
-        assertThat(refreshCookie).isNotNull()
+        val refreshCookie = refreshCookie(loginResult)
 
         // 로그아웃 전에 원문을 별도로 보관
         val rawRefreshToken: String = refreshCookie.value
@@ -449,9 +421,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("액세스 토큰으로 로그인한 회원 본인의 정보를 조회한다")
-    @Throws(Exception::class)
     fun t10() {
-        val email: String = "my-info@example.com"
+        val email = "my-info@example.com"
 
         val loginResult: MvcResult = loginForTest(email)
         val accessToken: String = extractAccessToken(loginResult)
@@ -461,7 +432,7 @@ class AuthControllerTest {
                 get("/api/v1/members/me")
                     .header(
                         "Authorization",
-                        "Bearer " + accessToken,
+                        "Bearer $accessToken",
                     ),
             ).andDo(print())
             .andExpect(status().isOk())
@@ -475,7 +446,6 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("액세스 토큰 없이 내 정보를 조회하면 거절한다")
-    @Throws(Exception::class)
     fun t11() {
         mvc
             .perform(
@@ -487,35 +457,26 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("V1 세션 정보가 없는 기존 Access Token은 보호 API에서 거부한다")
-    @Throws(Exception::class)
     fun legacyAccessTokenWithoutSessionIsRejected() {
-        val email: String = "legacy-access@example.com"
+        val email = "legacy-access@example.com"
         loginForTest(email)
         val member: Member = memberRepository.findByEmail(email).orElseThrow()
         val legacyToken: String =
             JwtUtil.createToken(
                 secretKey,
                 300000L,
-                javaMapOf(
-                    "id",
-                    member.id!!,
-                    "email",
-                    member.email,
-                    "role",
-                    member.role.name,
-                ),
+                mapOf("id" to member.id!!, "email" to member.email, "role" to member.role.name),
             )
 
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + legacyToken),
+                    .header("Authorization", "Bearer $legacyToken"),
             ).andExpect(status().isUnauthorized())
     }
 
     @Test
     @DisplayName("JWT 회원 ID와 세션 소유 회원이 다르면 보호 API를 거부한다")
-    @Throws(Exception::class)
     fun sessionOwnedByAnotherMemberIsRejected() {
         val loginResult: MvcResult = loginForTest("session-owner@example.com")
         val accessToken: String = extractAccessToken(loginResult)
@@ -526,56 +487,36 @@ class AuthControllerTest {
             JwtUtil.createToken(
                 secretKey,
                 300000L,
-                javaMapOf(
-                    "id",
-                    otherMemberId,
-                    "email",
-                    "other-session-owner@example.com",
-                    "role",
-                    "USER",
-                    "sid",
-                    sessionId,
-                ),
+                mapOf("id" to otherMemberId, "email" to "other-session-owner@example.com", "role" to "USER", "sid" to sessionId),
             )
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + mismatchedToken))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $mismatchedToken"))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"))
     }
 
     @Test
     @DisplayName("존재하지 않는 세션 ID를 가진 Access Token은 거부한다")
-    @Throws(Exception::class)
     fun unknownSessionIsRejected() {
-        val email: String = "unknown-session@example.com"
+        val email = "unknown-session@example.com"
         loginForTest(email)
         val member: Member = memberRepository.findByEmail(email).orElseThrow()
         val token: String =
             JwtUtil.createToken(
                 secretKey,
                 300000L,
-                javaMapOf(
-                    "id",
-                    member.id!!,
-                    "email",
-                    email,
-                    "role",
-                    "USER",
-                    "sid",
-                    "missing-session",
-                ),
+                mapOf("id" to member.id!!, "email" to email, "role" to "USER", "sid" to "missing-session"),
             )
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + token))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $token"))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"))
     }
 
     @Test
     @DisplayName("만료된 DB 세션은 아직 만료되지 않은 Access Token도 거부한다")
-    @Throws(Exception::class)
     fun expiredSessionRejectsAccessToken() {
         val loginResult: MvcResult = loginForTest("expired-session@example.com")
         val accessToken: String = extractAccessToken(loginResult)
@@ -584,14 +525,13 @@ class AuthControllerTest {
         entityManager.clear()
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + accessToken))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $accessToken"))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"))
     }
 
     @Test
     @DisplayName("세션 저장소 장애 시 인증을 허용하지 않고 공통 503 응답을 반환한다")
-    @Throws(Exception::class)
     fun sessionStoreFailureFailsClosedWithServiceUnavailable() {
         val loginResult: MvcResult = loginForTest("session-store-failure@example.com")
         val accessToken: String = extractAccessToken(loginResult)
@@ -600,7 +540,7 @@ class AuthControllerTest {
             .isUsable(any<String>(), any<Long>(), any(), any())
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + accessToken))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $accessToken"))
             .andExpect(status().isServiceUnavailable())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("AUTHENTICATION_SERVICE_UNAVAILABLE"))
@@ -612,7 +552,6 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("세션 조회 트랜잭션을 시작할 수 없으면 인증을 허용하지 않고 공통 503 응답을 반환한다")
-    @Throws(Exception::class)
     fun sessionTransactionStartFailureFailsClosedWithServiceUnavailable() {
         val loginResult: MvcResult = loginForTest("session-transaction-failure@example.com")
         val accessToken: String = extractAccessToken(loginResult)
@@ -621,7 +560,7 @@ class AuthControllerTest {
             .isUsable(any<String>(), any<Long>(), any(), any())
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + accessToken))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $accessToken"))
             .andExpect(status().isServiceUnavailable())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("AUTHENTICATION_SERVICE_UNAVAILABLE"))
@@ -633,9 +572,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("만료된 액세스 토큰으로 내 정보를 조회하면 401을 반환한다")
-    @Throws(Exception::class)
     fun t12() {
-        val email: String = "expired-access@example.com"
+        val email = "expired-access@example.com"
         loginForTest(email)
 
         val member: Member =
@@ -648,18 +586,13 @@ class AuthControllerTest {
             JwtUtil.createToken(
                 secretKey,
                 -60000L,
-                javaMapOf(
-                    "id",
-                    member.id!!,
-                    "email",
-                    member.email,
-                ),
+                mapOf("id" to member.id!!, "email" to member.email),
             )
 
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + expiredToken),
+                    .header("Authorization", "Bearer $expiredToken"),
             ).andDo(print())
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"))
@@ -667,9 +600,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("다른 키로 서명한 액세스 토큰으로 접근하면 401을 반환한다")
-    @Throws(Exception::class)
     fun t13() {
-        val email: String = "wrong-signature@example.com"
+        val email = "wrong-signature@example.com"
         loginForTest(email)
 
         val member: Member =
@@ -687,18 +619,13 @@ class AuthControllerTest {
             JwtUtil.createToken(
                 wrongSecretKey,
                 300000L,
-                javaMapOf(
-                    "id",
-                    member.id!!,
-                    "email",
-                    member.email,
-                ),
+                mapOf("id" to member.id!!, "email" to member.email),
             )
 
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + forgedToken),
+                    .header("Authorization", "Bearer $forgedToken"),
             ).andDo(print())
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value("INVALID_ACCESS_TOKEN"))
@@ -706,17 +633,11 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("DB에 저장된 리프레시 토큰이 만료되었으면 갱신을 거절한다")
-    @Throws(Exception::class)
     fun t14() {
-        val email: String = "expired-refresh@example.com"
+        val email = "expired-refresh@example.com"
         val loginResult: MvcResult = loginForTest(email)
 
-        val refreshCookie: Cookie =
-            loginResult
-                .response
-                .getCookie("refreshToken")
-
-        assertThat(refreshCookie).isNotNull()
+        val refreshCookie = refreshCookie(loginResult)
 
         val member: Member =
             memberRepository
@@ -734,7 +655,6 @@ class AuthControllerTest {
                     update RefreshToken r
                     set r.expiresAt = :expiresAt
                     where r.member.id = :memberId
-                    
                     """.trimIndent(),
                 ).setParameter("expiresAt", LocalDateTime.of(2000, 1, 1, 0, 0))
                 .setParameter("memberId", member.id!!)
@@ -756,9 +676,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("로그인 후 정지되면 기존 액세스 토큰과 재발급이 거절된다")
-    @Throws(Exception::class)
     fun t15() {
-        val email: String = "suspended-member@example.com"
+        val email = "suspended-member@example.com"
         val loginResult: MvcResult = loginForTest(email)
         val accessToken: String = extractAccessToken(loginResult)
 
@@ -772,7 +691,6 @@ class AuthControllerTest {
                     update Member m
                     set m.status = :status
                     where m.email = :email
-                    
                     """.trimIndent(),
                 ).setParameter("status", MemberStatus.SUSPENDED)
                 .setParameter("email", email)
@@ -786,7 +704,7 @@ class AuthControllerTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken),
+                    .header("Authorization", "Bearer $accessToken"),
             ).andDo(print())
             .andExpect(status().isUnauthorized())
 
@@ -794,14 +712,13 @@ class AuthControllerTest {
         mvc
             .perform(
                 post("/api/v1/auth/refresh")
-                    .cookie(loginResult.response.getCookie("refreshToken")),
+                    .cookie(refreshCookie(loginResult)),
             ).andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("ACCOUNT_INACTIVE"))
     }
 
     @Test
     @DisplayName("일반 회원이 관리자 공간 등록 API에 접근하면 403을 반환한다")
-    @Throws(Exception::class)
     fun t16() {
         val loginResult: MvcResult = loginForTest("user-admin-access@example.com")
         val accessToken: String = extractAccessToken(loginResult)
@@ -809,7 +726,7 @@ class AuthControllerTest {
         mvc
             .perform(
                 post("/api/v1/admin/spaces")
-                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Authorization", "Bearer $accessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}"),
             ).andDo(print())
@@ -818,9 +735,8 @@ class AuthControllerTest {
     }
 
     // 회원 저장 후 실제 로그인 API를 호출한다.
-    @Throws(Exception::class)
     private fun loginForTest(email: String): MvcResult {
-        val password: String = "Test1234!"
+        val password = "Test1234!"
 
         val member: Member =
             memberRepository.saveAndFlush(
@@ -842,18 +758,19 @@ class AuthControllerTest {
                     .content(
                         """
                         {
-                            "email": "%s",
-                            "password": "%s"
+                            "email": "$email",
+                            "password": "$password"
                         }
-                        
-                        """.trimIndent().formatted(email, password),
+                        """.trimIndent(),
                     ),
             ).andExpect(status().isOk())
             .andReturn()
     }
 
     // 로그인·갱신 응답에서 액세스 토큰을 꺼낸다.
-    @Throws(Exception::class)
+    private fun refreshCookie(result: MvcResult): Cookie =
+        checkNotNull(result.response.getCookie("refreshToken")) { "refreshToken 쿠키가 발급되지 않았다" }
+
     private fun extractAccessToken(result: MvcResult): String {
         val responseBody: String =
             result
@@ -874,20 +791,14 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("로그아웃 후 기존 액세스 토큰은 즉시 사용할 수 없다")
-    @Throws(Exception::class)
     fun t17() {
-        val email: String = "access-after-logout-" + UUID.randomUUID() + "@example.com"
+        val email = "access-after-logout-${UUID.randomUUID()}@example.com"
 
         // 1. 실제 로그인으로 두 토큰 발급
         val loginResult: MvcResult = loginForTest(email)
         val accessToken: String = extractAccessToken(loginResult)
 
-        val refreshCookie: Cookie =
-            loginResult
-                .response
-                .getCookie("refreshToken")
-
-        assertThat(refreshCookie).isNotNull()
+        val refreshCookie = refreshCookie(loginResult)
 
         // 2. 로그아웃
         mvc
@@ -901,16 +812,15 @@ class AuthControllerTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken),
+                    .header("Authorization", "Bearer $accessToken"),
             ).andDo(print())
             .andExpect(status().isUnauthorized())
     }
 
     @Test
     @DisplayName("로그아웃은 같은 회원의 다른 로그인 세션에는 영향을 주지 않는다")
-    @Throws(Exception::class)
     fun logoutRevokesOnlyTheSessionFromItsRefreshCookie() {
-        val email: String = "separate-login-sessions-" + UUID.randomUUID() + "@example.com"
+        val email = "separate-login-sessions-${UUID.randomUUID()}@example.com"
         val firstLogin: MvcResult = loginForTest(email)
         val secondLogin: MvcResult =
             mvc
@@ -919,9 +829,8 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             """
-                            {"email":"%s","password":"Test1234!"}
-                            
-                            """.trimIndent().formatted(email),
+                            {"email":"$email","password":"Test1234!"}
+                            """.trimIndent(),
                         ),
                 ).andExpect(status().isOk())
                 .andReturn()
@@ -931,36 +840,31 @@ class AuthControllerTest {
         mvc
             .perform(
                 post("/api/v1/auth/logout")
-                    .cookie(firstLogin.response.getCookie("refreshToken")),
+                    .cookie(refreshCookie(firstLogin)),
             ).andExpect(status().isNoContent())
 
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + firstAccessToken),
+                    .header("Authorization", "Bearer $firstAccessToken"),
             ).andExpect(status().isUnauthorized())
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + secondAccessToken),
+                    .header("Authorization", "Bearer $secondAccessToken"),
             ).andExpect(status().isOk())
         mvc
             .perform(
                 post("/api/v1/auth/refresh")
-                    .cookie(secondLogin.response.getCookie("refreshToken")),
+                    .cookie(refreshCookie(secondLogin)),
             ).andExpect(status().isOk())
     }
 
     @Test
     @DisplayName("사전 중복 검사를 통과해도 DB에서 이메일이 중복되면 409를 반환한다")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    @Throws(Exception::class)
     fun t18() {
-        val email: String = (
-            "duplicate-at-save-" +
-                UUID.randomUUID() +
-                "@example.com"
-        )
+        val email = "duplicate-at-save-${UUID.randomUUID()}@example.com"
 
         val grant: String = issueSignupGrant(email)
 
@@ -987,14 +891,13 @@ class AuthControllerTest {
                         .content(
                             """
                             {
-                                "email": "%s",
+                                "email": "$email",
                                 "password": "Test1234!",
                                 "passwordConfirm": "Test1234!",
                                 "nickname": "새회원",
-                                "grant": "%s"
+                                "grant": "$grant"
                             }
-                            
-                            """.trimIndent().formatted(email, grant),
+                            """.trimIndent(),
                         ),
                 ).andDo(print())
                 .andExpect(status().isConflict())
@@ -1016,7 +919,7 @@ class AuthControllerTest {
                 .isEqualTo("기존회원")
         } finally {
             // 이 테스트는 자동 롤백을 사용하지 않으므로 직접 정리
-            memberRepository.deleteById(existingMember.id)
+            memberRepository.deleteById(existingMember.id!!)
         }
     }
 
@@ -1050,12 +953,4 @@ class AuthControllerTest {
 
         return checked.grant!!
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    val result = LinkedHashMap<String, Any?>()
-    for (i in values.indices step 2) result[values[i] as String] = values[i + 1]
-    return result
 }

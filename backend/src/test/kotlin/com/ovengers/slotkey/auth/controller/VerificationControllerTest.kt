@@ -40,9 +40,8 @@ internal class VerificationControllerTest {
     private lateinit var mailSender: VerificationMailSender
 
     @Test
-    @Throws(Exception::class)
     fun 오류_응답을_반환해도_오입력이_누적되어_다섯번째에_차단된다() {
-        val email: String = "http-" + UUID.randomUUID() + "@example.com"
+        val email = "http-${UUID.randomUUID()}@example.com"
         val deliveredCode: AtomicReference<String> = AtomicReference()
 
         doAnswer { invocation ->
@@ -61,12 +60,7 @@ internal class VerificationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(
-                                javaMapOf(
-                                    "email",
-                                    email,
-                                    "purpose",
-                                    "SIGNUP",
-                                ),
+                                mapOf("email" to email, "purpose" to "SIGNUP"),
                             ),
                         ),
                 ).andExpect(status().isOk())
@@ -89,16 +83,7 @@ internal class VerificationControllerTest {
 
         val body: String =
             objectMapper.writeValueAsString(
-                javaMapOf(
-                    "email",
-                    email,
-                    "purpose",
-                    "SIGNUP",
-                    "challengeId",
-                    challengeId,
-                    "code",
-                    wrongCode,
-                ),
+                mapOf("email" to email, "purpose" to "SIGNUP", "challengeId" to challengeId, "code" to wrongCode),
             )
 
         for (i in 0..3) {
@@ -132,12 +117,7 @@ internal class VerificationControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "purpose",
-                                "SIGNUP",
-                            ),
+                            mapOf("email" to email, "purpose" to "SIGNUP"),
                         ),
                     ),
             ).andExpect(status().isTooManyRequests())
@@ -146,12 +126,4 @@ internal class VerificationControllerTest {
                     .value("VERIFICATION_TEMPORARILY_BLOCKED"),
             )
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    val result = LinkedHashMap<String, Any?>()
-    for (i in values.indices step 2) result[values[i] as String] = values[i + 1]
-    return result
 }

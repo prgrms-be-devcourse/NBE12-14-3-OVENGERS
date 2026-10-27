@@ -11,7 +11,6 @@ import java.sql.DriverManager
 
 internal class AuthSessionMigrationIntegrationTest {
     @Test
-    @Throws(Exception::class)
     fun v24DeletesLegacyRefreshTokensBeforeRequiringSessionForeignKey() {
         mysqlContainer().use { mysql ->
             mysql.start()
@@ -29,14 +28,12 @@ internal class AuthSessionMigrationIntegrationTest {
                             'legacy@example.test', 'legacy', 'USER', 'ACTIVE', 0,
                             CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6), NULL, CURRENT_TIMESTAMP(6)
                         )
-                        
                         """.trimIndent(),
                     )
                     statement.executeUpdate(
                         """
                         INSERT INTO refresh_token (member_id, token_hash, expires_at)
                         VALUES (1, REPEAT('a', 64), DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 1 DAY))
-                        
                         """.trimIndent(),
                     )
                 }
@@ -67,7 +64,6 @@ internal class AuthSessionMigrationIntegrationTest {
                             WHERE table_schema = DATABASE()
                               AND table_name = 'refresh_token'
                               AND column_name = 'auth_session_id'
-                            
                             """.trimIndent(),
                         ).use { result ->
                             assertThat(result.next()).isTrue()
@@ -81,7 +77,6 @@ internal class AuthSessionMigrationIntegrationTest {
                               AND table_name = 'refresh_token'
                               AND column_name = 'auth_session_id'
                               AND referenced_table_name = 'auth_session'
-                            
                             """.trimIndent(),
                         ).use { result ->
                             result.next()
@@ -93,7 +88,6 @@ internal class AuthSessionMigrationIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun allMigrationsApplyToAnEmptyDatabase() {
         mysqlContainer().use { mysql ->
             mysql.start()
@@ -113,9 +107,7 @@ internal class AuthSessionMigrationIntegrationTest {
                     statement
                         .executeQuery(
                             (
-                                "SELECT COUNT(*) FROM information_schema.tables " +
-                                    "WHERE table_schema = DATABASE() " +
-                                    "AND table_name = 'auth_session'"
+                                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'auth_session'"
                             ),
                         ).use { result ->
                             result.next()
@@ -128,10 +120,7 @@ internal class AuthSessionMigrationIntegrationTest {
                     statement
                         .executeQuery(
                             (
-                                "SELECT IS_NULLABLE FROM information_schema.columns " +
-                                    "WHERE table_schema = DATABASE() " +
-                                    "AND table_name = 'refresh_token' " +
-                                    "AND column_name = 'consumed_at'"
+                                "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'refresh_token' AND column_name = 'consumed_at'"
                             ),
                         ).use { result ->
                             assertThat(result.next()).isTrue()
@@ -144,10 +133,7 @@ internal class AuthSessionMigrationIntegrationTest {
                     statement
                         .executeQuery(
                             (
-                                "SELECT COUNT(*) FROM information_schema.columns " +
-                                    "WHERE table_schema = DATABASE() " +
-                                    "AND table_name = 'login_attempt_bucket' " +
-                                    "AND column_name IN ('email', 'window_id', 'attempt_count')"
+                                "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'login_attempt_bucket' AND column_name IN ('email', 'window_id', 'attempt_count')"
                             ),
                         ).use { result ->
                             result.next()
@@ -160,10 +146,7 @@ internal class AuthSessionMigrationIntegrationTest {
                     statement
                         .executeQuery(
                             (
-                                "SELECT IS_NULLABLE FROM information_schema.columns " +
-                                    "WHERE table_schema = DATABASE() " +
-                                    "AND table_name = 'login_attempt_bucket' " +
-                                    "AND column_name = 'attempt_count'"
+                                "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'login_attempt_bucket' AND column_name = 'attempt_count'"
                             ),
                         ).use { result ->
                             assertThat(result.next()).isTrue()
@@ -188,7 +171,6 @@ internal class AuthSessionMigrationIntegrationTest {
             .baselineOnMigrate(false)
             .validateOnMigrate(true)
 
-    @Throws(Exception::class)
     private fun connection(mysql: MySQLContainer<*>): Connection =
         DriverManager.getConnection(
             mysql.jdbcUrl,

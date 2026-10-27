@@ -34,7 +34,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
-import java.util.ArrayList
 import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
@@ -80,7 +79,6 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun unknownEmailGetsSameTenAttemptsAndEleventhIsLimited() {
         val email: String = newEmail()
         for (i in 0..9) {
@@ -92,7 +90,6 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun separateEmailsHaveIndependentBuckets() {
         val first: String = newEmail()
         val second: String = newEmail()
@@ -104,7 +101,6 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun nextFixedWindowIsAllowedAndRetryAfterRoundsUpToBoundary() {
         val email: String = newEmail()
         for (i in 0..9) {
@@ -134,7 +130,6 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun malformedAndInvalidDtoRequestsAreRejectedBeforeTheLimiter() {
         val email: String = newEmail()
         mvc
@@ -147,7 +142,7 @@ internal class LoginRateLimitIntegrationTest {
             .perform(
                 post("/api/v1/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(javaMapOf("email", email))),
+                    .content(objectMapper.writeValueAsString(mapOf("email" to email))),
             ).andExpect(status().isBadRequest())
         for (i in 0..9) {
             login(email, "Wrong1234!").andExpect(status().isUnauthorized())
@@ -156,16 +151,15 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun simultaneousFirstRequestsConsumeExactlyTenSlots() {
         val email: String = newEmail()
         val requestCount: Int = 12
-        val ready: CountDownLatch = CountDownLatch(requestCount)
-        val start: CountDownLatch = CountDownLatch(1)
+        val ready = CountDownLatch(requestCount)
+        val start = CountDownLatch(1)
         val executor: ExecutorService = Executors.newFixedThreadPool(requestCount)
-        val futures = ArrayList<Future<Int>>()
+        val futures = mutableListOf<Future<Int>>()
         try {
-            for (i in 0..<requestCount) {
+            repeat(requestCount) {
                 futures.add(
                     executor.submit(
                         Callable<Int> {
@@ -178,12 +172,9 @@ internal class LoginRateLimitIntegrationTest {
             }
             assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue()
             start.countDown()
-            val statuses = ArrayList<Int>()
-            for (future: Future<Int> in futures) {
-                statuses.add(future.get(30, TimeUnit.SECONDS))
-            }
-            assertThat(statuses).filteredOn { status -> status == 401 }.hasSize(10)
-            assertThat(statuses).filteredOn { status -> status == 429 }.hasSize(2)
+            val statuses = futures.map { it.get(30, TimeUnit.SECONDS) }
+            assertThat(statuses.count { it == 401 }).isEqualTo(10)
+            assertThat(statuses.count { it == 429 }).isEqualTo(2)
         } finally {
             start.countDown()
             executor.shutdownNow()
@@ -212,7 +203,6 @@ internal class LoginRateLimitIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun rateLimitingDoesNotSuspendMemberOrRevokeExistingSession() {
         val email: String = newEmail()
         createMember(email)
@@ -228,10 +218,10 @@ internal class LoginRateLimitIntegrationTest {
                 .path("accessToken")
                 .asText()
         val member: Member = memberRepository.findByEmail(email).orElseThrow()
-        val sessionCountBefore: Integer =
+        val sessionCountBefore =
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM auth_session WHERE member_id = ? AND revoked_at IS NULL",
-                Integer::class.java,
+                Int::class.javaObjectType,
                 member.id!!,
             )
 
@@ -242,7 +232,7 @@ internal class LoginRateLimitIntegrationTest {
         login(email, "Wrong1234!").andExpect(status().isTooManyRequests())
 
         mvc
-            .perform(get("/api/v1/members/me").header("Authorization", "Bearer " + token))
+            .perform(get("/api/v1/members/me").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk())
         assertThat(
             memberRepository
@@ -253,13 +243,12 @@ internal class LoginRateLimitIntegrationTest {
         assertThat(
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM auth_session WHERE member_id = ? AND revoked_at IS NULL",
-                Integer::class.java,
+                Int::class.javaObjectType,
                 member.id!!,
             ),
         ).isEqualTo(sessionCountBefore)
     }
 
-    @Throws(Exception::class)
     private fun login(
         email: String,
         password: String,
@@ -267,11 +256,11 @@ internal class LoginRateLimitIntegrationTest {
         mvc.perform(
             post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(javaMapOf("email", email, "password", password))),
+                .content(objectMapper.writeValueAsString(mapOf("email" to email, "password" to password))),
         )
 
     private fun createMember(email: String) {
-        transactionTemplate.executeWithoutResult { status ->
+        transactionTemplate.executeWithoutResult {
             val member: Member = memberRepository.save(Member(email, "rate-limit-test"))
             credentialRepository.save(
                 LocalCredential(
@@ -283,17 +272,9 @@ internal class LoginRateLimitIntegrationTest {
         }
     }
 
-    private fun newEmail(): String = "login-limit-" + UUID.randomUUID() + "@example.com"
+    private fun newEmail(): String = "login-limit-${UUID.randomUUID()}@example.com"
 
     companion object {
-        private val PASSWORD: String = "Test1234!"
+        private val PASSWORD = "Test1234!"
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    val result = LinkedHashMap<String, Any?>()
-    for (i in values.indices step 2) result[values[i] as String] = values[i + 1]
-    return result
 }

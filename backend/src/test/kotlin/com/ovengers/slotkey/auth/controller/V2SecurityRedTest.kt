@@ -63,7 +63,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
-import java.util.ArrayList
 import java.util.HexFormat
 import java.util.Optional
 import java.util.UUID
@@ -153,12 +152,11 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 로그아웃하면 기존 Access Token은 즉시 폐기된다")
-    @Throws(Exception::class)
     fun logout_invalidates_existing_access_token() {
         val email: String = newEmail("logout")
         val login: MvcResult = login(email)
         val accessToken: String = accessToken(login)
-        val refreshCookie: Cookie = login.response.getCookie("refreshToken")
+        val refreshCookie = refreshCookie(login)
 
         mvc
             .perform(post("/api/v1/auth/logout").cookie(refreshCookie))
@@ -167,13 +165,12 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken),
+                    .header("Authorization", "Bearer $accessToken"),
             ).andExpect(status().isUnauthorized())
     }
 
     @Test
     @DisplayName("V2: 비밀번호 재설정이 성공하면 기존 Access Token은 즉시 폐기된다")
-    @Throws(Exception::class)
     fun password_reset_invalidates_existing_access_token() {
         val email: String = newEmail("password-reset")
         val login: MvcResult = login(email)
@@ -186,16 +183,7 @@ internal class V2SecurityRedTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "grant",
-                                grant,
-                                "password",
-                                "New1234!",
-                                "passwordConfirm",
-                                "New1234!",
-                            ),
+                            mapOf("email" to email, "grant" to grant, "password" to "New1234!", "passwordConfirm" to "New1234!"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -203,18 +191,17 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken),
+                    .header("Authorization", "Bearer $accessToken"),
             ).andExpect(status().isUnauthorized())
     }
 
     @Test
     @DisplayName("V2: Refresh Token은 재사용할 수 없다")
-    @Throws(Exception::class)
     fun refresh_token_is_rotated_and_cannot_be_reused() {
         val email: String = newEmail("rotation")
         val login: MvcResult = login(email)
         val oldAccessToken: String = accessToken(login)
-        val originalRefreshCookie: Cookie = login.response.getCookie("refreshToken")
+        val originalRefreshCookie = refreshCookie(login)
         val siblingLogin: MvcResult = loginExisting(email, PASSWORD)
         val siblingAccessToken: String = accessToken(siblingLogin)
         val siblingRefreshCookie: Cookie = refreshCookie(siblingLogin)
@@ -245,7 +232,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + oldAccessToken),
+                    .header("Authorization", "Bearer $oldAccessToken"),
             ).andExpect(status().isUnauthorized())
         mvc
             .perform(post("/api/v1/auth/refresh").cookie(rotatedCookie))
@@ -254,7 +241,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + siblingAccessToken),
+                    .header("Authorization", "Bearer $siblingAccessToken"),
             ).andExpect(status().isOk())
         mvc
             .perform(post("/api/v1/auth/refresh").cookie(siblingRefreshCookie))
@@ -263,7 +250,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 관리자가 회원을 정지하면 기존 AT와 RT 세션이 영구 폐기된다")
-    @Throws(Exception::class)
     fun suspended_member_cannot_use_existing_access_token() {
         val email: String = newEmail("suspended")
         val firstLogin: MvcResult = login(email)
@@ -281,14 +267,11 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 patch("/api/v1/admin/members/{memberId}/suspend", member.id!!)
-                    .header("Authorization", "Bearer " + adminAccessToken)
+                    .header("Authorization", "Bearer $adminAccessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "reason",
-                                "V2 세션 폐기 검증",
-                            ),
+                            mapOf("reason" to "V2 세션 폐기 검증"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -296,12 +279,12 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + firstAccessToken),
+                    .header("Authorization", "Bearer $firstAccessToken"),
             ).andExpect(status().isUnauthorized())
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + secondAccessToken),
+                    .header("Authorization", "Bearer $secondAccessToken"),
             ).andExpect(status().isUnauthorized())
 
         mvc
@@ -314,7 +297,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 성공·실패 합산 10회 로그인은 허용하고 11번째 요청은 제한한다")
-    @Throws(Exception::class)
     fun repeated_login_failures_are_rate_limited() {
         val email: String = newEmail("rate-limit")
         val successfulLogin: MvcResult = login(email)
@@ -326,12 +308,7 @@ internal class V2SecurityRedTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(
-                                javaMapOf(
-                                    "email",
-                                    email,
-                                    "password",
-                                    "Wrong1234!",
-                                ),
+                                mapOf("email" to email, "password" to "Wrong1234!"),
                             ),
                         ),
                 ).andExpect(status().isUnauthorized())
@@ -343,12 +320,7 @@ internal class V2SecurityRedTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "password",
-                                "Wrong1234!",
-                            ),
+                            mapOf("email" to email, "password" to "Wrong1234!"),
                         ),
                     ),
             ).andExpect(status().isTooManyRequests())
@@ -359,13 +331,12 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken(successfulLogin)),
+                    .header("Authorization", "Bearer ${accessToken(successfulLogin)}"),
             ).andExpect(status().isOk())
     }
 
     @Test
     @DisplayName("V2: 정상 사용자는 RT Rotation 후 새 RT로 계속 갱신할 수 있다")
-    @Throws(Exception::class)
     fun refresh_token_rotation_allows_next_refresh_with_new_token() {
         val email: String = newEmail("rotation-success")
         val login: MvcResult = login(email)
@@ -458,7 +429,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 비밀번호 재설정 후 기존 Refresh Token은 폐기된다")
-    @Throws(Exception::class)
     fun password_reset_invalidates_existing_refresh_token() {
         val email: String = newEmail("password-reset-refresh")
         val login: MvcResult = login(email)
@@ -476,7 +446,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 비밀번호 재설정은 여러 로그인 세션의 AT와 RT를 모두 폐기한다")
-    @Throws(Exception::class)
     fun password_reset_invalidates_all_existing_sessions() {
         val email: String = newEmail("password-reset-sessions")
         val otherEmail: String = newEmail("unaffected-member")
@@ -500,7 +469,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + at1),
+                        .header("Authorization", "Bearer $at1"),
                 ).andReturn()
                 .response
                 .status
@@ -508,7 +477,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + at2),
+                        .header("Authorization", "Bearer $at2"),
                 ).andReturn()
                 .response
                 .status
@@ -537,7 +506,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken(freshLogin)),
+                    .header("Authorization", "Bearer ${accessToken(freshLogin)}"),
             ).andExpect(status().isOk())
         mvc
             .perform(
@@ -548,7 +517,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + otherMemberAccessToken),
+                    .header("Authorization", "Bearer $otherMemberAccessToken"),
             ).andExpect(status().isOk())
         mvc
             .perform(post("/api/v1/auth/refresh").cookie(otherMemberRefreshToken))
@@ -557,7 +526,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 회원 정지 후 복구해도 정지 전 AT와 RT는 다시 살아나지 않는다")
-    @Throws(Exception::class)
     fun member_restore_does_not_revive_old_session() {
         val email: String = newEmail("restore-session")
         val login: MvcResult = login(email)
@@ -573,14 +541,11 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 patch("/api/v1/admin/members/{memberId}/suspend", member.id!!)
-                    .header("Authorization", "Bearer " + adminAccessToken)
+                    .header("Authorization", "Bearer $adminAccessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "reason",
-                                "V2 레드 테스트 정지",
-                            ),
+                            mapOf("reason" to "V2 레드 테스트 정지"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -588,14 +553,11 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 patch("/api/v1/admin/members/{memberId}/restore", member.id!!)
-                    .header("Authorization", "Bearer " + adminAccessToken)
+                    .header("Authorization", "Bearer $adminAccessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "reason",
-                                "V2 레드 테스트 복구",
-                            ),
+                            mapOf("reason" to "V2 레드 테스트 복구"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -604,7 +566,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + oldAccessToken),
+                        .header("Authorization", "Bearer $oldAccessToken"),
                 ).andReturn()
                 .response
                 .status
@@ -625,7 +587,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken(freshLogin)),
+                    .header("Authorization", "Bearer ${accessToken(freshLogin)}"),
             ).andExpect(status().isOk())
         mvc
             .perform(
@@ -636,7 +598,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 회원탈퇴 후 기존 모든 로그인 세션의 AT와 RT가 거부된다")
-    @Throws(Exception::class)
     fun withdrawal_invalidates_existing_access_token() {
         val email: String = newEmail("withdrawal")
         val firstLogin: MvcResult = login(email)
@@ -649,14 +610,11 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 post("/api/v1/auth/withdraw")
-                    .header("Authorization", "Bearer " + firstAccessToken)
+                    .header("Authorization", "Bearer $firstAccessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "currentPassword",
-                                PASSWORD,
-                            ),
+                            mapOf("currentPassword" to PASSWORD),
                         ),
                     ),
             ).andExpect(status().isNoContent())
@@ -664,12 +622,12 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + firstAccessToken),
+                    .header("Authorization", "Bearer $firstAccessToken"),
             ).andExpect(status().isUnauthorized())
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + secondAccessToken),
+                    .header("Authorization", "Bearer $secondAccessToken"),
             ).andExpect(status().isUnauthorized())
 
         mvc
@@ -682,7 +640,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 인증 최종 잠금의 오류 응답 후 정지·세션 폐기는 커밋되고 복구 후에도 옛 토큰은 거부된다")
-    @Throws(Exception::class)
     fun final_verification_lock_commits_and_permanently_revokes_sessions() {
         val email: String = newEmail("verification-final-lock")
         val userLogin: MvcResult = login(email)
@@ -712,15 +669,11 @@ internal class V2SecurityRedTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                     objectMapper.writeValueAsString(
-                                        javaMapOf(
-                                            "email",
-                                            email,
-                                            "purpose",
-                                            purpose.name,
-                                            "challengeId",
-                                            issued.challengeId,
-                                            "code",
-                                            wrongCode,
+                                        mapOf(
+                                            "email" to email,
+                                            "purpose" to purpose.name,
+                                            "challengeId" to issued.challengeId,
+                                            "code" to wrongCode,
                                         ),
                                     ),
                                 ),
@@ -765,14 +718,11 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 patch("/api/v1/admin/members/{memberId}/restore", member.id!!)
-                    .header("Authorization", "Bearer " + adminAccessToken)
+                    .header("Authorization", "Bearer $adminAccessToken")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "reason",
-                                "V2 인증 잠금 복구 검증",
-                            ),
+                            mapOf("reason" to "V2 인증 잠금 복구 검증"),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -780,7 +730,7 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + oldAccessToken),
+                    .header("Authorization", "Bearer $oldAccessToken"),
             ).andExpect(status().isUnauthorized())
         mvc
             .perform(post("/api/v1/auth/refresh").cookie(oldRefreshToken))
@@ -790,13 +740,12 @@ internal class V2SecurityRedTest {
         mvc
             .perform(
                 get("/api/v1/members/me")
-                    .header("Authorization", "Bearer " + accessToken(freshLogin)),
+                    .header("Authorization", "Bearer ${accessToken(freshLogin)}"),
             ).andExpect(status().isOk())
     }
 
     @Test
     @DisplayName("V2: 비밀번호 재설정과 이미 시작된 refresh가 경합해도 옛 세션은 재사용할 수 없다")
-    @Throws(Exception::class)
     fun password_reset_racing_refresh_cannot_leave_old_session_usable() {
         val email: String = newEmail("reset-refresh-race")
         val login: MvcResult = login(email)
@@ -804,13 +753,11 @@ internal class V2SecurityRedTest {
         val oldRefreshToken: Cookie = refreshCookie(login)
         val grant: String = issueGrant(email, VerificationPurpose.PASSWORD_RESET)
 
-        val ready: CountDownLatch = CountDownLatch(2)
-        val start: CountDownLatch = CountDownLatch(1)
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
         val executor: ExecutorService = Executors.newFixedThreadPool(2)
-        var resetFuture: Future<ConcurrentResponse>? = null
-        var refreshFuture: Future<ConcurrentResponse>? = null
         try {
-            resetFuture =
+            val resetFuture =
                 executor.submit(
                     Callable {
                         concurrentRequest(
@@ -823,15 +770,11 @@ internal class V2SecurityRedTest {
                                             .contentType(MediaType.APPLICATION_JSON)
                                             .content(
                                                 objectMapper.writeValueAsString(
-                                                    javaMapOf(
-                                                        "email",
-                                                        email,
-                                                        "grant",
-                                                        grant,
-                                                        "password",
-                                                        NEW_PASSWORD,
-                                                        "passwordConfirm",
-                                                        NEW_PASSWORD,
+                                                    mapOf(
+                                                        "email" to email,
+                                                        "grant" to grant,
+                                                        "password" to NEW_PASSWORD,
+                                                        "passwordConfirm" to NEW_PASSWORD,
                                                     ),
                                                 ),
                                             ),
@@ -840,7 +783,7 @@ internal class V2SecurityRedTest {
                         )
                     },
                 )
-            refreshFuture =
+            val refreshFuture =
                 executor.submit(
                     Callable {
                         concurrentRequest(
@@ -860,8 +803,8 @@ internal class V2SecurityRedTest {
             assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue()
             start.countDown()
 
-            val resetResult = resetFuture!!.get(10, TimeUnit.SECONDS)
-            val refreshResult = refreshFuture!!.get(10, TimeUnit.SECONDS)
+            val resetResult = resetFuture.get(10, TimeUnit.SECONDS)
+            val refreshResult = refreshFuture.get(10, TimeUnit.SECONDS)
             assertThat(resetResult.failure).isNull()
             assertThat(refreshResult.failure).isNull()
             assertThat(resetResult.status).isEqualTo(200)
@@ -870,7 +813,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + oldAccessToken),
+                        .header("Authorization", "Bearer $oldAccessToken"),
                 ).andExpect(status().isUnauthorized())
             mvc
                 .perform(post("/api/v1/auth/refresh").cookie(oldRefreshToken))
@@ -881,7 +824,7 @@ internal class V2SecurityRedTest {
                 mvc
                     .perform(
                         get("/api/v1/members/me")
-                            .header("Authorization", "Bearer " + refreshResult.accessToken),
+                            .header("Authorization", "Bearer ${refreshResult.accessToken}"),
                     ).andExpect(status().isUnauthorized())
             }
 
@@ -889,7 +832,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + accessToken(freshLogin)),
+                        .header("Authorization", "Bearer ${accessToken(freshLogin)}"),
                 ).andExpect(status().isOk())
         } finally {
             start.countDown()
@@ -927,17 +870,16 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 동일 Refresh Token 동시 사용은 정확히 하나만 성공한다")
-    @Throws(Exception::class)
     fun same_refresh_token_concurrent_use_allows_exactly_one_request() {
         val login: MvcResult = login(newEmail("refresh-concurrent"))
         val oldAccessToken: String = accessToken(login)
         val refreshToken: Cookie = refreshCookie(login)
-        val ready: CountDownLatch = CountDownLatch(2)
-        val start: CountDownLatch = CountDownLatch(1)
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
         val executor: ExecutorService = Executors.newFixedThreadPool(2)
-        val futures = ArrayList<Future<RefreshAttempt>>()
+        val futures = mutableListOf<Future<RefreshAttempt>>()
 
-        val request: Callable<RefreshAttempt> =
+        val request =
             Callable<RefreshAttempt> {
                 ready.countDown()
                 if (!start.await(10, TimeUnit.SECONDS)) {
@@ -969,22 +911,12 @@ internal class V2SecurityRedTest {
             assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue()
             start.countDown()
 
-            val results = ArrayList<RefreshAttempt>()
-            for (future: Future<RefreshAttempt> in futures) {
-                results.add(future.get(10, TimeUnit.SECONDS))
-            }
+            val results = futures.map { it.get(10, TimeUnit.SECONDS) }
 
             assertThat(results).allSatisfy { result -> assertThat(result.failure).isNull() }
-            assertThat(results.stream().filter { result -> result.status == 200 }.toList())
-                .hasSize(1)
-            assertThat(results.stream().filter { result -> result.status == 401 }.toList())
-                .hasSize(1)
-            val winningAttempt: RefreshAttempt =
-                results
-                    .stream()
-                    .filter { result -> result.status == 200 }
-                    .findFirst()
-                    .orElseThrow()
+            assertThat(results.filter { it.status == 200 }).hasSize(1)
+            assertThat(results.filter { it.status == 401 }).hasSize(1)
+            val winningAttempt = results.first { it.status == 200 }
             assertThat(winningAttempt.newRefreshToken)
                 .`as`("동시 refresh 성공 응답은 새 RT를 발급해야 한다")
                 .isNotNull()
@@ -998,12 +930,12 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + oldAccessToken),
+                        .header("Authorization", "Bearer $oldAccessToken"),
                 ).andExpect(status().isUnauthorized())
             mvc
                 .perform(
                     post("/api/v1/auth/refresh")
-                        .cookie(winningAttempt.newRefreshToken!!),
+                        .cookie(winningAttempt.newRefreshToken),
                 ).andExpect(status().isUnauthorized())
         } finally {
             executor.shutdownNow()
@@ -1013,7 +945,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: 새 RT 저장 실패 시 RT1 소비가 롤백되어 다시 교체할 수 있다")
-    @Throws(Exception::class)
     fun replacement_insert_failure_rolls_back_consumption() {
         val login: MvcResult = login(newEmail("rotation-rollback"))
         val rt1: Cookie = refreshCookie(login)
@@ -1035,7 +966,6 @@ internal class V2SecurityRedTest {
 
     @Test
     @DisplayName("V2: RT 식별 정보 조회 후 재설정이 먼저 커밋되면 이후 회원 잠금 조회에서 오래된 RT를 거부한다")
-    @Throws(Exception::class)
     fun refresh_revalidates_after_password_reset_wins_member_lock() {
         val email: String = newEmail("refresh-reset-order")
         val login: MvcResult = login(email)
@@ -1044,22 +974,20 @@ internal class V2SecurityRedTest {
         val grant: String = issueGrant(email, VerificationPurpose.PASSWORD_RESET)
         val memberId: Long = memberRepository.findByEmail(email).orElseThrow().id!!
 
-        val memberLocked: CountDownLatch = CountDownLatch(1)
-        val refreshLockRequested: CountDownLatch = CountDownLatch(1)
-        val allowResetCommit: CountDownLatch = CountDownLatch(1)
+        val memberLocked = CountDownLatch(1)
+        val refreshLockRequested = CountDownLatch(1)
+        val allowResetCommit = CountDownLatch(1)
         val executor: ExecutorService = Executors.newFixedThreadPool(2)
         try {
             val resetFuture: Future<*> =
                 executor.submit {
-                    TransactionTemplate(transactionManager).executeWithoutResult { status ->
+                    TransactionTemplate(transactionManager).executeWithoutResult {
                         memberRepository.findByEmailForUpdate(email).orElseThrow()
                         memberLocked.countDown()
                         try {
                             check(
-                                !(
-                                    !refreshLockRequested.await(10, TimeUnit.SECONDS) ||
-                                        !allowResetCommit.await(10, TimeUnit.SECONDS)
-                                ),
+                                refreshLockRequested.await(10, TimeUnit.SECONDS) &&
+                                    allowResetCommit.await(10, TimeUnit.SECONDS),
                             ) { "refresh lock ordering timed out" }
                         } catch (e: InterruptedException) {
                             Thread.currentThread().interrupt()
@@ -1108,7 +1036,7 @@ internal class V2SecurityRedTest {
             mvc
                 .perform(
                     get("/api/v1/members/me")
-                        .header("Authorization", "Bearer " + oldAccessToken),
+                        .header("Authorization", "Bearer $oldAccessToken"),
                 ).andExpect(status().isUnauthorized())
             assertThat(
                 loginExisting(email, NEW_PASSWORD).response.status,
@@ -1120,13 +1048,11 @@ internal class V2SecurityRedTest {
         }
     }
 
-    @Throws(Exception::class)
     private fun login(email: String): MvcResult {
         createMemberWithCredential(email, PASSWORD)
         return loginExisting(email, PASSWORD)
     }
 
-    @Throws(Exception::class)
     private fun loginExisting(
         email: String,
         password: String,
@@ -1137,12 +1063,7 @@ internal class V2SecurityRedTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "password",
-                                password,
-                            ),
+                            mapOf("email" to email, "password" to password),
                         ),
                     ),
             ).andExpect(status().isOk())
@@ -1152,7 +1073,7 @@ internal class V2SecurityRedTest {
         email: String,
         password: String,
     ) {
-        TransactionTemplate(transactionManager).executeWithoutResult { status ->
+        TransactionTemplate(transactionManager).executeWithoutResult {
             val member: Member = memberRepository.save(Member(email, "테스트회원"))
             localCredentialRepository.save(
                 LocalCredential(
@@ -1165,10 +1086,10 @@ internal class V2SecurityRedTest {
     }
 
     private fun createAdminWithCredential(): Member {
-        val admin: Member = Member(newEmail("admin"), "관리자")
+        val admin = Member(newEmail("admin"), "관리자")
         ReflectionTestUtils.setField(admin, "role", MemberRole.ADMIN)
 
-        TransactionTemplate(transactionManager).executeWithoutResult { status ->
+        TransactionTemplate(transactionManager).executeWithoutResult {
             memberRepository.save(admin)
             localCredentialRepository.save(
                 LocalCredential(
@@ -1181,7 +1102,6 @@ internal class V2SecurityRedTest {
         return admin
     }
 
-    @Throws(Exception::class)
     private fun resetPassword(
         email: String,
         grant: String,
@@ -1193,39 +1113,25 @@ internal class V2SecurityRedTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         objectMapper.writeValueAsString(
-                            javaMapOf(
-                                "email",
-                                email,
-                                "grant",
-                                grant,
-                                "password",
-                                password,
-                                "passwordConfirm",
-                                password,
-                            ),
+                            mapOf("email" to email, "grant" to grant, "password" to password, "passwordConfirm" to password),
                         ),
                     ),
             ).andExpect(status().isOk())
     }
 
     private fun refreshCookie(result: MvcResult): Cookie {
-        val cookie: Cookie = result.response.getCookie("refreshToken")
+        val cookie = result.response.getCookie("refreshToken")
         assertThat(cookie)
             .`as`("응답에 Refresh Token 쿠키가 있어야 한다")
             .isNotNull()
-        assertThat(cookie.value).isNotBlank()
+        assertThat(cookie!!.value).isNotBlank()
         return cookie
     }
 
     private fun cookieMaxAge(result: MvcResult): Long {
-        val header: String = result.response.getHeader("Set-Cookie")
+        val header = result.response.getHeader("Set-Cookie")
         assertThat(header).contains("refreshToken=", "Max-Age=")
-        val maxAge: String =
-            header
-                .substring(header.indexOf("Max-Age=") + "Max-Age=".length)
-                .split(";")
-                .first()
-        return maxAge.toLong()
+        return header!!.substringAfter("Max-Age=").substringBefore(";").toLong()
     }
 
     private fun refreshToken(rawToken: String): RefreshToken = refreshTokenRepository.findByTokenHash(hashToken(rawToken)).orElseThrow()
@@ -1243,16 +1149,15 @@ internal class V2SecurityRedTest {
     }
 
     private fun assertThatSessionRevoked(rawToken: String) {
-        val revoked: Integer =
+        val revoked =
             jdbcTemplate.queryForObject(
                 """
                 SELECT COUNT(*)
                 FROM auth_session s
                 JOIN refresh_token t ON t.auth_session_id = s.id
                 WHERE t.token_hash = ? AND s.revoked_at IS NOT NULL
-                
                 """.trimIndent(),
-                Integer::class.java,
+                Int::class.javaObjectType,
                 hashToken(rawToken),
             )
         assertThat(revoked).isEqualTo(1)
@@ -1270,7 +1175,6 @@ internal class V2SecurityRedTest {
             .isBeforeOrEqualTo(sessionExpiry.atZone(clock.zone).toInstant())
     }
 
-    @Throws(Exception::class)
     private fun accessToken(result: MvcResult): String {
         val data: JsonNode =
             objectMapper
@@ -1303,7 +1207,6 @@ internal class V2SecurityRedTest {
             ).grant!!
     }
 
-    @Throws(Exception::class)
     private fun issueChallengeFromApi(
         email: String,
         purpose: VerificationPurpose,
@@ -1321,12 +1224,7 @@ internal class V2SecurityRedTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             objectMapper.writeValueAsString(
-                                javaMapOf(
-                                    "email",
-                                    email,
-                                    "purpose",
-                                    purpose.name,
-                                ),
+                                mapOf("email" to email, "purpose" to purpose.name),
                             ),
                         ),
                 ).andExpect(status().isOk())
@@ -1351,7 +1249,6 @@ internal class V2SecurityRedTest {
             UPDATE verification_guard
             SET blocked_until = ?, last_sent_at = ?
             WHERE email = ? AND purpose = ?
-            
             """.trimIndent(),
             now.minusSeconds(1),
             now.minusSeconds(31),
@@ -1360,7 +1257,7 @@ internal class V2SecurityRedTest {
         )
     }
 
-    private fun newEmail(prefix: String): String = "v2-" + prefix + "-" + UUID.randomUUID() + "@example.com"
+    private fun newEmail(prefix: String): String = "v2-$prefix-${UUID.randomUUID()}@example.com"
 
     private data class RefreshAttempt(
         val status: Int,
@@ -1389,15 +1286,7 @@ internal class V2SecurityRedTest {
     )
 
     companion object {
-        private val PASSWORD: String = "Test1234!"
-        private val NEW_PASSWORD: String = "New1234!"
+        private val PASSWORD = "Test1234!"
+        private val NEW_PASSWORD = "New1234!"
     }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    val result = LinkedHashMap<String, Any?>()
-    for (i in values.indices step 2) result[values[i] as String] = values[i + 1]
-    return result
 }

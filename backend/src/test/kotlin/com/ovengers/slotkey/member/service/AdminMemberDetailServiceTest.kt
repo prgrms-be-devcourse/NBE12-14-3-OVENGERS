@@ -449,8 +449,8 @@ internal class AdminMemberDetailServiceTest {
             ),
         ).thenReturn(Page.empty(sortedPage))
 
-        whenever(spaceRepository.findAllById(listOf()))
-            .thenReturn(listOf())
+        whenever(spaceRepository.findAllById(emptyList()))
+            .thenReturn(emptyList())
 
         // when
         val response: Page<AdminMemberReservationResponse> =
@@ -464,7 +464,7 @@ internal class AdminMemberDetailServiceTest {
         assertThat(response.totalElements).isZero()
         assertThat(response.totalPages).isZero()
 
-        verify(spaceRepository).findAllById(listOf())
+        verify(spaceRepository).findAllById(emptyList())
     }
 
     @Test

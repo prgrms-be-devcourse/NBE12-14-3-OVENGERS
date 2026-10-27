@@ -38,7 +38,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.ArrayList
 import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
@@ -79,12 +78,12 @@ internal class VerificationFlowIntegrationTest {
     private lateinit var email: String
 
     @BeforeEach fun setUp() {
-        email = "verification-" + UUID.randomUUID() + "@example.com"
+        email = "verification-${UUID.randomUUID()}@example.com"
 
         currentTime.set(Instant.parse("2026-10-13T00:00:00Z"))
 
         whenever(clock.zone).thenReturn(ZoneId.of("Asia/Seoul"))
-        whenever(clock.instant()).thenAnswer { invocation -> currentTime.get() }
+        whenever(clock.instant()).thenAnswer { currentTime.get() }
 
         doAnswer { invocation ->
             deliveredCode.set(invocation.getArgument(2, String::class.java))
@@ -295,7 +294,7 @@ internal class VerificationFlowIntegrationTest {
             .isEqualTo(ADMIN_LOCKED)
 
         TransactionTemplate(transactionManager)
-            .executeWithoutResult { status ->
+            .executeWithoutResult {
                 val guard =
                     guardService.acquire(
                         email,
@@ -316,13 +315,12 @@ internal class VerificationFlowIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun 같은_번호를_동시에_확인해도_한_요청만_성공한다() {
         val issued: ChallengeIssueResult = issue()
         val code: String = deliveredCode.get()!!
 
-        val ready: CountDownLatch = CountDownLatch(2)
-        val start: CountDownLatch = CountDownLatch(1)
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
 
         val executor: ExecutorService = Executors.newFixedThreadPool(2)
 
@@ -386,21 +384,20 @@ internal class VerificationFlowIntegrationTest {
         }
     }
 
-    @Throws(Exception::class)
     private fun <T> runConcurrently(
         requestCount: Int,
         request: Callable<T>,
     ): List<T> {
-        val ready: CountDownLatch = CountDownLatch(requestCount)
-        val start: CountDownLatch = CountDownLatch(1)
+        val ready = CountDownLatch(requestCount)
+        val start = CountDownLatch(1)
 
         val executor: ExecutorService =
             Executors.newFixedThreadPool(requestCount)
 
         try {
-            val futures = ArrayList<Future<T>>()
+            val futures = mutableListOf<Future<T>>()
 
-            for (i in 0..<requestCount) {
+            repeat(requestCount) {
                 futures.add(
                     executor.submit(
                         Callable {
@@ -417,13 +414,7 @@ internal class VerificationFlowIntegrationTest {
             assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue()
             start.countDown()
 
-            val results = ArrayList<T>()
-
-            for (future: Future<T> in futures) {
-                results.add(future.get(15, TimeUnit.SECONDS))
-            }
-
-            return results
+            return futures.map { it.get(15, TimeUnit.SECONDS) }
         } finally {
             start.countDown()
             executor.shutdownNow()
@@ -438,7 +429,6 @@ internal class VerificationFlowIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun 동시에_다섯번_틀려도_횟수가_누락되지_않는다() {
         val issued: ChallengeIssueResult = issue()
         val wrong: String = wrongCode(deliveredCode.get()!!)
@@ -449,26 +439,15 @@ internal class VerificationFlowIntegrationTest {
                 Callable { verify(issued, wrong) },
             )
 
-        assertThat(
-            results
-                .stream()
-                .filter { result -> result.status == WRONG_CODE }
-                .count(),
-        ).isEqualTo(4)
+        assertThat(results.count { it.status == WRONG_CODE }).isEqualTo(4)
 
-        assertThat(
-            results
-                .stream()
-                .filter { result -> result.status == TEMPORARILY_BLOCKED }
-                .count(),
-        ).isEqualTo(1)
+        assertThat(results.count { it.status == TEMPORARILY_BLOCKED }).isEqualTo(1)
 
         assertThat(verify(issued, deliveredCode.get()!!).status)
             .isEqualTo(TEMPORARILY_BLOCKED)
     }
 
     @Test
-    @Throws(Exception::class)
     fun 최초_발급이_동시에_들어와도_한번만_발송한다() {
         val results: List<Boolean> =
             runConcurrently<Boolean>(

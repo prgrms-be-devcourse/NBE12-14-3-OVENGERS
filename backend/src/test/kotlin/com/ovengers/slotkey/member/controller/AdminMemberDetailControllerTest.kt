@@ -82,16 +82,7 @@ internal class AdminMemberDetailControllerTest {
         JwtUtil.createToken(
             secretKey,
             300000L,
-            javaMapOf(
-                "id",
-                id,
-                "email",
-                email,
-                "role",
-                role.name,
-                "sid",
-                "test-session",
-            ),
+            mapOf("id" to id, "email" to email, "role" to role.name, "sid" to "test-session"),
         )
 
     private fun createMemberResponse(
@@ -113,7 +104,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("회원 상세 조회: ADMIN 권한으로 조회하면 회원 정보와 요약 통계를 반환한다")
-    @Throws(Exception::class)
     fun getMemberDetail_admin_returns200() {
         // given
         val adminToken: String =
@@ -136,7 +126,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/42")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.code").value("OK"))
@@ -151,7 +141,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("회원 상세 조회: 존재하지 않는 회원은 404 MEMBER_NOT_FOUND를 반환한다")
-    @Throws(Exception::class)
     fun getMemberDetail_notFound_returns404() {
         // given
         val adminToken: String =
@@ -164,7 +153,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/999")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("MEMBER_NOT_FOUND"))
@@ -174,7 +163,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("회원 상세 조회: 일반 회원은 403 ACCESS_DENIED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberDetail_userRole_returns403() {
         // given
         val userToken: String =
@@ -184,7 +172,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/42")
-                    .header("Authorization", "Bearer " + userToken),
+                    .header("Authorization", "Bearer $userToken"),
             ).andExpect(status().isForbidden())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
@@ -194,7 +182,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("회원 상세 조회: 토큰이 없으면 401 AUTHENTICATION_REQUIRED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberDetail_noToken_returns401() {
         mockMvc
             .perform(get("/api/v1/admin/members/42"))
@@ -207,7 +194,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("크레딧 내역 조회: ADMIN 권한으로 조회하면 거래 내역과 페이지 정보를 반환한다")
-    @Throws(Exception::class)
     fun getMemberCreditTransactions_admin_returns200() {
         // given
         val adminToken: String =
@@ -245,7 +231,7 @@ internal class AdminMemberDetailControllerTest {
                 get("/api/v1/admin/members/42/credit-transactions")
                     .param("page", "1")
                     .param("size", "5")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.code").value("OK"))
@@ -269,7 +255,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("크레딧 내역 조회: 존재하지 않는 회원은 404 MEMBER_NOT_FOUND를 반환한다")
-    @Throws(Exception::class)
     fun getMemberCreditTransactions_notFound_returns404() {
         // given
         val adminToken: String =
@@ -288,7 +273,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/999/credit-transactions")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("MEMBER_NOT_FOUND"))
@@ -301,7 +286,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("크레딧 내역 조회: 일반 회원은 403 ACCESS_DENIED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberCreditTransactions_userRole_returns403() {
         // given
         val userToken: String =
@@ -311,7 +295,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/42/credit-transactions")
-                    .header("Authorization", "Bearer " + userToken),
+                    .header("Authorization", "Bearer $userToken"),
             ).andExpect(status().isForbidden())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
@@ -321,7 +305,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("크레딧 내역 조회: 토큰이 없으면 401 AUTHENTICATION_REQUIRED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberCreditTransactions_noToken_returns401() {
         mockMvc
             .perform(get("/api/v1/admin/members/42/credit-transactions"))
@@ -334,7 +317,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("예약 내역 조회: ADMIN 권한으로 조회하면 예약 정보와 페이지 정보를 반환한다")
-    @Throws(Exception::class)
     fun getMemberReservations_admin_returns200() {
         // given
         val adminToken: String =
@@ -374,7 +356,7 @@ internal class AdminMemberDetailControllerTest {
                 get("/api/v1/admin/members/42/reservations")
                     .param("page", "1")
                     .param("size", "5")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.code").value("OK"))
@@ -399,7 +381,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("예약 내역 조회: 존재하지 않는 회원은 404 MEMBER_NOT_FOUND를 반환한다")
-    @Throws(Exception::class)
     fun getMemberReservations_notFound_returns404() {
         // given
         val adminToken: String =
@@ -416,7 +397,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/999/reservations")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("MEMBER_NOT_FOUND"))
@@ -429,7 +410,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("예약 내역 조회: 일반 회원은 403 ACCESS_DENIED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberReservations_userRole_returns403() {
         // given
         val userToken: String =
@@ -439,7 +419,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/42/reservations")
-                    .header("Authorization", "Bearer " + userToken),
+                    .header("Authorization", "Bearer $userToken"),
             ).andExpect(status().isForbidden())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
@@ -449,7 +429,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("예약 내역 조회: 토큰이 없으면 401 AUTHENTICATION_REQUIRED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberReservations_noToken_returns401() {
         // when & then
         mockMvc
@@ -463,7 +442,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("상태 변경 이력 조회: ADMIN 권한으로 조회하면 이력과 페이지 정보를 반환한다")
-    @Throws(Exception::class)
     fun getMemberStatusHistory_admin_returns200() {
         // given
         val adminToken: String =
@@ -502,7 +480,7 @@ internal class AdminMemberDetailControllerTest {
                 get("/api/v1/admin/members/42/status-history")
                     .param("page", "1")
                     .param("size", "5")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("SUCCESS"))
             .andExpect(jsonPath("$.code").value("OK"))
@@ -538,7 +516,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("상태 변경 이력 조회: 존재하지 않는 회원은 404 MEMBER_NOT_FOUND를 반환한다")
-    @Throws(Exception::class)
     fun getMemberStatusHistory_notFound_returns404() {
         // given
         val adminToken: String =
@@ -557,7 +534,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/999/status-history")
-                    .header("Authorization", "Bearer " + adminToken),
+                    .header("Authorization", "Bearer $adminToken"),
             ).andExpect(status().isNotFound())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("MEMBER_NOT_FOUND"))
@@ -570,7 +547,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("상태 변경 이력 조회: 일반 회원은 403 ACCESS_DENIED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberStatusHistory_userRole_returns403() {
         // given
         val userToken: String =
@@ -580,7 +556,7 @@ internal class AdminMemberDetailControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/admin/members/42/status-history")
-                    .header("Authorization", "Bearer " + userToken),
+                    .header("Authorization", "Bearer $userToken"),
             ).andExpect(status().isForbidden())
             .andExpect(jsonPath("$.status").value("FAIL"))
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
@@ -590,7 +566,6 @@ internal class AdminMemberDetailControllerTest {
 
     @Test
     @DisplayName("상태 변경 이력 조회: 토큰이 없으면 401 AUTHENTICATION_REQUIRED를 반환한다")
-    @Throws(Exception::class)
     fun getMemberStatusHistory_noToken_returns401() {
         // when & then
         mockMvc
@@ -600,13 +575,5 @@ internal class AdminMemberDetailControllerTest {
             .andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"))
 
         verifyNoInteractions(adminMemberService)
-    }
-}
-
-@Suppress("UNCHECKED_CAST")
-private fun javaMapOf(vararg values: Any?): Map<String, Any?> {
-    require(values.size % 2 == 0)
-    return buildMap {
-        for (i in values.indices step 2) put(values[i] as String, values[i + 1])
     }
 }

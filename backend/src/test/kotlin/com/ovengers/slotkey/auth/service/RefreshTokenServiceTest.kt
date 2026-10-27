@@ -46,7 +46,6 @@ class RefreshTokenServiceTest {
 
     @Test
     @DisplayName("리프레시 토큰의 DB 만료 시각은 발급 시점부터 약 24시간이다")
-    @Throws(Exception::class)
     fun t1() {
         // 1. 회원 준비
         val member: Member =

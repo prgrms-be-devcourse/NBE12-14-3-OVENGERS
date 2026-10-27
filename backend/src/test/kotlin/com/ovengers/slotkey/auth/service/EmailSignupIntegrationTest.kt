@@ -154,5 +154,5 @@ internal class EmailSignupIntegrationTest {
         return checked.grant!!
     }
 
-    private fun newEmail(): String = "signup-" + UUID.randomUUID() + "@example.com"
+    private fun newEmail(): String = "signup-${UUID.randomUUID()}@example.com"
 }
