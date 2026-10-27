@@ -19,6 +19,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Check api-spec against controllers and ErrorCode
+        run: |
+          python3 check_api_spec.py ../..
+          python3 -m unittest test_check_api_spec
+        working-directory: .github/scripts
       - run: chmod +x gradlew
       - run: ./gradlew build
       - name: Check test count against baseline
