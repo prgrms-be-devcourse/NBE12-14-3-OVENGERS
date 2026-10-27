@@ -32,7 +32,7 @@ class DoorAccessTokenConcurrencyTest : ReservationIntegrationTestSupport() {
     @Test
     @DisplayName("토큰이 없는 예약에 발급 요청이 동시에 들어와도 활성 토큰은 정확히 1개이고, 진 요청은 409로 끝난다")
     fun issue_firstIssueConcurrently_leavesExactlyOneActiveToken() {
-        val results: List<Throwable?> = runConcurrently(issueTasks())
+        val results: List<Throwable> = runConcurrently(issueTasks())
 
         assertThat(successCount(results)).isGreaterThanOrEqualTo(1)
         assertThat(failures(results)).isSubsetOf(ErrorCode.RESERVATION_STATE_CONFLICT)
@@ -46,7 +46,7 @@ class DoorAccessTokenConcurrencyTest : ReservationIntegrationTestSupport() {
     fun issue_reissueConcurrently_leavesExactlyOneActiveToken() {
         doorAccessTokenService.issue(memberId, reservationId)
 
-        val results: List<Throwable?> = runConcurrently(issueTasks())
+        val results: List<Throwable> = runConcurrently(issueTasks())
 
         assertThat(failures(results)).isSubsetOf(ErrorCode.RESERVATION_STATE_CONFLICT)
         assertThat(activeTokenCount()).isEqualTo(1)
