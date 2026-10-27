@@ -1,0 +1,8 @@
+{
+  "transactionId" : 502,
+  "type" : "PENALTY",
+  "amount" : -7500,
+  "balanceAfter" : 297500,
+  "reason" : null,
+  "createdAt" : "2026-10-20T11:30:15"
+}
