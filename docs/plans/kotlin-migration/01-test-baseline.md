@@ -43,7 +43,7 @@
 
 ## 2026-10-22 합의: 새 기준선과 테스트 수 자동 검사
 
-- 10/20 `d1a15ec`의 1,048건은 `adca3ae`에서 Kotlin 플러그인이 들어오기 전 값이다. 현재 `dev` 커밋에서 **CI의 `clean build`로 새 기준선을 측정**해 [테스트 결과](../../testing/test-results.md)에 커밋·날짜·테스트 수·스킵을 기록한다. 로컬 실행은 디버깅 보조이며 기준선은 CI 값을 쓴다.
+- 10/20 `d1a15ec`의 1,048건은 `adca3ae`에서 Kotlin 플러그인이 들어오기 전 값이다. 현재 `dev` 커밋에서 **CI의 `clean build`로 새 기준선을 측정**해 [테스트 결과](../../testing/test-results.md)에 커밋·날짜·테스트 수·스킵을 기록한다. 로컬 실행은 디버깅 보조이며 기준선은 CI 값을 쓴다. *(2026-10-27 참고: 로컬 `clean test` 200개 클래스·1,444개 통과 기록이 [§0-LATEST](../../testing/test-results.md)에 있으나 CI 값이 아니다.)*
 - [`backend-ci.yml`](../../../.github/workflows/backend-ci.yml)에 `backend/build/test-results/test/*.xml`의 `tests` 합계가 기준선 이상이고 `skipped`가 0인지 검사하는 단계를 추가한다. 기준선 측정 PR에 함께 넣는다. 근거: [테스트 보호 장치](../../decisions/kotlin-test-guardrails.md).
 - 테스트도 운영 코드와 같은 PR에서 Kotlin으로 옮기되 판정(assert) 줄은 바꾸지 않는다.
 

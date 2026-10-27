@@ -467,7 +467,7 @@ Authorization: Bearer {accessToken}
 
 | 계층 | 사용 도구 | 검증 대상 및 실측 결과 |
 | --- | --- | --- |
-| 백엔드 단위·통합 테스트 | JUnit 5, Mockito, Testcontainers MySQL 8.4 | 도메인 단위 로직, 트랜잭션 전파, DB 유니크 제약, 비관적 락 동시성, 다중 스레드 멱등성 검증<br>기존 집계: 83개 클래스 / 654개 테스트 통과. 기능 동결 기준 실행 기록은 [테스트 결과](docs/testing/test-results.md)의 2026-10-20 `d1a15ec` 기록(1,048개 통과)을 참조. 이번 문서 수정에서 재실행하지 않음 |
+| 백엔드 단위·통합 테스트 | JUnit 5, Mockito, Testcontainers MySQL 8.4 | 도메인 단위 로직, 트랜잭션 전파, DB 유니크 제약, 비관적 락 동시성, 다중 스레드 멱등성 검증<br>최신 로컬 전체 실행(2026-10-27 `dev` `f75f8b1`, `./gradlew clean test`): 200개 클래스 / 1,444개 테스트 통과(실패·오류·스킵 0). 상세와 이전 기록은 [테스트 결과](docs/testing/test-results.md)의 §0-LATEST 참조(CI 결과 아님) |
 | 프론트엔드 단위 테스트 | Node.js Test Runner (`node --test`) | API 클라이언트 에러 처리, 출입 키 저장/파싱, 유효성 검사 등<br>과거 README 집계: 45개 통과(pass 45, fail 0). 기능 동결 기준의 최신 프론트 실행 수치를 뜻하지 않으며, 이번 문서 수정에서 재실행하지 않음 |
 | 정적 분석 및 컴파일 | ESLint, TypeScript (`tsc`) | 프론트엔드 린트 및 타입 무결성 검증 통과 (`npm run lint`, `npx tsc --noEmit`) |
 | API 문서 자동 검증 | MockMvc, Springdoc OpenAPI | Swagger UI 경로 및 OpenAPI 사양 생성 자동 검증 통과 (`/swagger-ui/index.html`) |
