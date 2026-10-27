@@ -123,6 +123,35 @@ class StatsControllerIntegrationTest : IntegrationTestSupport() {
     }
 
     @Test
+    @DisplayName("참조 공간이 삭제된 스냅샷도 공개 랭킹에 삭제된 공간/INACTIVE로 표시되고 순매출은 내려가지 않는다")
+    fun missingSpaceIsShownAsDeletedWithoutRevenue() {
+        val present = saveSpace("판교 A룸", "판교")
+        val missingSpaceId = 999_999_991L
+        snap(present, "판교", 100L, 2, 4)
+        snap(missingSpaceId, "판교", 500L, 9, 18)
+
+        mockMvc
+            .perform(
+                get(SPACE_RANKING)
+                    .header(HttpHeaders.AUTHORIZATION, userToken)
+                    .param("period", "DAILY")
+                    .param("date", "2026-10-14"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
+            .andExpect(jsonPath("$.data.items.length()").value(2))
+            .andExpect(jsonPath("$.data.items[0].rank").value(1))
+            .andExpect(jsonPath("$.data.items[0].spaceId").value(missingSpaceId))
+            .andExpect(jsonPath("$.data.items[0].spaceName").value("삭제된 공간"))
+            .andExpect(jsonPath("$.data.items[0].spaceStatus").value("INACTIVE"))
+            .andExpect(jsonPath("$.data.items[0].location").value("판교"))
+            .andExpect(jsonPath("$.data.items[0].reservationCount").value(9))
+            .andExpect(jsonPath("$.data.items[0].slotCount").value(18))
+            .andExpect(jsonPath("$.data.items[0].netRevenue").doesNotExist())
+            .andExpect(jsonPath("$.data.items[1].spaceId").value(present))
+            .andExpect(jsonPath("$.data.items[1].spaceName").value("판교 A룸"))
+    }
+
+    @Test
     @DisplayName("지역 랭킹도 순매출 없이 지역·오피스 수·건수·슬롯 수만 내려준다")
     fun locationRankingWithoutRevenue() {
         snap(saveSpace("A", "판교"), "판교", 100L, 1, 2)
