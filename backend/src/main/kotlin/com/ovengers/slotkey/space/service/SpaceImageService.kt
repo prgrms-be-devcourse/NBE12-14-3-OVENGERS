@@ -21,9 +21,9 @@ import org.springframework.web.multipart.MultipartFile
  */
 @Service
 class SpaceImageService(
-    private val spaceImageStorage: SpaceImageStorage?,
-    private val adminSpaceImageUpdateService: AdminSpaceImageUpdateService?,
-    private val spaceRepository: SpaceRepository?,
+    private val spaceImageStorage: SpaceImageStorage,
+    private val adminSpaceImageUpdateService: AdminSpaceImageUpdateService,
+    private val spaceRepository: SpaceRepository,
 ) {
     private val log: Logger = LoggerFactory.getLogger(SpaceImageService::class.java)
 
@@ -33,19 +33,19 @@ class SpaceImageService(
         adminMemberId: Long?,
     ): SpaceDetailResponse? {
         // 0. 대상 공간 존재 여부 사전 검증
-        if (!spaceRepository!!.existsById(spaceId)) {
+        if (!spaceRepository.existsById(spaceId)) {
             throw BusinessException(ErrorCode.SPACE_NOT_FOUND)
         }
 
         // 1. 새 파일 디스크 저장 및 서명/해상도 검증
-        val storedImage: StoredImage = spaceImageStorage!!.store(file)
+        val storedImage: StoredImage = spaceImageStorage.store(file)
         val newImagePath: String = storedImage.relativeUrl
         val newFileName: String = storedImage.fileName
 
         val updateResult: ImageUpdateResult
         try {
             // 2. 별도 트랜잭션 서비스에서 Space 잠금 및 감사 로그 원자적 기록
-            updateResult = adminSpaceImageUpdateService!!.updateSpaceImage(spaceId, newImagePath, adminMemberId)
+            updateResult = adminSpaceImageUpdateService.updateSpaceImage(spaceId, newImagePath, adminMemberId)
         } catch (e: RuntimeException) {
             // DB 실패 또는 커밋 실패 시 새로 생성된 파일 정리
             log.error("Failed to commit image update to DB. Cleaning up newly stored file: {}", newFileName, e)
