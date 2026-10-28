@@ -337,7 +337,7 @@ class TossWebhookIntegrationTest : IntegrationTestSupport() {
             jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM pg_webhook_event",
                 Int::class.javaObjectType,
-            ),
+            )!!,
         ).isZero()
     }
 

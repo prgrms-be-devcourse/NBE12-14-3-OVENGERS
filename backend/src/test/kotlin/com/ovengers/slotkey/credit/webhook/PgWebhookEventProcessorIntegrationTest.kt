@@ -248,7 +248,7 @@ class PgWebhookEventProcessorIntegrationTest : IntegrationTestSupport() {
                 "SELECT COUNT(*) FROM audit_logs WHERE target_type = 'CHARGE_ORDER' " +
                     "AND action = 'CHARGE_RECOVERY_MANUAL_REVIEW'",
                 Int::class.javaObjectType,
-            ),
+            )!!,
         ).isEqualTo(1)
         assertEventDone(eventId, "STATE_CONFLICT")
     }

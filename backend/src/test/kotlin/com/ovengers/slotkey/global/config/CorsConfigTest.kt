@@ -25,7 +25,7 @@ class CorsConfigTest {
         assertThat(corsConfiguration.allowedMethods).contains("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         assertThat(corsConfiguration.allowedHeaders).contains("Authorization", "Content-Type", "Idempotency-Key")
         assertThat(corsConfiguration.exposedHeaders).contains("Authorization")
-        assertThat(corsConfiguration.allowCredentials).isTrue()
-        assertThat(corsConfiguration.maxAge).isEqualTo(3600L)
+        assertThat(corsConfiguration.allowCredentials!!).isTrue()
+        assertThat(corsConfiguration.maxAge!!).isEqualTo(3600L)
     }
 }

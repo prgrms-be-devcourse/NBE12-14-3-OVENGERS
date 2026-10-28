@@ -166,7 +166,7 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(reservationSlotRepository.count()).isEqualTo(2)
 
         // 3. 도어 토큰 롤백 검증: revoke 처리되지 않고 활성(revokedAt == null) 상태 유지
-        val reloadedToken: DoorAccessToken = doorAccessTokenRepository.findById(doorAccessToken.id).orElseThrow()
+        val reloadedToken: DoorAccessToken = doorAccessTokenRepository.findById(doorAccessToken.id!!).orElseThrow()
         assertThat(reloadedToken.isRevoked).isFalse()
         assertThat(reloadedToken.revokedAt).isNull()
 
@@ -177,7 +177,7 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(auditLogRepository.count()).isZero()
 
         // 6. 회원 잔액 및 크레딧 원장 롤백 검증: 잔액 초기값 유지, REFUND 원장 0건
-        val reloadedMember: Member = memberRepository.findById(userMember.id).orElseThrow()
+        val reloadedMember: Member = memberRepository.findById(userMember.id!!).orElseThrow()
         assertThat(reloadedMember.balance).isEqualTo(userMember.balance)
         assertThat(creditTransactionRepository.count()).isZero()
     }
@@ -199,7 +199,7 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(reservationSlotRepository.count()).isZero()
 
         // 3. 도어 토큰 폐기 확인
-        val reloadedToken: DoorAccessToken = doorAccessTokenRepository.findById(doorAccessToken.id).orElseThrow()
+        val reloadedToken: DoorAccessToken = doorAccessTokenRepository.findById(doorAccessToken.id!!).orElseThrow()
         assertThat(reloadedToken.isRevoked).isTrue()
         assertThat(reloadedToken.revokedAt).isEqualTo(expectedNow)
         assertThat(reloadedToken.revokeReason).isEqualTo("ADMIN_FORCE_CANCEL")
@@ -231,7 +231,7 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(auditLog.createdAt).isEqualTo(expectedNow)
 
         // 6. 크레딧 환불 확인: 회원 잔액이 totalAmount(6000)만큼 증가하고 REFUND 원장이 정확히 1건 기록됨
-        val reloadedUser: Member = memberRepository.findById(userMember.id).orElseThrow()
+        val reloadedUser: Member = memberRepository.findById(userMember.id!!).orElseThrow()
         assertThat(reloadedUser.balance).isEqualTo(userMember.balance + reservation.getTotalAmount())
         val transactions: List<CreditTransaction> = creditTransactionRepository.findAll()
         assertThat(transactions).hasSize(1)

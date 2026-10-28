@@ -57,7 +57,7 @@ class SpaceRankingSchemaIntegrationTest : IntegrationTestSupport() {
                   AND constraint_type = 'FOREIGN KEY'
                 """.trimIndent(),
                 Int::class.javaObjectType,
-            )
+            )!!
         assertThat(count).isZero()
     }
 

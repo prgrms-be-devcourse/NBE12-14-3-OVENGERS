@@ -24,6 +24,6 @@ class KafkaConsumerConfigTest {
     @DisplayName("IllegalArgumentException(해석 불가 payload)은 재시도 대상에서 빠져 있다")
     fun malformedPayloadIsNotRetryable() {
         // removeClassification은 직전 분류를 돌려준다: false = 재시도하지 않는 예외로 등록돼 있었다.
-        assertThat(handler().removeClassification(IllegalArgumentException::class.java)).isFalse()
+        assertThat(handler().removeClassification(IllegalArgumentException::class.java)!!).isFalse()
     }
 }
