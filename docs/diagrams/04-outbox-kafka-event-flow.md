@@ -42,6 +42,28 @@ sequenceDiagram
     end
 ```
 
+## 알림 이벤트 확장 (2026-10-28)
+
+같은 Outbox·relay 위에 두 번째 토픽을 더했다. 보내는 쪽은 4곳이고 받는 쪽은 컨슈머 하나다. 근거는 [notification-events.md](../decisions/notification-events.md).
+
+```mermaid
+flowchart LR
+    FC["관리자 강제 취소"] --> OB
+    CG["관리자 크레딧 지급"] --> OB
+    IA["문의 답변"] --> OB
+    IC["문의 등록"] --> OB
+    OB[("outbox_event<br/>같은 트랜잭션")] --> RL["OutboxRelay"]
+    RL --> T1["slot-released"]
+    RL --> T2["notification-events<br/>(eventType 구분)"]
+    T1 --> C1["slotkey-waitlist-notifier<br/>대기자 선별"]
+    T2 --> C2["slotkey-notifier<br/>수신자 저장"]
+    C2 -->|"recipientMemberId 있음"| M["해당 회원 1명"]
+    C2 -->|"recipientMemberId = null"| A["ACTIVE 관리자 전원"]
+```
+
+- 강제 취소는 두 토픽에 모두 이벤트를 남긴다. 빈자리(`slot-released`)와 예약자 알림(`notification-events`)이다.
+- 두 컨슈머 모두 `processed_event`의 `UNIQUE(consumer, event_id)`로 중복을 흡수한다. 컨슈머 이름이 달라 서로 막지 않는다.
+
 ## 실패와 중복이 생기는 지점
 
 ```mermaid

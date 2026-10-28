@@ -53,11 +53,11 @@ flowchart TD
     WEBHOOK --> RECOVERY["PG 조회 / 충전 확정"]
     RECOVERY --> CREDIT
     CHARGE --> CREDIT
-    RES --> OUTBOX["슬롯 해제 Outbox 기록"]
+    RES --> OUTBOX["Outbox 기록 (슬롯 해제 / 알림 이벤트)"]
     OUTBOX --> DB
     OUTBOX --> RELAY["폴링 relay"]
     RELAY --> KAFKA["Kafka (활성화 설정 시)"]
-    KAFKA --> NOTIFY["멱등 컨슈머 / 빈자리 알림"]
+    KAFKA --> NOTIFY["멱등 컨슈머 2개 / 빈자리·운영 알림"]
     NOTIFY --> DB
     SCHED["Scheduler"] --> JOB1["HOLD 만료 정리 (HELD → EXPIRED)"]
     SCHED --> JOB2["노쇼 판정 (CONFIRMED → NO_SHOW)"]
@@ -79,7 +79,7 @@ flowchart TD
 - **Inquiry Service**: 회원 1:1 문의 등록·조회 및 관리자 답변 작성을 처리하며, `inquiries` 테이블(V10)을 단독 관리한다.
 - **예약 Scheduler**: 예약 생명주기의 세 가지 배치를 담당한다 — ① 만료된 `HELD`를 `EXPIRED`로 정리(단, 이는 정합성의 보험일 뿐 유일한 방어선이 아니다. 예약 생성 시점에도 만료 HELD를 즉시 정리하므로 배치가 늦어도 신규 예약은 막히지 않는다) ② 시작+15분까지 미체크인인 `CONFIRMED`를 `NO_SHOW`로 전이(슬롯 반환, 환불 없음) ③ 종료 시각이 지난 `IN_USE`를 자동으로 `COMPLETED` 처리(`checked_out_at` = `end_time`, 배치 실행 시각이 아님). 출입 검증은 어떤 배치 결과도 그대로 믿지 않고 매 요청에서 현재 시각·예약 상태를 다시 확인한다(배치 지연 리스크 대응).
 - **확장 경로**: PG 충전은 DB 1(준비) → 트랜잭션 밖 승인 → DB 2(확정)로 분리하고, `ChargeOrderRecoveryScheduler`가 결과 미확정 주문을 조회 복구한다. `PgWebhookEventScheduler`는 저장된 웹훅을 처리하며 PG 조회로 검증한다. 예약 취소의 크레딧 환급은 이 PG 경로를 호출하지 않는다.
-- **예약 대기·알림**: 슬롯 해제와 같은 트랜잭션의 Outbox → relay → Kafka → 멱등 컨슈머 → 알림 저장 흐름이다. `slotkey.kafka.enabled` 기본값은 `false`이며 비활성 환경에서는 Outbox를 기록해도 전달·알림 생성은 수행하지 않는다. 대기자는 선착순으로 예약하며 자동 승격은 없다. 공간 랭킹은 `SpaceRankingScheduler`가 확정 스냅숏을 기록한다.
+- **예약 대기·알림**: 슬롯 해제와 같은 트랜잭션의 Outbox → relay → Kafka → 멱등 컨슈머 → 알림 저장 흐름이다. 2026-10-28부터 관리자 강제 취소·크레딧 지급·문의 답변·문의 등록도 같은 경로로 토픽 `notification-events`(컨슈머 그룹 `slotkey-notifier`)에 실린다. 문의 등록 알림은 ACTIVE 관리자 전원에게 간다([notification-events.md](../decisions/notification-events.md)). `slotkey.kafka.enabled` 기본값은 `false`이며 비활성 환경에서는 Outbox를 기록해도 전달·알림 생성은 수행하지 않는다. 대기자는 선착순으로 예약하며 자동 승격은 없다. 공간 랭킹은 `SpaceRankingScheduler`가 확정 스냅숏을 기록한다.
 - 도메인은 하나의 Spring Boot 애플리케이션 안에서 패키지 단위로 분리하며, 별도의 결제 게이트웨이 서버를 두지 않는다(크레딧 차감은 애플리케이션 내부 로직).
 
 ## 학습 범위 밖 기술과 검증 계획 (5-3)

@@ -32,7 +32,8 @@
 | [`reservation-concurrency.md`](reservation-concurrency.md) | 기술 선택 | `Space → Reservation` 잠금 순서와 조건부 UPDATE로 결제·연장·취소 경합을 막는다. | 채택 |
 | [`reservation-idempotency.md`](reservation-idempotency.md) | 기술 선택 | `Idempotency-Key`를 결제 확정 지점에 걸어 크레딧 차감·예약 확정의 중복을 막는다. | 채택 |
 | [`pg-charge.md`](pg-charge.md) | 기능 | 토스페이먼츠 테스트 키로 주문서형 SDK와 서버 승인 API를 붙여 크레딧 충전 경로를 만든다. | 채택 (웹훅 A·B 구현 포함, 상세 문서의 별도 검증 대기 기록 유지) |
-| [`outbox-kafka.md`](outbox-kafka.md) | 기술 선택 | 도메인 사실을 outbox에 적고 Kafka로 전달해 대기열·알림·감사가 받아 쓰게 한다. 10/21 범위: 폴링 Outbox, `SlotReleased` 1종, 멱등 컨슈머. | 10/21 범위 구현·문서화 반영 |
+| [`outbox-kafka.md`](outbox-kafka.md) | 기술 선택 | 도메인 사실을 outbox에 적고 Kafka로 전달해 대기열·알림·감사가 받아 쓰게 한다. 10/21 범위: 폴링 Outbox, `SlotReleased` 1종, 멱등 컨슈머. | 10/21 범위 구현·문서화 반영 (2026-10-28 알림 이벤트 확장은 아래 문서) |
+| [`notification-events.md`](notification-events.md) | 기능 | 같은 Outbox + Kafka 경로에 관리자 강제 취소·크레딧 지급·문의 답변·문의 등록 알림을 토픽 `notification-events` 하나로 더한다. 문의 등록은 ACTIVE 관리자 전원에게 보낸다. | 채택 (PR #246 병합·운영 배포, 2026-10-28. 운영 확인은 수동) |
 | [`waitlist.md`](waitlist.md) | 기능 | 예약 대기열을 만든다. 10/21 범위는 빈자리 이벤트 시 대기자 전원 알림(선착순)이고, 1순위 HOLD 제안은 3차다. | 10/21 범위 구현·문서화 반영 |
 | [`notification-ui.md`](notification-ui.md) | 기능 | 알림 목록·배지 및 upToId 상한 기반 일괄 읽음을 제공한다. | 구현 반영 (과거 자기검증 기록 유지, 브라우저·CI 재검증 아님) |
 | [`hold-cancel-and-account-ui.md`](hold-cancel-and-account-ui.md) | 기능 | HELD 직접 취소, 대기 목록·충전 내역·계정 UI를 정리한다. | 구현 반영 (검증 범위는 상세 기록 참조) |

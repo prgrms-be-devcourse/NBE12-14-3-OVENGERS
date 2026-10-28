@@ -115,7 +115,17 @@ GitHub Actions에서 EC2로 배포하는 방법은 크게 두 가지:
 
 **확인하지 않은 것**: 회원가입부터 이용 완료까지의 전체 흐름 재현, 부하·동시성의 운영 환경 측정, Kafka·Outbox 이벤트 소비의 운영 확인, 보안그룹 외 네트워크 구성. 보안그룹 `slotkey-c7i-sg`는 인바운드가 SSH(22)와 8080 두 개이며 둘 다 접두사 목록 소스다. 9092(Kafka)·3306은 열려 있지 않다.
 
-**롤백**: `slotkey.jar.2nd.bak`을 `slotkey.jar`로 복사하고 `sudo systemctl restart slotkey`. DB가 같은 V26이라 2차 JAR와 호환된다. 스키마가 더 올라간 뒤에는 이 전제가 깨지므로 RDS 스냅샷으로 복구한다.
+**롤백**: `slotkey.jar.2nd.bak`을 `slotkey.jar`로 복사하고 `sudo systemctl restart slotkey`. DB가 같은 V26이라 2차 JAR와 호환된다. 스키마가 더 올라간 뒤에는 이 전제가 깨지므로 RDS 스냅샷으로 복구한다. *(2026-10-28 이후: 아래 §4-3의 V27로 이 전제가 깨졌다.)*
+
+### 4-3. 알림 이벤트 확장 배포 (2026-10-28, PR #246)
+
+**변경**: Flyway `V27__generalize_notification.sql`(`notification`에 `type`·`reference_id` 추가, `waitlist_entry_id` NULL 허용)과 새 Kafka 토픽 `notification-events`(컨슈머 그룹 `slotkey-notifier`). 결정은 [notification-events.md](../decisions/notification-events.md).
+
+**배포 전 확인**: 로컬 DB 복사본(기존 알림 9건)에서 Flyway로 V27을 적용해 백필을 확인했다. 운영 서버의 `SLOTKEY_KAFKA_ENABLED=true`는 사용자가 확인했다. 이번 배포 전에는 RDS 스냅샷을 따로 만들지 않았다(사용자 판단).
+
+**결과**: `dev` 머지 후 배포 job이 돌았고, 운영에서 알림 동작과 `notification-events` 토픽 생성을 사용자가 직접 확인했다. 자동화된 E2E 기록은 아니다. §4-2의 "Kafka·Outbox 이벤트 소비의 운영 확인"은 이 수동 확인으로 일부 채워졌다.
+
+**롤백 주의**: V27 이후에는 PR #246 이전 JAR(2차 `slotkey.jar.2nd.bak` 포함)로 되돌리면 대기자 알림 INSERT가 실패한다. 이전 코드는 `reference_id`를 넣지 않는데 이 컬럼이 기본값 없는 NOT NULL이기 때문이다(코드·스키마 대조로 판단, 실행 확인 안 함). 롤백이 필요하면 먼저 `reference_id`에 기본값을 주는 새 마이그레이션을 적용하거나 RDS 시점 복구를 쓴다.
 
 ## 5. 향후 개선 후보 (이번 사이클에서는 보류)
 

@@ -22,7 +22,7 @@
 | 취소·종료 후에도 출입 가능 | 출입 검증마다 회원·소유권·예약 상태·토큰·시간을 재확인, 예약당 활성 토큰 1개를 DB 제약으로 강제 | [출입 키 정책](docs/decisions/access-key-policy.md) |
 | 관리자 권한 남용 | 관리자도 타인 예약 취소·도어 토큰 발급 불가. `force-cancel`만 사유와 감사 로그로 허용 | [인가 정책](docs/decisions/authorization-policy.md) |
 | 외부 PG 결과가 불확실 | 승인 API를 트랜잭션 밖에서 호출, 결과 모름은 `CONFIRMING`으로 두고 스케줄러가 조회 복구 | [PG 크레딧 충전](docs/decisions/pg-charge.md) |
-| 빈자리 알림 유실·중복 | 슬롯 해제와 같은 트랜잭션에 Outbox 기록 → Kafka → 멱등 컨슈머 | [Outbox·Kafka](docs/decisions/outbox-kafka.md), [대기열](docs/decisions/waitlist.md) |
+| 빈자리·운영 알림 유실·중복 | 슬롯 해제·강제 취소·크레딧 지급·문의와 같은 트랜잭션에 Outbox 기록 → Kafka → 멱등 컨슈머 | [Outbox·Kafka](docs/decisions/outbox-kafka.md), [대기열](docs/decisions/waitlist.md), [알림 이벤트](docs/decisions/notification-events.md) |
 
 ## 🧩 기능
 
@@ -33,7 +33,7 @@
 | 예약 | HOLD → 결제 확정, 조회·취소(시작 전 환불 정책)·연장·체크아웃, 만료·노쇼·자동 퇴실 스케줄러 |
 | 크레딧 | 예약 결제는 크레딧 원장 차감. 토스페이먼츠(sandbox)로 크레딧 충전, 웹훅 수신, 불명확 주문 자동 복구 |
 | 출입 | 출입 키 발급·재발급·폐기, 모의 출입 검증(최초 체크인 / 재입장), 출입 기록 |
-| 대기·알림 | 점유 구간 대기 신청, 슬롯 해제 시 대기자 전원 알림(선착순, 자동 승격 없음) — Kafka 활성 환경 |
+| 대기·알림 | 점유 구간 대기 신청, 슬롯 해제 시 대기자 전원 알림(선착순, 자동 승격 없음). 강제 취소·관리자 크레딧 지급·문의 답변 알림, 문의 등록 시 관리자 알림. 알림에서 해당 화면으로 이동 — Kafka 활성 환경 |
 | 관리자 | 대시보드, 공간 등록·수정·사진 업로드, 회원 정지·복구·크레딧 지급, 전체 예약 조회·강제 취소, 감사 로그, 문의 답변 |
 | 문의 | 회원 1:1 문의, 관리자 답변 |
 
@@ -117,7 +117,7 @@ Base URL `/api/v1`, 인증은 `Authorization: Bearer {accessToken}`(Refresh Toke
 | 영역 | 기술 |
 | --- | --- |
 | Backend | Kotlin 1.9.25, Java 21(JVM), Spring Boot 3.3.4, Spring Security 6, Spring Data JPA, JJWT |
-| DB | MySQL 8.4, Flyway(V1~V26, `ddl-auto: none`) |
+| DB | MySQL 8.4, Flyway(V1~V27, `ddl-auto: none`) |
 | 메시징 | Kafka + Outbox(compose 프로필 `kafka`, `SLOTKEY_KAFKA_ENABLED=true`일 때만 동작) |
 | 결제 | 토스페이먼츠 sandbox (주문서형 결제위젯 SDK v2, Core API 승인·조회) |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS |
@@ -126,24 +126,24 @@ Base URL `/api/v1`, 인증은 `Authorization: Bearer {accessToken}`(Refresh Toke
 
 ## 🔄 3차: Kotlin 전환과 확장
 
-2차 Java 구현을 **HTTP·메시지·DB 스키마를 바꾸지 않고** Kotlin으로 옮겼습니다. 현재 `backend/src`에 Java 파일은 없고 Kotlin이 main 292개 · test 214개입니다(2026-10-28 기준).
+2차 Java 구현을 **HTTP·메시지·DB 스키마를 바꾸지 않고** Kotlin으로 옮겼습니다. 현재 `backend/src`에 Java 파일은 없고 Kotlin이 main 296개 · test 219개입니다(2026-10-28, PR #246 병합 기준).
 
 - **전환 규칙**: Kotlin 파일에 Lombok을 쓰지 않고, JPA 엔티티에는 `data class`를 쓰지 않습니다(`kotlin-jpa`, `allOpen` 사용). 같은 클래스의 `.java` 삭제와 `.kt` 추가는 한 커밋에 담습니다.
 - **안전장치**: ktlint(위반 시 빌드 실패), CI 테스트 수 하한·스킵 0 검사, 전환 전 Java 응답을 저장해 비교하는 **골든 파일 테스트**.
-- **확장**: PG 크레딧 충전, 예약 대기 + 빈자리 알림(Outbox → Kafka), 공간 랭킹, DB 세션 기반 인증 V2, PIT 뮤테이션 테스트.
-- **운영 배포**: 전환 중에는 과금 문제로 EC2를 일시 중지했고, 전환 완료 후 재가동해 3차 JAR를 2차와 같은 EC2·RDS로 교체 배포했습니다(2026-10-28). 로그인·예약·충전·도어 토큰은 수동으로 확인했습니다. 상세와 롤백은 [배포·CI/CD](docs/operations/deploy-cicd.md#4-2-3차kotlin-교체-배포-2026-10-28)를 봅니다.
+- **확장**: PG 크레딧 충전, 예약 대기 + 빈자리 알림과 운영 알림 4종(Outbox → Kafka), 공간 랭킹, DB 세션 기반 인증 V2, PIT 뮤테이션 테스트.
+- **운영 배포**: 전환 중에는 과금 문제로 EC2를 일시 중지했고, 전환 완료 후 재가동해 3차 JAR를 2차와 같은 EC2·RDS로 교체 배포했습니다(2026-10-28). 로그인·예약·충전·도어 토큰은 수동으로 확인했습니다. 같은 날 알림 이벤트 확장(Flyway V27, 토픽 `notification-events`)을 배포하고 운영 알림 동작을 수동으로 확인했습니다. 상세와 롤백(V27 이후 이전 JAR 롤백 주의)은 [배포·CI/CD](docs/operations/deploy-cicd.md#4-2-3차kotlin-교체-배포-2026-10-28)와 [§4-3](docs/operations/deploy-cicd.md#4-3-알림-이벤트-확장-배포-2026-10-28-pr-246)을 봅니다.
 - 계획·일정: [Kotlin 전환 계획](docs/plans/kotlin-migration/README.md) · 결정: [Lombok 경계](docs/decisions/kotlin-lombok-boundary.md), [JPA 엔티티](docs/decisions/kotlin-jpa-entity-open.md), [data class 범위](docs/decisions/kotlin-data-class-scope.md), [ktlint](docs/decisions/kotlin-ktlint.md), [테스트 보호 장치](docs/decisions/kotlin-test-guardrails.md)
 
 ## 🧪 테스트
 
 | 구분 | 내용 |
 | --- | --- |
-| 최신 전체 회귀 | 2026-10-27 `dev` `f75f8b1`, `./gradlew clean test`: 200개 클래스 / **1,444개 테스트 통과**(실패·오류·스킵 0). 로컬 자기검증이며 CI 결과가 아님 → [테스트 결과](docs/testing/test-results.md) |
+| 최신 전체 회귀 | 2026-10-28 PR #246(`dev` `1acfe15`와 같은 소스), `./gradlew ktlintCheck test`: **1,498개 테스트 통과**(실패·오류·스킵 0). 로컬 자기검증이며 CI도 통과 → [테스트 결과](docs/testing/test-results.md) |
 | 동시성·멱등성 | 다중 스레드로 동일 슬롯 경합(1건만 성공), 만료-결제 경합, 같은 `Idempotency-Key` 재요청, 충전 승인 중복, 연장-신규 예약 경합 |
 | 골든 테스트 | Java 구현 기준으로 저장한 주요 API 응답(JSON)과 Kotlin 전환 후 응답을 비교해 HTTP 계약 불변을 검증 → [골든 가이드](docs/testing/java-kotlin-golden-guide.md) |
 | 시간 경계 | `Clock` 주입으로 체크인 시작·마감, HOLD 만료, 종료 직전·정각·직후를 고정 시각으로 검증 |
 | 뮤테이션 | 핵심 도메인에 한해 PIT 수동 실행(`./gradlew pitest`), CI 미연결 → [결정](docs/decisions/mutation-testing.md) |
-| 미검증 | E2E 브라우저 자동화, 운영 환경 Kafka 연동 실측, `SUM(credit_transaction) == member.balance` 전체 불변식 |
+| 미검증 | E2E 브라우저 자동화, 운영 환경 Kafka 연동의 자동화된 측정(2026-10-28 수동 확인만), `SUM(credit_transaction) == member.balance` 전체 불변식 |
 
 전략과 시나리오-테스트 대응표: [test-strategy.md](docs/testing/test-strategy.md)
 

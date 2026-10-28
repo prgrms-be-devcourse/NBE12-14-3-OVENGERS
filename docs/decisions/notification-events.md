@@ -1,7 +1,7 @@
 ---
 title: 알림 이벤트 확장 (강제 취소·크레딧 지급·문의)
 type: 기능
-status: 구현 완료 (검증·리뷰 대기)
+status: 채택
 date: 2026-10-28
 tags: [notification, outbox, kafka]
 related: [outbox-kafka.md, waitlist.md, notification-ui.md]
@@ -37,7 +37,7 @@ related: [outbox-kafka.md, waitlist.md, notification-ui.md]
 
 | 대안 | 장점 | 기각한 이유 |
 | --- | --- | --- |
-| 이벤트 종류마다 토픽·컨슈머 분리 | 소비자별 독립 재처리 | 소비자가 알림 하나뿐이라 토픽·그룹만 늘고 얻는 것이 없다 |
+| 이벤트 종류마다 토픽·컨슈머 분리 (기존 [outbox-kafka.md](outbox-kafka.md)의 "토픽은 이벤트 종류별로" 규칙) | 소비자별 독립 재처리, 기존 규칙과 일관 | 이번 이벤트는 도메인 사실이 아니라 수신자·문구가 정해진 알림 요청이고 소비자가 알림 하나뿐이다. 나누면 같은 컨슈머가 토픽 4개를 구독할 뿐 얻는 것이 없다. 기존 규칙은 도메인 사실 이벤트에 계속 적용하고, outbox-kafka.md에 예외로 기록했다 |
 | 서비스에서 `NotificationRepository` 직접 저장(Kafka 없이) | 가장 단순 | 알림이 같은 트랜잭션에 묶이지만 "발행과 수신을 분리한다"는 이 프로젝트의 선택과 어긋나고 수신처 추가 시 서비스 수정이 필요 |
 | 별도 `admin_notification` 테이블 | 스키마 분리 | 목록·읽음·배지 API와 화면을 전부 이중으로 만들어야 한다 |
 | 알림 테이블 재생성 | 깔끔한 스키마 | 운영 데이터가 있고 `V26` 이후 push된 마이그레이션이라 컬럼 추가로 충분하다 |
@@ -61,7 +61,9 @@ related: [outbox-kafka.md, waitlist.md, notification-ui.md]
 - 기록기(`NotificationEventRecorderIntegrationTest`): 트랜잭션 필수, 롤백 시 outbox 행 없음, 관리자 대상은 수신자 null·키 `ADMIN`.
 - 컨슈머(`NotificationEventListenerTest`, `NotificationEventHandlerIntegrationTest`): 잘못된 payload는 재시도 없이 거부, 모르는 타입은 건너뜀, 같은 이벤트 재전달은 알림 1건, 비활성·없는 수신자는 건너뜀, 관리자 fan-out은 ACTIVE 관리자만.
 - 생산 지점: 강제 취소·크레딧 지급·문의 답변·문의 등록 모두 커밋 시 outbox 1건, 롤백 시 0건(`AdminReservationServiceIntegrationTest`, `AdminMemberServiceIntegrationTest`, `AdminInquiryNotificationIntegrationTest`). 기록기→relay→리스너 왕복은 `OutboxRelayIntegrationTest`(브로커는 Fake).
-- **검증하지 못한 것:** 실제 Kafka 브로커 왕복과 토픽 자동 생성, 운영 DB에 기존 알림 행이 있는 상태의 `V27` 백필, 브라우저에서의 화면 확인.
+- **PR 이후 로컬 확인(2026-10-28, Claude):** 로컬 DB 복사본(기존 대기 알림 9건)에 Flyway로 `V27` 적용 → 9건 모두 `type`·`reference_id` 백필, 불일치 0. 같은 복사본으로 앱을 띄워 로컬 Kafka(KRaft)로 회원 대상·관리자 전원 대상 이벤트를 흘려 relay `PUBLISHED` → 컨슈머 저장까지 확인했다. 첫 시도에서 알림 한글이 깨졌는데, 원인은 시드용 `mysql` 클라이언트의 `latin1` 기본 문자셋이었고 코드 문제는 아니었다(문자셋을 지정해 다시 넣자 정상).
+- **사용자 확인(2026-10-28, 이태호):** 로컬 화면에서 알림 4종의 실제 흐름과 타입별 이동을 확인했고, 운영 배포 후 동작과 운영 Kafka의 `notification-events` 토픽 생성, `SLOTKEY_KAFKA_ENABLED=true`를 확인했다. 운영 확인은 수동 확인이며 자동화된 기록은 아니다.
+- **검증하지 못한 것:** 운영 RDS의 실제 알림 행 수에서의 `V27` 소요 시간(로컬 9건으로만 확인), 이전 JAR로의 롤백 동작(위 §6 참고), 브라우저 E2E 자동화.
 
 ## 6. 한계와 재검토 조건
 
@@ -69,6 +71,8 @@ related: [outbox-kafka.md, waitlist.md, notification-ui.md]
 - 인스턴스 1개·폴링 relay 가정은 그대로다. 다중 인스턴스가 되면 relay 중복 발행을 재검토한다.
 - 개별 읽음·알림 종류별 필터·실시간 푸시(WebSocket/SSE)는 이번 범위가 아니다.
 - 관리자 수가 크게 늘면 fan-out 행 수를 재검토한다.
+- **감사·통계 같은 두 번째 소비자가 생기면** `notification-events`를 재사용하지 않는다. 이 토픽의 payload는 알림 문구라서 도메인 사실로 쓰기 어렵다. 그때는 도메인 사실 이벤트(예: `reservation-force-cancelled`, `credit-granted`)를 이벤트별 토픽으로 따로 내고, 알림은 그 이벤트를 소비해 만드는 구조로 옮긴다.
+- **V27 이후에는 이 PR 이전 JAR로 롤백하면 대기자 알림 저장이 실패한다.** 이전 코드의 `notification` INSERT에는 `reference_id`가 없는데, 이 컬럼은 기본값 없는 NOT NULL이다(코드·스키마 대조로 판단했고 실행으로 확인하지는 않았다). 롤백이 필요해지면 `reference_id`에 기본값을 주는 새 마이그레이션을 먼저 적용해야 한다. 2차 JAR(`slotkey.jar.2nd.bak`)도 같다.
 
 ## 면접·발표용 정리 (구현 후)
 
@@ -77,5 +81,6 @@ related: [outbox-kafka.md, waitlist.md, notification-ui.md]
   - Q. 왜 이벤트 종류마다 토픽·컨슈머를 나누지 않았나요? A. 소비자가 알림 하나뿐이라 토픽과 그룹만 늘고 얻는 게 없다. 수신자와 문구를 이벤트에 담아 컨슈머는 타입을 가리지 않고 저장만 한다.
   - Q. 소비자가 하나뿐인데 Kafka가 꼭 필요한가요? A. 솔직히 소비자가 늘기 전까지는 약한 근거다. 지금의 근거는 발행과 수신의 분리, 재처리, 그리고 돈·예약 상태 변경과 알림 기록의 원자성(outbox)이다. 감사·통계 같은 두 번째 소비자가 생기면 가치가 커진다.
   - Q. 관리자 전원 알림은 어떻게 하나요? A. 이벤트의 수신자를 null로 두고 컨슈머가 소비 시점의 ACTIVE 관리자를 조회해 한 명당 한 건 저장한다. 변경 트랜잭션에서 회원 테이블을 읽지 않아 새 잠금 경로가 없다.
+  - Q. 예전에 "토픽은 이벤트 종류별로 나눈다"고 정했는데 왜 한 토픽에 타입을 넣었나요? A. 그 규칙은 도메인 사실 이벤트용이다. 이번 이벤트는 수신자와 문구가 정해진 알림 요청이고 받는 쪽이 알림 하나뿐이라 나눠도 얻는 게 없었다. 예외로 기록했고, 두 번째 소비자가 생기면 도메인 사실 이벤트를 따로 내는 구조로 옮긴다.
   - Q. 중복 전달은요? A. 전달은 최소 1회라 중복이 가능하고, `processed_event`(컨슈머, 이벤트 id)가 첫 방어선, `notification`의 유니크가 두 번째 방어선이다.
-- **숫자·근거 한 줄:** 전체 테스트 1498개 통과, 이벤트 4종 모두 커밋 시 1건·롤백 시 0건을 통합 테스트로 확인(자기검증, 실제 브로커 왕복은 미검증).
+- **숫자·근거 한 줄:** 전체 테스트 1,498개 통과, 이벤트 4종 모두 커밋 시 1건·롤백 시 0건을 통합 테스트로 확인. 로컬 실제 Kafka 왕복과 운영 배포 후 동작은 수동으로 확인.
