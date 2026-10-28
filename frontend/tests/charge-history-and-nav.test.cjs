@@ -34,27 +34,27 @@ function load(relative, mocks = {}) {
   return loadedModule.exports;
 }
 
-test('USER_NAV 는 오피스 찾기 → 인기 오피스 → 예약 내역 → 빈자리 알림 → 출입하기 순서이다', () => {
+test('USER_NAV 는 오피스 찾기 → 인기 오피스 → 예약 내역 → 출입하기 순서이고 빈자리 알림은 계정 메뉴로 옮겼다', () => {
   const { USER_NAV, ROUTES } = load('constants/routePaths.ts');
   assert.deepEqual(USER_NAV.map((item) => [item.href, item.label]), [
     [ROUTES.spaces, '오피스 찾기'],
     [ROUTES.ranking, '인기 오피스'],
     [ROUTES.reservations, '예약 내역'],
-    [ROUTES.waitlist, '빈자리 알림'],
     [ROUTES.door, '출입하기'],
   ]);
   assert.equal(ROUTES.creditHistory, '/credits/history');
+  assert.ok(!USER_NAV.some((item) => item.href === ROUTES.waitlist));
 });
 
 test('비로그인 상단 메뉴는 로그인 후와 같고, 회원 정보가 필요한 메뉴만 requiresAuth 로 표시한다', () => {
   const { USER_NAV, ROUTES, visibleUserNav } = load('constants/routePaths.ts');
   assert.deepEqual(visibleUserNav(false), USER_NAV);
   assert.deepEqual(USER_NAV.filter((item) => item.requiresAuth).map((item) => item.href), [
-    ROUTES.reservations, ROUTES.waitlist, ROUTES.door,
+    ROUTES.reservations, ROUTES.door,
   ]);
 });
 
-test('관리자 화면에서는 회원 전용 메뉴(인기 오피스·예약 내역·빈자리 알림)를 숨긴다', () => {
+test('관리자 화면에서는 회원 전용 메뉴(인기 오피스·예약 내역)를 숨긴다', () => {
   const { ROUTES, visibleUserNav } = load('constants/routePaths.ts');
   assert.deepEqual(visibleUserNav(true).map((item) => item.href), [ROUTES.spaces, ROUTES.door]);
 });

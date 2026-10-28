@@ -27,5 +27,12 @@ export default function NotificationLink({ memberId, pathname }: { memberId?: nu
     return () => { active = false; window.removeEventListener(NOTIFICATIONS_READ_EVENT, refresh); };
   }, [memberId, onNotifications]);
   if (!memberId) return null;
-  return <Link className={styles.entry} href={ROUTES.notifications}>알림<UnreadBadge count={result?.memberId === memberId ? result.count : 0} /></Link>;
+  const count = result?.memberId === memberId ? result.count : 0;
+  const label = count > 0 ? `알림, 안 읽은 알림 ${count}개` : '알림';
+  return <Link className={styles.entry} href={ROUTES.notifications} aria-label={label} title="알림">
+    <svg className={styles.icon} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z" /><path d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+    <UnreadBadge count={count} />
+  </Link>;
 }

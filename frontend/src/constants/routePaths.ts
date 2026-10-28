@@ -54,12 +54,11 @@ export const USER_NAV: NavItem[] = [
   { href: ROUTES.spaces, label: '오피스 찾기' },
   { href: ROUTES.ranking, label: '인기 오피스' },
   { href: ROUTES.reservations, label: '예약 내역', requiresAuth: true },
-  { href: ROUTES.waitlist, label: '빈자리 알림', requiresAuth: true },
   { href: ROUTES.door, label: '출입하기', requiresAuth: true },
 ];
 
 /** 관리자 화면에서 숨기는 회원 전용 메뉴 */
-const MEMBER_ONLY_NAV: Set<string> = new Set([ROUTES.ranking, ROUTES.reservations, ROUTES.waitlist]);
+const MEMBER_ONLY_NAV: Set<string> = new Set([ROUTES.ranking, ROUTES.reservations]);
 
 export function visibleUserNav(hideMemberMenus: boolean): NavItem[] {
   return hideMemberMenus ? USER_NAV.filter((item) => !MEMBER_ONLY_NAV.has(item.href)) : USER_NAV;

@@ -14,7 +14,7 @@ p{color:var(--muted)}
 .brand{display:flex;align-items:center;gap:12px;font-size:1.65rem;letter-spacing:-.04em;font-weight:600;white-space:nowrap}
 .brandmark{width:40px;height:40px;display:block;flex:none;border-radius:12px}
 .brand em{font-style:normal;color:var(--cyan)}
-.nav{display:flex;gap:28px;align-items:center;margin-right:auto}
+.nav{display:flex;gap:36px;align-items:center;margin-right:auto}
 .nav a{color:var(--muted);font-size:.95rem;padding:28px 0;border-bottom:2px solid transparent}
 .nav a.active{color:var(--blue);border-bottom-color:var(--blue)}
 .header-actions{display:flex;gap:10px;align-items:center;font-size:.9rem}

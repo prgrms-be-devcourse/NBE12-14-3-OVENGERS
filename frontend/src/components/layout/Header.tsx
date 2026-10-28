@@ -112,6 +112,7 @@ export default function Header() {
               {!isAdmin && <span className="account-mobile-credit">{formatCredit(member.balance)}</span>}
             </div>
             <ActiveLink href={ROUTES.myPage}>마이페이지</ActiveLink>
+            {!isAdmin && <ActiveLink href={ROUTES.waitlist}>빈자리 알림</ActiveLink>}
             {!isAdmin && <ActiveLink href={ROUTES.creditCharge}>크레딧 충전하기</ActiveLink>}
             {!isAdmin && <ActiveLink href={ROUTES.creditHistory}>충전 내역</ActiveLink>}
             {!isAdmin && <ActiveLink href={ROUTES.inquiries}>내 문의</ActiveLink>}

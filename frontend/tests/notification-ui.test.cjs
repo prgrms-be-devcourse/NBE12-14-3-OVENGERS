@@ -67,6 +67,26 @@ test('배지는 0이면 숨기고 비로그인은 요청하지 않는다', async
 });
 
 
+test('상단 알림 진입점은 글자 대신 종 아이콘이고 접근성 이름은 알림으로 남긴다', () => {
+  const {renderToStaticMarkup} = require('react-dom/server');
+  const React = require('react');
+  const mod = load('components/notification/NotificationLink.tsx', {
+    react: {...React, useState: () => [{memberId: 1, count: 3}, () => {}], useEffect: () => {}},
+    '../../api/notificationApi': {getUnreadCount: async () => ({unreadCount: 3})},
+    'next/link': {__esModule: true, default: ({href, children, ...props}) => React.createElement('a', {href, ...props}, children)},
+  });
+  const html = renderToStaticMarkup(mod.default({memberId: 1, pathname: '/'}));
+  assert.match(html, /<svg/);
+  assert.match(html, /aria-label="알림, 안 읽은 알림 3개"/);
+  assert.doesNotMatch(html.replace(/aria-label="[^"]*"/g, '').replace(/title="[^"]*"/g, ''), /알림/);
+  const quiet = load('components/notification/NotificationLink.tsx', {
+    react: {...React, useState: () => [null, () => {}], useEffect: () => {}},
+    '../../api/notificationApi': {getUnreadCount: async () => ({unreadCount: 0})},
+    'next/link': {__esModule: true, default: ({href, children, ...props}) => React.createElement('a', {href, ...props}, children)},
+  });
+  assert.match(renderToStaticMarkup(quiet.default({memberId: 1, pathname: '/'})), /aria-label="알림"/);
+});
+
 test('목록 렌더 후 최대 id를 읽음 상한으로 보내고 빈 목록은 요청하지 않는다', async () => {
   const React = require('react');
   const {renderToStaticMarkup} = require('react-dom/server');
