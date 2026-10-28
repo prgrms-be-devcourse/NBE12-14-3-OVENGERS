@@ -19,6 +19,8 @@ import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.entity.MemberRole
 import com.ovengers.slotkey.member.entity.MemberStatus
 import com.ovengers.slotkey.member.repository.MemberRepository
+import com.ovengers.slotkey.notification.entity.NotificationType
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import com.ovengers.slotkey.reservation.repository.ReservationRepository
 import com.ovengers.slotkey.space.repository.SpaceRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -58,6 +61,9 @@ internal class AdminMemberServiceTest {
 
     @Mock
     private lateinit var creditGrantService: CreditGrantService
+
+    @Mock
+    private lateinit var notificationEventRecorder: NotificationEventRecorder
 
     @Mock
     private lateinit var verificationGuardService: VerificationGuardService
@@ -96,6 +102,7 @@ internal class AdminMemberServiceTest {
                 creditTransactionRepository,
                 spaceRepository,
                 authSessionService,
+                notificationEventRecorder,
             )
     }
 
@@ -493,6 +500,14 @@ internal class AdminMemberServiceTest {
                 1050000,
             )
 
+        verify(notificationEventRecorder)
+            .record(
+                eq(NotificationType.CREDIT_GRANTED),
+                eq(memberId),
+                eq(memberId),
+                any(),
+            )
+
         assertThat(response.memberId).isEqualTo(memberId)
         assertThat(response.balance).isEqualTo(1050000)
         assertThat(response.lastStatusChangedAt).isNull()
@@ -530,6 +545,7 @@ internal class AdminMemberServiceTest {
             creditGrantService,
             auditLogService,
         )
+        verifyNoInteractions(notificationEventRecorder)
     }
 
     @Test

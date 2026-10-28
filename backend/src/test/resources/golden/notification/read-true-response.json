@@ -1,6 +1,8 @@
 {
   "id" : 5,
   "waitlistEntryId" : 3,
+  "type" : "WAITLIST_SLOT_RELEASED",
+  "referenceId" : 3,
   "message" : "빈자리가 생겼습니다.",
   "read" : true,
   "createdAt" : "2026-10-23T09:00:00"

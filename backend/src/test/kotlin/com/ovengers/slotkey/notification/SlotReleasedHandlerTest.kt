@@ -93,9 +93,10 @@ class SlotReleasedHandlerTest : ReservationIntegrationTestSupport() {
         val entryId = waiting(memberId, spaceId, start, end)
         // (event_id, waitlist_entry_id) UNIQUE를 일부러 선점해 알림 INSERT가 실패하게 만든다.
         jdbcTemplate.update(
-            "INSERT INTO notification (member_id, waitlist_entry_id, event_id, message, created_at) " +
-                "VALUES (?, ?, ?, 'x', NOW())",
+            "INSERT INTO notification (member_id, waitlist_entry_id, reference_id, event_id, message, created_at) " +
+                "VALUES (?, ?, ?, ?, 'x', NOW())",
             memberId,
+            entryId,
             entryId,
             eventId,
         )
@@ -384,9 +385,10 @@ class SlotReleasedHandlerTest : ReservationIntegrationTestSupport() {
         val conflictEntry = waiting(conflictMember, spaceId, start, end)
         // 나중 후보(id가 큰 쪽)의 (event_id, waitlist_entry_id)를 선점해 두 번째 알림 INSERT를 실패시킨다.
         jdbcTemplate.update(
-            "INSERT INTO notification (member_id, waitlist_entry_id, event_id, message, created_at) " +
-                "VALUES (?, ?, ?, 'x', NOW())",
+            "INSERT INTO notification (member_id, waitlist_entry_id, reference_id, event_id, message, created_at) " +
+                "VALUES (?, ?, ?, ?, 'x', NOW())",
             conflictMember,
+            conflictEntry,
             conflictEntry,
             eventId,
         )

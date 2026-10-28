@@ -1,5 +1,7 @@
 package com.ovengers.slotkey.outbox
 
+import com.ovengers.slotkey.notification.consumer.NotificationEventListener
+import com.ovengers.slotkey.notification.entity.NotificationType
 import com.ovengers.slotkey.reservation.entity.ReservationStatus
 import com.ovengers.slotkey.reservation.service.ReservationCancelService
 import com.ovengers.slotkey.support.ReservationIntegrationTestSupport
@@ -57,6 +59,12 @@ class OutboxRelayIntegrationTest : ReservationIntegrationTestSupport() {
     @Autowired
     private lateinit var context: ApplicationContext
 
+    @Autowired
+    private lateinit var notificationRecorder: NotificationEventRecorder
+
+    @Autowired
+    private lateinit var notificationListener: NotificationEventListener
+
     private val key = "relay-" + System.nanoTime()
 
     @BeforeEach
@@ -89,6 +97,29 @@ class OutboxRelayIntegrationTest : ReservationIntegrationTestSupport() {
         assertThat(statusOfEvent(id)).isEqualTo("PUBLISHED")
         assertThat(publishedAt(id)).isNotNull()
         assertThat(attempts(id)).isZero()
+    }
+
+    @Test
+    fun notificationEventTravelsFromRecorderThroughRelayAndListenerToOneNotification() {
+        val member = createMember(0)
+        transactionTemplate.executeWithoutResult {
+            notificationRecorder.record(NotificationType.CREDIT_GRANTED, member, 7L, "크레딧이 지급되었습니다.")
+        }
+
+        relay.relayPending()
+
+        val sent = fake.sent().single()
+        assertThat(sent.topic).isEqualTo("notification-events")
+        assertThat(sent.key).isEqualTo(member.toString())
+        // 브로커 없이 relay가 내보낸 payload를 그대로 컨슈머에 두 번 전달한다(최소 1회 전달 → 중복 흡수).
+        notificationListener.onMessage(sent.payload)
+        notificationListener.onMessage(sent.payload)
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM notification WHERE member_id = ?", Int::class.javaObjectType, member))
+            .isEqualTo(1)
+        jdbcTemplate.update(
+            "DELETE FROM processed_event WHERE consumer = 'notification-notifier' AND event_id IN (SELECT event_id FROM outbox_event WHERE partition_key = ?)",
+            member.toString(),
+        )
     }
 
     @Test

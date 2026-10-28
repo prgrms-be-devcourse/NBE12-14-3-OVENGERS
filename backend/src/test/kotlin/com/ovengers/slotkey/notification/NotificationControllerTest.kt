@@ -12,6 +12,7 @@ import com.ovengers.slotkey.global.security.jwt.JwtUtil
 import com.ovengers.slotkey.member.entity.MemberRole
 import com.ovengers.slotkey.notification.controller.NotificationController
 import com.ovengers.slotkey.notification.dto.response.NotificationResponse
+import com.ovengers.slotkey.notification.entity.NotificationType
 import com.ovengers.slotkey.notification.service.NotificationQueryService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -86,6 +87,8 @@ class NotificationControllerTest {
         val n =
             NotificationResponse(
                 1L,
+                11L,
+                NotificationType.WAITLIST_SLOT_RELEASED,
                 11L,
                 "자리가 비었습니다",
                 false,

@@ -374,8 +374,8 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             assertThat(auditLogs).hasSize(1)
             assertThat(auditLogs.get(0).action).isEqualTo(AuditAction.FORCE_CANCEL_RESERVATION)
 
-            // outbox: 강제 취소 커밋 1건
-            assertThat(outboxEventRepository.count()).isEqualTo(1)
+            // outbox: 강제 취소 커밋으로 빈자리 이벤트 1건과 예약자 알림 이벤트 1건
+            assertThat(outboxEventRepository.findAll().map { it.topic }).containsExactlyInAnyOrder("slot-released", "notification-events")
         })
     }
 

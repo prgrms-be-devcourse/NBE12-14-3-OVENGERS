@@ -21,6 +21,8 @@ import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.entity.MemberRole
 import com.ovengers.slotkey.member.entity.MemberStatus
 import com.ovengers.slotkey.member.repository.MemberRepository
+import com.ovengers.slotkey.notification.entity.NotificationType
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import com.ovengers.slotkey.reservation.repository.ReservationRepository
 import com.ovengers.slotkey.space.repository.SpaceRepository
 import org.springframework.data.domain.Page
@@ -44,6 +46,7 @@ class AdminMemberService(
     private val creditTransactionRepository: CreditTransactionRepository,
     private val spaceRepository: SpaceRepository,
     private val authSessionService: AuthSessionService,
+    private val notificationEventRecorder: NotificationEventRecorder,
 ) {
     @Transactional(readOnly = true)
     fun getMembers(
@@ -243,9 +246,23 @@ class AdminMemberService(
             beforeBalance,
             updatedMember.balance,
         )
+        notificationEventRecorder.record(
+            NotificationType.CREDIT_GRANTED,
+            memberId,
+            memberId,
+            creditGrantedMessage(amount, updatedMember.balance, reason),
+        )
 
         return toAdminMemberResponse(updatedMember)
     }
+
+    private fun creditGrantedMessage(
+        amount: Int,
+        balance: Int,
+        reason: String,
+    ): String =
+        "관리자가 크레딧 ${"%,d".format(amount)}원을 지급했습니다. 현재 잔액은 ${"%,d".format(balance)}원입니다. " +
+            "사유: ${reason.trim().take(MAX_REASON_LENGTH)}"
 
     private fun changeStatus(
         memberId: Long,
@@ -318,4 +335,8 @@ class AdminMemberService(
         memberRepository
             .findByIdForUpdate(memberId)
             .orElseThrow { BusinessException(ErrorCode.MEMBER_NOT_FOUND) }
+
+    private companion object {
+        const val MAX_REASON_LENGTH = 200
+    }
 }

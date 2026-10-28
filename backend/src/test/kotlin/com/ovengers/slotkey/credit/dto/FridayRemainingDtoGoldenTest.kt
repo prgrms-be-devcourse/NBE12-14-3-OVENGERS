@@ -112,7 +112,8 @@ class FridayRemainingDtoGoldenTest {
                 Arguments.of(
                     "notification",
                     NotificationResponse::class.java,
-                    "{\"id\":5,\"waitlistEntryId\":3,\"message\":\"빈자리가 생겼습니다.\"," +
+                    "{\"id\":5,\"waitlistEntryId\":3,\"type\":\"WAITLIST_SLOT_RELEASED\",\"referenceId\":3," +
+                        "\"message\":\"빈자리가 생겼습니다.\"," +
                         "\"read\":false,\"createdAt\":\"2026-10-23T09:00:00\"}",
                 ),
                 Arguments.of("read-all", ReadAllResponse::class.java, "{\"updatedCount\":2}"),

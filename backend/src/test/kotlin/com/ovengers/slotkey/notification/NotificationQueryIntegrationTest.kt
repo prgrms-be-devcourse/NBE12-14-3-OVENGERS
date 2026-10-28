@@ -54,9 +54,10 @@ class NotificationQueryIntegrationTest : ReservationIntegrationTestSupport() {
         message: String,
     ): Long {
         jdbcTemplate.update(
-            "INSERT INTO notification (member_id, waitlist_entry_id, event_id, message, created_at) " +
-                "VALUES (?, ?, ?, ?, NOW())",
+            "INSERT INTO notification (member_id, waitlist_entry_id, reference_id, event_id, message, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, NOW())",
             memberId,
+            entryId,
             entryId,
             eventId,
             message,

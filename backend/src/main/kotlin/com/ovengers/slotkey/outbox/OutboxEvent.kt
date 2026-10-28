@@ -63,4 +63,20 @@ class OutboxEvent protected constructor() {
         this.payload = payload
         this.createdAt = createdAt
     }
+
+    constructor(
+        eventId: String,
+        eventType: String,
+        topic: String,
+        partitionKey: String,
+        payload: String,
+        createdAt: LocalDateTime,
+    ) : this() {
+        this.eventId = eventId
+        this.eventType = eventType
+        this.topic = topic
+        this.partitionKey = partitionKey
+        this.payload = payload
+        this.createdAt = createdAt
+    }
 }

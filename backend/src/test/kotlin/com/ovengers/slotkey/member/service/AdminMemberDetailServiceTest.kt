@@ -23,6 +23,7 @@ import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.entity.MemberRole
 import com.ovengers.slotkey.member.entity.MemberStatus
 import com.ovengers.slotkey.member.repository.MemberRepository
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import com.ovengers.slotkey.reservation.entity.Reservation
 import com.ovengers.slotkey.reservation.entity.ReservationStatus
 import com.ovengers.slotkey.reservation.repository.ReservationRepository
@@ -69,6 +70,9 @@ internal class AdminMemberDetailServiceTest {
     private lateinit var creditGrantService: CreditGrantService
 
     @Mock
+    private lateinit var notificationEventRecorder: NotificationEventRecorder
+
+    @Mock
     private lateinit var verificationGuardService: VerificationGuardService
 
     @Mock
@@ -105,6 +109,7 @@ internal class AdminMemberDetailServiceTest {
                 creditTransactionRepository,
                 spaceRepository,
                 authSessionService,
+                notificationEventRecorder,
             )
     }
 

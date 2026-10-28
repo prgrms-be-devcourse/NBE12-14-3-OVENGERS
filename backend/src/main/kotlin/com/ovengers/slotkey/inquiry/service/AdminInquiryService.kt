@@ -7,6 +7,8 @@ import com.ovengers.slotkey.inquiry.dto.request.InquiryAnswerRequest
 import com.ovengers.slotkey.inquiry.entity.Inquiry
 import com.ovengers.slotkey.inquiry.entity.InquiryStatus
 import com.ovengers.slotkey.inquiry.repository.InquiryRepository
+import com.ovengers.slotkey.notification.entity.NotificationType
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
@@ -19,6 +21,7 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class AdminInquiryService(
     private val inquiryRepository: InquiryRepository,
+    private val notificationEventRecorder: NotificationEventRecorder,
     private val clock: Clock,
 ) {
     fun getInquiries(
@@ -47,5 +50,15 @@ class AdminInquiryService(
                 request.content,
                 LocalDateTime.now(clock),
             )
+            notificationEventRecorder.record(
+                NotificationType.INQUIRY_ANSWERED,
+                inquiry.memberId,
+                requireNotNull(inquiry.id),
+                "문의 '${inquiry.title.take(MAX_TITLE_LENGTH)}'에 답변이 등록되었습니다.",
+            )
         }
+
+    private companion object {
+        const val MAX_TITLE_LENGTH = 50
+    }
 }

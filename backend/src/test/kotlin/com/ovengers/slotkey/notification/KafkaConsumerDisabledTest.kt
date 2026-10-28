@@ -1,5 +1,6 @@
 package com.ovengers.slotkey.notification
 
+import com.ovengers.slotkey.notification.consumer.NotificationEventListener
 import com.ovengers.slotkey.notification.consumer.SlotReleasedListener
 import com.ovengers.slotkey.support.IntegrationTestSupport
 import org.assertj.core.api.Assertions.assertThat
@@ -16,6 +17,7 @@ class KafkaConsumerDisabledTest : IntegrationTestSupport() {
     @Test
     fun listenerAndErrorHandlerBeansAreAbsentByDefault() {
         assertThat(context.getBeanNamesForType(SlotReleasedListener::class.java)).isEmpty()
+        assertThat(context.getBeanNamesForType(NotificationEventListener::class.java)).isEmpty()
         assertThat(context.getBeanNamesForType(CommonErrorHandler::class.java)).isEmpty()
     }
 }

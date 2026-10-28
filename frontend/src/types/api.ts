@@ -372,9 +372,19 @@ export interface ApplyWaitlistRequest {
 }
 
 /** 내 알림. createdAt은 서버 LocalDateTime 문자열이다. */
+export type NotificationType =
+  | 'WAITLIST_SLOT_RELEASED'
+  | 'RESERVATION_FORCE_CANCELLED'
+  | 'CREDIT_GRANTED'
+  | 'INQUIRY_ANSWERED'
+  | 'INQUIRY_CREATED';
 export interface Notification {
   id: number;
-  waitlistEntryId: number;
+  /** 대기자 알림에만 있다. 그 밖의 타입은 null. */
+  waitlistEntryId: number | null;
+  type: NotificationType;
+  /** 타입별 대상 id: 대기 항목·예약·회원(크레딧 지급)·문의. */
+  referenceId: number;
   message: string;
   read: boolean;
   createdAt: string;

@@ -67,6 +67,9 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
     @Autowired
     private lateinit var spaceRepository: SpaceRepository
 
+    @Autowired
+    private lateinit var outboxEventRepository: com.ovengers.slotkey.outbox.OutboxEventRepository
+
     @SpyBean
     private lateinit var auditLogRepository: AuditLogRepository
 
@@ -74,6 +77,7 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
     private lateinit var adminMember: Member
 
     @BeforeEach fun setUp() {
+        outboxEventRepository.deleteAllInBatch()
         refreshTokenRepository.deleteAllInBatch()
         authSessionRepository.deleteAllInBatch()
         auditLogRepository.deleteAllInBatch()
@@ -168,6 +172,7 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(reloaded.balance).isEqualTo(initialBalance)
         assertThat(creditTransactionRepository.count()).isZero()
         assertThat(auditLogRepository.count()).isZero()
+        assertThat(outboxEventRepository.findAll().filter { it.topic == "notification-events" }).isEmpty()
     }
 
     @Test
@@ -247,5 +252,19 @@ internal class AdminMemberServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(auditLog.targetId).isEqualTo(userMember.id!!)
         assertThat(auditLog.reason).isEqualTo("보상 지급")
         assertThat(auditLog.createdAt).isEqualTo(FixedClockConfig.FIXED_DATE_TIME)
+
+        // 알림 이벤트: 지급받은 회원 앞으로 PENDING 1건, 문구에 금액·잔액·사유가 들어간다
+        val events = outboxEventRepository.findAll().filter { it.topic == "notification-events" }
+        assertThat(events).hasSize(1)
+        val event = events.single()
+        assertThat(event.eventType).isEqualTo("CREDIT_GRANTED")
+        assertThat(event.partitionKey).isEqualTo(userMember.id.toString())
+        val payload =
+            com.fasterxml.jackson.databind
+                .ObjectMapper()
+                .readTree(event.payload)
+        assertThat(payload["recipientMemberId"].asLong()).isEqualTo(userMember.id)
+        assertThat(payload["referenceId"].asLong()).isEqualTo(userMember.id)
+        assertThat(payload["message"].asText()).contains("50,000원", "보상 지급")
     }
 }

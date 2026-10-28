@@ -180,6 +180,9 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         val reloadedMember: Member = memberRepository.findById(userMember.id!!).orElseThrow()
         assertThat(reloadedMember.balance).isEqualTo(userMember.balance)
         assertThat(creditTransactionRepository.count()).isZero()
+
+        // 7. 알림 이벤트 롤백 검증: notification-events outbox 행이 남지 않음
+        assertThat(outboxEventRepository.findAll().filter { it.topic == "notification-events" }).isEmpty()
     }
 
     @Test
@@ -241,6 +244,21 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
         assertThat(transaction.type).isEqualTo(CreditTransactionType.REFUND)
         assertThat(transaction.amount).isEqualTo(reservation.getTotalAmount())
         assertThat(transaction.balanceAfter).isEqualTo(userMember.balance + reservation.getTotalAmount())
+
+        // 7. 알림 이벤트 확인: 예약자에게 가는 notification-events outbox 행이 PENDING으로 1건 기록됨
+        val notificationEvents = outboxEventRepository.findAll().filter { it.topic == "notification-events" }
+        assertThat(notificationEvents).hasSize(1)
+        val event = notificationEvents.single()
+        assertThat(event.eventType).isEqualTo("RESERVATION_FORCE_CANCELLED")
+        assertThat(event.partitionKey).isEqualTo(userMember.id.toString())
+        assertThat(event.status).isEqualTo("PENDING")
+        val payload =
+            com.fasterxml.jackson.databind
+                .ObjectMapper()
+                .readTree(event.payload)
+        assertThat(payload["recipientMemberId"].asLong()).isEqualTo(userMember.id)
+        assertThat(payload["referenceId"].asLong()).isEqualTo(reservation.getId())
+        assertThat(event.payload).contains("회의실 A", "정상 직권 취소")
     }
 
     @Test

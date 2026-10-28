@@ -101,7 +101,7 @@ internal class AuthSessionMigrationIntegrationTest {
                     .current()
                     .version
                     .version,
-            ).isEqualTo("26")
+            ).isEqualTo("27")
             connection(mysql).use { connection ->
                 connection.createStatement().use { statement ->
                     statement

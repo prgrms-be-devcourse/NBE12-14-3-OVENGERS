@@ -9,6 +9,8 @@ import com.ovengers.slotkey.credit.service.CreditService
 import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.member.repository.MemberRepository
+import com.ovengers.slotkey.notification.entity.NotificationType
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import com.ovengers.slotkey.outbox.SlotReleasedRecorder
 import com.ovengers.slotkey.reservation.dto.request.AdminReservationSearchCondition
 import com.ovengers.slotkey.reservation.dto.response.AdminReservationDetailResponse
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /** 관리자 예약 조회와 조건부 강제 취소를 처리한다. */
 @Service
@@ -45,6 +48,7 @@ class AdminReservationService(
     private val creditService: CreditService,
     private val clock: Clock,
     private val slotReleasedRecorder: SlotReleasedRecorder,
+    private val notificationEventRecorder: NotificationEventRecorder,
 ) {
     @Transactional(readOnly = true)
     fun searchReservations(
@@ -181,6 +185,12 @@ class AdminReservationService(
             reservation.spaceId,
             SlotReleasedRecorder.Reason.FORCE_CANCELLED,
         )
+        notificationEventRecorder.record(
+            NotificationType.RESERVATION_FORCE_CANCELLED,
+            memberId,
+            requiredReservationId,
+            forceCancelMessage(findSpaceName(reservation.spaceId), reservation.startTime, reservation.endTime, reason),
+        )
 
         val cancelled =
             reservationRepository.findByIdOrNull(requiredReservationId)
@@ -192,7 +202,25 @@ class AdminReservationService(
         )
     }
 
+    private fun forceCancelMessage(
+        spaceName: String?,
+        startTime: LocalDateTime,
+        endTime: LocalDateTime,
+        reason: String?,
+    ): String {
+        val base =
+            "[${spaceName ?: "공간"}] ${startTime.format(DATE_TIME)}~${endTime.format(TIME)} 예약이 관리자에 의해 취소되었습니다."
+        val trimmedReason = reason?.trim()?.takeIf { it.isNotEmpty() } ?: return base
+        return "$base 사유: ${trimmedReason.take(MAX_REASON_LENGTH)}"
+    }
+
     private fun findMemberEmail(memberId: Long): String? = memberRepository.findById(memberId).map { it.email }.orElse(null)
 
     private fun findSpaceName(spaceId: Long): String? = spaceRepository.findById(spaceId).map { it.name }.orElse(null)
+
+    private companion object {
+        val DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("M월 d일 HH:mm")
+        val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        const val MAX_REASON_LENGTH = 200
+    }
 }

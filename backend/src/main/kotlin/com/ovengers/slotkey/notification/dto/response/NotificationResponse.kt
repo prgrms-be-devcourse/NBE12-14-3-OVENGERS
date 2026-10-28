@@ -1,12 +1,15 @@
 package com.ovengers.slotkey.notification.dto.response
 
 import com.ovengers.slotkey.notification.entity.Notification
+import com.ovengers.slotkey.notification.entity.NotificationType
 import java.time.LocalDateTime
 
 @JvmRecord
 data class NotificationResponse(
     val id: Long,
-    val waitlistEntryId: Long,
+    val waitlistEntryId: Long?,
+    val type: NotificationType,
+    val referenceId: Long,
     val message: String,
     val read: Boolean,
     val createdAt: LocalDateTime,
@@ -17,6 +20,8 @@ data class NotificationResponse(
             NotificationResponse(
                 requireNotNull(notification.id),
                 notification.waitlistEntryId,
+                notification.type,
+                notification.referenceId,
                 notification.message,
                 notification.readAt != null,
                 notification.createdAt,

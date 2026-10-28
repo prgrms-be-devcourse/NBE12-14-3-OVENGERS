@@ -12,6 +12,8 @@ import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.repository.MemberRepository
+import com.ovengers.slotkey.notification.entity.NotificationType
+import com.ovengers.slotkey.outbox.NotificationEventRecorder
 import com.ovengers.slotkey.outbox.SlotReleasedRecorder
 import com.ovengers.slotkey.reservation.dto.request.AdminReservationSearchCondition
 import com.ovengers.slotkey.reservation.dto.response.AdminReservationDetailResponse
@@ -92,6 +94,9 @@ class AdminReservationServiceTest {
 
     @Mock
     private lateinit var slotReleasedRecorder: SlotReleasedRecorder
+
+    @Mock
+    private lateinit var notificationEventRecorder: NotificationEventRecorder
     private lateinit var adminReservationService: AdminReservationService
     private val now: LocalDateTime = LocalDateTime.of(2026, 9, 17, 12, 0)
     private lateinit var startTime: LocalDateTime
@@ -112,6 +117,7 @@ class AdminReservationServiceTest {
                 creditService,
                 clock,
                 slotReleasedRecorder,
+                notificationEventRecorder,
             )
         startTime = LocalDateTime.of(2026, 9, 18, 14, 0)
     }
@@ -249,6 +255,12 @@ class AdminReservationServiceTest {
             org.mockito.ArgumentMatchers.anyLong(),
             anyNonNull(),
         )
+        verify(notificationEventRecorder, never()).record(
+            anyNonNull(),
+            org.mockito.ArgumentMatchers.anyLong(),
+            org.mockito.ArgumentMatchers.anyLong(),
+            anyNonNull(),
+        )
     }
 
     @Test
@@ -302,6 +314,12 @@ class AdminReservationServiceTest {
             eqNonNull(ReservationStatus.CANCELLED),
         )
         verify(slotReleasedRecorder).record(RESERVATION_ID, SPACE_ID, SlotReleasedRecorder.Reason.FORCE_CANCELLED)
+        verify(notificationEventRecorder).record(
+            eqNonNull(NotificationType.RESERVATION_FORCE_CANCELLED),
+            eqNonNull(MEMBER_ID),
+            eqNonNull(RESERVATION_ID),
+            anyNonNull(),
+        )
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.ovengers.slotkey.notification
 
 import com.ovengers.slotkey.notification.dto.response.NotificationResponse
+import com.ovengers.slotkey.notification.entity.NotificationType
 import com.ovengers.slotkey.support.HttpBodyGoldenSupport
 import com.ovengers.slotkey.support.SurveyGoldenAssertions.readGolden
 import org.assertj.core.api.Assertions.assertThat
@@ -21,8 +22,8 @@ class NotificationListHttpBodyGoldenTest : HttpBodyGoldenSupport() {
         given(notifications.getMyNotifications(7L, pageable)).willReturn(
             PageImpl(
                 listOf(
-                    NotificationResponse(2L, 12L, "두 번째 알림", true, created.plusMinutes(1)),
-                    NotificationResponse(1L, 11L, "자리가 비었습니다", false, created),
+                    NotificationResponse(2L, 12L, NotificationType.WAITLIST_SLOT_RELEASED, 12L, "두 번째 알림", true, created.plusMinutes(1)),
+                    NotificationResponse(1L, 11L, NotificationType.WAITLIST_SLOT_RELEASED, 11L, "자리가 비었습니다", false, created),
                 ),
                 pageable,
                 5L,

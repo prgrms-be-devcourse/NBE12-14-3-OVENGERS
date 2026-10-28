@@ -97,7 +97,7 @@ class NotificationReadIntegrationTest : ReservationIntegrationTestSupport() {
         readAt: Timestamp?,
     ) {
         jdbcTemplate.update(
-            "INSERT INTO notification(member_id,waitlist_entry_id,event_id,message,created_at,read_at) VALUES (?,1,?,'message',NOW(),?)",
+            "INSERT INTO notification(member_id,waitlist_entry_id,reference_id,event_id,message,created_at,read_at) VALUES (?,1,1,?,'message',NOW(),?)",
             memberId,
             eventId,
             readAt,

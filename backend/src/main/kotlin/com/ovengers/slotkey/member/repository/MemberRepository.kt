@@ -2,6 +2,7 @@
 package com.ovengers.slotkey.member.repository
 
 import com.ovengers.slotkey.member.entity.Member
+import com.ovengers.slotkey.member.entity.MemberRole
 import com.ovengers.slotkey.member.entity.MemberStatus
 import jakarta.persistence.LockModeType
 import org.springframework.data.domain.Page
@@ -16,6 +17,11 @@ interface MemberRepository : JpaRepository<Member, Long> {
     fun findByEmail(email: String): Optional<Member>
 
     fun existsByEmail(email: String): Boolean
+
+    fun findAllByRoleAndStatus(
+        role: MemberRole,
+        status: MemberStatus,
+    ): List<Member>
 
     @Query(
         """

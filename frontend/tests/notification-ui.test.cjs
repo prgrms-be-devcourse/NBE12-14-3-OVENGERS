@@ -157,3 +157,42 @@ test('목록 렌더 후 최대 id를 읽음 상한으로 보내고 빈 목록은
     if (ids.length) assert.match(html, /안 읽음/);
   }
 });
+
+test('알림 타입별로 이동할 화면과 버튼 문구를 정한다', () => {
+  const {notificationTarget} = load('utils/notificationTarget.ts');
+  assert.deepEqual(notificationTarget({type: 'WAITLIST_SLOT_RELEASED', referenceId: 3}), {href: '/waitlist', label: '빈자리 알림 보기'});
+  assert.deepEqual(notificationTarget({type: 'RESERVATION_FORCE_CANCELLED', referenceId: 12}), {href: '/reservations/12', label: '예약 보기'});
+  assert.deepEqual(notificationTarget({type: 'CREDIT_GRANTED', referenceId: 5}), {href: '/credits/history', label: '충전 내역 보기'});
+  assert.deepEqual(notificationTarget({type: 'INQUIRY_ANSWERED', referenceId: 8}), {href: '/inquiries/detail?id=8', label: '답변 보기'});
+  assert.deepEqual(notificationTarget({type: 'INQUIRY_CREATED', referenceId: 9}), {href: '/admin/inquiries/detail?id=9', label: '문의 보기'});
+});
+
+test('모르는 알림 타입은 링크 없이 문구만 보여 준다', () => {
+  const {notificationTarget} = load('utils/notificationTarget.ts');
+  assert.equal(notificationTarget({type: 'SOMETHING_NEW', referenceId: 1}), null);
+  assert.equal(notificationTarget({referenceId: 1}), null);
+});
+
+test('알림 목록은 타입별 링크를 그리고 waitlistEntryId가 null이어도 렌더한다', () => {
+  const React = require('react');
+  const {renderToStaticMarkup} = require('react-dom/server');
+  const data = {content: [
+    {id: 3, type: 'INQUIRY_CREATED', waitlistEntryId: null, referenceId: 9, message: '새 문의가 등록되었습니다', read: false, createdAt: '2026-10-28T12:00:00'},
+    {id: 2, type: 'CREDIT_GRANTED', waitlistEntryId: null, referenceId: 5, message: '크레딧 지급', read: true, createdAt: '2026-10-28T11:00:00'},
+    {id: 1, type: 'WAITLIST_SLOT_RELEASED', waitlistEntryId: 4, referenceId: 4, message: '빈자리', read: true, createdAt: '2026-10-28T10:00:00'},
+  ], page: 0, size: 20, totalPages: 1, totalElements: 3};
+  const mod = load('views/notifications/NotificationsPage.tsx', {
+    react: {...React, useState: () => [0, () => {}], useRef: () => ({current: null}), useEffect: () => {}},
+    '../../api/notificationApi': {getNotifications: async () => data, readAllNotifications: async () => ({updatedCount: 0}), getUnreadCount: async () => ({unreadCount: 0})},
+    '../../hooks/useApi': {
+      useAsync: () => ({data, loading: false, error: null, run: async () => data}),
+      useAction: () => ({execute: async () => {}, error: null}),
+    },
+    'next/link': {__esModule: true, default: ({href, children, ...props}) => React.createElement('a', {href, ...props}, children)},
+  });
+  const html = renderToStaticMarkup(React.createElement(mod.default));
+  assert.match(html, /href="\/admin\/inquiries\/detail\?id=9"[^>]*>문의 보기/);
+  assert.match(html, /href="\/credits\/history"[^>]*>충전 내역 보기/);
+  assert.match(html, /href="\/waitlist"[^>]*>빈자리 알림 보기/);
+  assert.doesNotMatch(html, /빈자리 알림을 확인하세요/);
+});
