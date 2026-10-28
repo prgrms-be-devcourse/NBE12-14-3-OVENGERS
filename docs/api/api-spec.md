@@ -574,6 +574,8 @@
 
 ## 13. 알림 (Notification)
 
+> **2026-10-28 확장**: 빈자리 알림 외에 관리자 강제 취소·관리자 크레딧 지급·문의 답변·문의 등록 알림이 같은 목록에 들어온다(`type`으로 구분). 이 이벤트들은 변경과 같은 트랜잭션에서 `outbox_event`에 기록되고 토픽 `notification-events`(컨슈머 그룹 `slotkey-notifier`)로 전달된다. 수신자는 강제 취소=예약자, 크레딧 지급=지급받은 회원, 문의 답변=문의 작성자, 문의 등록=**소비 시점의 ACTIVE 관리자 전원**(관리자도 `GET /notifications`로 본다). 근거는 [decisions/notification-events.md](../decisions/notification-events.md). 아래 첫 문단은 빈자리 알림(`WAITLIST_SLOT_RELEASED`)의 규칙이다.
+>
 > 슬롯 해제 이벤트(`SlotReleased`)를 컨슈머가 처리해 만든 "자리가 비었다" 알림이다. 알림 대상은 이벤트 payload가 아니라 **그 시점의 DB**로 다시 고른다: 같은 공간의 활성 대기 중 해제 구간과 겹치고, 신청 구간 **전체**가 지금 비어 있으며, 회원이 `ACTIVE`이고, 본인이 겹치는 만료 전 `HELD`·`CONFIRMED`·`IN_USE` 예약을 갖고 있지 않은 항목이다. 알림 후에도 대기는 `WAITING`을 유지한다. Kafka를 끈 환경(`slotkey.kafka.enabled=false`, 기본값)에서는 알림이 생성되지 않는다.
 
 - `GET /notifications` (인증 필요): 내 알림 목록, 최신순(id 내림차순). `page`, `size`(기본 20). 응답 200 `ApiResponse<PageResponse<NotificationResponse>>`. 오류: `AUTHENTICATION_REQUIRED`(401). 본인 알림만 조회된다.
@@ -582,7 +584,17 @@
 
 ### 응답 필드 (`NotificationResponse`)
 
-`id`, `waitlistEntryId`, `message`, `read`(불리언, `read_at`이 있으면 `true`), `createdAt`. `message`는 생성 시점의 공간 이름·구간을 담은 문자열 스냅샷이며 선착순·예약 비보장 안내를 포함한다.
+`id`, `waitlistEntryId`(대기자 알림에만 값이 있고 그 밖의 타입은 `null`), `type`, `referenceId`, `message`, `read`(불리언, `read_at`이 있으면 `true`), `createdAt`. `message`는 생성 시점의 문자열 스냅샷이다(빈자리 알림은 공간 이름·구간과 선착순·예약 비보장 안내 포함).
+
+| `type` | 의미 | `referenceId` | 수신자 |
+| --- | --- | --- | --- |
+| `WAITLIST_SLOT_RELEASED` | 대기 구간의 빈자리 | 대기 항목 id(`waitlistEntryId`와 같음) | 대기자 |
+| `RESERVATION_FORCE_CANCELLED` | 관리자 강제 취소 | 예약 id | 예약자 |
+| `CREDIT_GRANTED` | 관리자 크레딧 지급 | 지급받은 회원 id | 지급받은 회원 |
+| `INQUIRY_ANSWERED` | 문의 답변 등록 | 문의 id | 문의 작성자 |
+| `INQUIRY_CREATED` | 문의 등록 | 문의 id | ACTIVE 관리자 전원 |
+
+필드 추가(`type`, `referenceId`)와 `waitlistEntryId`의 nullable 전환 외에 기존 응답은 바뀌지 않는다. 클라이언트는 모르는 `type`을 링크 없이 `message`만 보여 주는 방식으로 처리한다.
 
 ## 14. [관리자] 통계 (Stats)
 
