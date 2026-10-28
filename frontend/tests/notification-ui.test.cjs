@@ -87,6 +87,52 @@ test('상단 알림 진입점은 글자 대신 종 아이콘이고 접근성 이
   assert.match(renderToStaticMarkup(quiet.default({memberId: 1, pathname: '/'})), /aria-label="알림"/);
 });
 
+test('알림 페이지에서는 알림 링크에 aria-current 와 활성 표시를 준다', () => {
+  const {renderToStaticMarkup} = require('react-dom/server');
+  const React = require('react');
+  const mod = load('components/notification/NotificationLink.tsx', {
+    react: {...React, useState: () => [null, () => {}], useEffect: () => {}},
+    '../../api/notificationApi': {getUnreadCount: async () => ({unreadCount: 0})},
+    'next/link': {__esModule: true, default: ({href, children, ...props}) => React.createElement('a', {href, ...props}, children)},
+  });
+  const here = renderToStaticMarkup(mod.default({memberId: 1, pathname: '/notifications'}));
+  assert.match(here, /aria-current="page"/);
+  assert.match(here, /class="entry active"/);
+  const elsewhere = renderToStaticMarkup(mod.default({memberId: 1, pathname: '/spaces'}));
+  assert.doesNotMatch(elsewhere, /aria-current/);
+  assert.doesNotMatch(elsewhere, /active/);
+});
+
+function renderHeader({member, isAdmin = false, pathname = '/spaces'}) {
+  const {renderToStaticMarkup} = require('react-dom/server');
+  const React = require('react');
+  const mod = load('components/layout/Header.tsx', {
+    'next/link': {__esModule: true, default: ({href, children, ...props}) => React.createElement('a', {href, ...props}, children)},
+    'next/navigation': {usePathname: () => pathname},
+    '../../hooks/useAuth': {useAuth: () => ({member, isAdmin, logout() {}})},
+    '../brand/BrandMark': {__esModule: true, default: () => null},
+    '../notification/NotificationLink': {__esModule: true, default: () => React.createElement('a', {href: '/notifications'}, 'bell')},
+  });
+  return renderToStaticMarkup(React.createElement(mod.default));
+}
+
+test('상단 오른쪽 그룹은 크레딧 → 계정 메뉴 → 알림 순이고 크레딧은 충전 페이지로 연결된다', () => {
+  const html = renderHeader({member: {memberId: 1, nickname: '테스터', balance: 12000}});
+  const credit = html.indexOf('href="/credits/charge" class="header-credit"');
+  const account = html.indexOf('home-account-menu');
+  const bell = html.indexOf('href="/notifications"');
+  assert.ok(credit > 0 && account > credit && bell > account, `order credit=${credit} account=${account} bell=${bell}`);
+  assert.match(html, /12,000 크레딧/);
+  assert.match(html, /aria-label="12,000 크레딧, 충전하기"/);
+});
+
+test('크레딧 충전 페이지에서는 크레딧 링크에 aria-current 를 주고 관리자에게는 크레딧을 보이지 않는다', () => {
+  const member = {memberId: 1, nickname: '테스터', balance: 500};
+  assert.match(renderHeader({member, pathname: '/credits/charge'}), /class="header-credit"[^>]*aria-current="page"|aria-current="page"[^>]*class="header-credit"/);
+  assert.doesNotMatch(renderHeader({member, pathname: '/spaces'}), /header-credit"[^>]*aria-current/);
+  assert.doesNotMatch(renderHeader({member, isAdmin: true}), /header-credit/);
+});
+
 test('목록 렌더 후 최대 id를 읽음 상한으로 보내고 빈 목록은 요청하지 않는다', async () => {
   const React = require('react');
   const {renderToStaticMarkup} = require('react-dom/server');

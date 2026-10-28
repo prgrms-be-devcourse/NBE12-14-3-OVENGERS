@@ -2,32 +2,25 @@
 html:has(.home-shell){scroll-behavior:smooth;scroll-padding-top:96px}
 .home-shell{--home-ending:#142d4e;background:#f1f6fb;color:#20334d;color-scheme:light;font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
 .home-main{width:100%;margin:0;padding:0}
-.home-shell .header{position:fixed;inset:0 0 auto;height:88px;padding:0 clamp(24px,5vw,90px);border:0;background:transparent;backdrop-filter:none;color:white;transform:translate3d(0,var(--home-header-offset,0px),0);gap:30px}
+.home-shell .header{position:fixed;inset:0 0 auto;height:88px;padding:0 clamp(24px,5vw,90px);border:0;background:transparent;backdrop-filter:none;color:white;transform:translate3d(0,var(--home-header-offset,0px),0)}
 .home-shell .brand{font-size:1.45rem;font-weight:500;gap:9px;letter-spacing:-.03em}
 .home-shell .brand em{color:inherit}
 .home-shell .brandmark{border-radius:0;width:34px;height:34px}
-.home-shell .nav{margin-left:auto;margin-right:0;gap:24px}
-.home-shell .nav a{color:inherit;font-size:.88rem;font-weight:400;padding:10px 0}
-.home-shell .nav a:hover{border-bottom-color:currentColor}
-.home-shell .header-actions{gap:10px;font-size:.8rem}
-.home-shell .header-actions .muted{color:inherit}
-.home-shell .header-actions .badge{background:#ffffff16;border-color:#ffffff55;color:inherit;font-weight:400}
-.home-shell .header-actions .btn,.home-shell .header-actions button{background:transparent;border-color:#ffffff90;color:inherit;font-weight:400;border-radius:999px;font-size:.8rem;padding:7px 15px}
-.home-shell .header-actions .btn:hover,.home-shell .header-actions button:hover{background:#ffffff20}
+.home-shell .header-actions>.btn{background:transparent;border-color:#ffffff90;color:inherit;font-weight:400;border-radius:999px;font-size:.8rem;padding:7px 15px}
+.home-shell .header-actions>.btn:hover{background:#ffffff20}
 .footer-brand{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;font-size:1.1rem;font-weight:500;color:inherit}
 .home-shell .footer{background:var(--home-ending);max-width:none;margin:0;padding:24px clamp(24px,5vw,90px) 28px;border-color:#ffffff24;color:#c0d0e2;align-items:center;font-size:.875rem;line-height:1.85}
 .home-shell .footer-brand{color:#f7fbff;font-size:1.25rem}
 .home-shell .footer-brand:focus-visible{outline-color:#91caff}
 .home-shell .footer>span{text-align:right}
-@media(max-width:1100px){.home-shell .header{gap:20px}.home-shell .header-actions>.muted,.home-shell .header-actions>.badge{display:none}.home-shell .nav{gap:18px}}
-@media(max-width:850px){.home-shell .header{height:72px;padding:0 22px;gap:18px}.home-shell .header .nav{display:flex;gap:15px}.home-shell .nav a{font-size:.8rem}.home-shell .brand{font-size:1.15rem}.home-shell .brandmark{width:28px;height:28px}.home-shell .header-actions{display:none}}
-@media(max-width:480px){.home-shell .header{gap:8px;padding:0 14px}.home-shell .nav{gap:11px}.home-shell .nav a{font-size:.74rem}.home-shell .brand{gap:4px;font-size:1rem}.home-shell .brandmark{width:25px;height:25px}.home-shell .footer{flex-direction:column;align-items:flex-start;gap:18px}.home-shell .footer>span{text-align:left}}
+@media(max-width:850px){.home-shell .header{height:72px;padding:0 22px}.home-shell .brand{font-size:1.15rem}.home-shell .brandmark{width:28px;height:28px}}
+@media(max-width:480px){.home-shell .header{padding:0 14px}.home-shell .brand{gap:4px;font-size:1rem}.home-shell .brandmark{width:25px;height:25px}.home-shell .footer{flex-direction:column;align-items:flex-start;gap:18px}.home-shell .footer>span{text-align:left}}
 @media(prefers-reduced-motion:reduce){html:has(.home-shell){scroll-behavior:auto}.home-shell .header{transition:none}}
 
 .home-account-menu{display:block;position:relative;font-size:.88rem;flex-shrink:0}
-.home-account-menu summary{cursor:pointer;list-style:none;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.home-account-menu summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;min-height:44px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:var(--text);font-size:.875rem;font-weight:400;line-height:1.4;white-space:nowrap;transition:background .15s,color .15s}
 .home-account-menu summary::-webkit-details-marker{display:none}
-.home-account-menu summary:hover{background:#2b64df0a}
+.home-account-menu summary:hover,.home-account-menu[open] summary{background:#2b64df14;color:var(--blue)}
 .home-account-menu[open] .account-chevron{transform:rotate(180deg)}
 .home-account-panel{position:absolute;right:0;top:calc(100% + 12px);width:240px;max-width:calc(100vw - 28px);padding:8px;background:#f8fbfe;color:#20334d;border:1px solid #d6e3ef;border-radius:12px;box-shadow:0 8px 25px #102c4820;display:flex;flex-direction:column}
 .account-identity{padding:16px 12px;margin-bottom:6px;border-bottom:1px solid #d6e3ef;display:flex;flex-direction:column;gap:8px;overflow-wrap:anywhere}
@@ -38,26 +31,25 @@ html:has(.home-shell){scroll-behavior:smooth;scroll-padding-top:96px}
 .account-signout{border-top:1px solid #d6e3ef;margin-top:6px;padding-top:6px}
 .home-account-menu summary:focus-visible{outline:3px solid #6db7ff;outline-offset:4px}
 .account-mobile-credit,.guest-account-menu{display:none}
-.home-shell .home-account-menu summary{border-color:#ffffff80;color:white}
-.home-shell .home-account-menu summary:hover{background:#ffffff20}
-@media(max-width:1100px){.home-shell .account-mobile-credit{display:block}}
-@media(max-width:850px){.guest-account-menu,.account-mobile-credit{display:block}.home-account-menu{font-size:.8rem}.home-account-menu summary{padding:9px;gap:6px}}
-@media(max-width:480px){.header .nav a[href="/door"],.home-shell .header .nav a[href="/door"]{display:block}.header .nav,.home-shell .header .nav{gap:10px}.home-account-menu summary>svg:first-child{display:none}.home-account-menu summary{padding:8px;gap:5px}}
 @media(max-width:360px){.header .brand>span{display:none}}
 
-/* Separate navigation from account information while keeping a shared baseline. */
-.header .nav a,.header .header-credit,.header .home-account-menu summary{font-size:.9rem;font-weight:400;min-height:44px;line-height:1.4;display:flex;align-items:center}
-.header .nav a{padding:10px 0}
-.header .header-credit{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
-.header .home-account-menu summary{border:1px solid var(--line);border-radius:10px;padding:10px 12px;gap:8px}
-.header .home-account-menu summary:hover{background:transparent;color:var(--blue)}
+/* Header: [brand] [nav] | [notification · credit · account]. Spacing is set by flex gaps only (no per-item margins). */
+.header{gap:24px}
+.header .nav{display:flex;align-items:center;gap:36px;margin:0 0 0 auto}
+.header .nav a{display:flex;align-items:center;min-height:44px;padding:10px 0;border-bottom:2px solid transparent;color:var(--muted);font-size:.9rem;font-weight:500;line-height:1.4;white-space:nowrap}
+.header .nav a.active{color:var(--blue);border-bottom-color:var(--blue)}
+.header-actions{position:relative;display:flex;align-items:center;gap:14px}
+.header-actions::before{content:"";position:absolute;left:-12px;top:50%;height:22px;width:1px;background:var(--line);transform:translateY(-50%)}
+.header .header-credit{display:flex;align-items:center;min-width:0;max-width:180px;min-height:44px;padding:0 8px;border-radius:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:.8125rem;font-weight:400;line-height:1.4;font-variant-numeric:tabular-nums;transition:background .15s,color .15s}
+.header .header-credit:hover,.header .header-credit[aria-current="page"]{background:#2b64df14;color:var(--blue)}
+.header .header-credit:focus-visible{outline:3px solid #6db7ff;outline-offset:2px}
 .account-trigger-label{display:block;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.home-shell .header .nav a,.home-shell .header .header-credit,.home-shell .header .home-account-menu summary{color:white;font-size:.9rem}
-.home-shell .header .home-account-menu summary{border-color:#ffffff55;background:#102c4814}
-.home-shell .header .home-account-menu summary:hover{color:white;background:#ffffff18;border-color:#ffffff90}
-.header .header-credit,.home-shell .header .header-credit{font-size:.82rem}
+/* Over the home photo: keep the same hierarchy with white text */
+.home-shell .header .nav a,.home-shell .header .header-credit,.home-shell .header .home-account-menu summary{color:#fff}
+.home-shell .header .nav a:hover,.home-shell .header .nav a.active{border-bottom-color:#fff}
+.home-shell .header-actions::before{background:#ffffff45}
+.home-shell .header .home-account-menu summary:hover,.home-shell .header .home-account-menu[open] summary,.home-shell .header .header-credit:hover,.home-shell .header .header-credit[aria-current="page"]{background:#ffffff24;color:#fff}
+@media(max-width:1100px){.header .nav{gap:20px}.header .header-credit{display:none}.account-mobile-credit{display:block}.account-trigger-label{max-width:110px}}
+@media(max-width:850px){.header{gap:14px}.header-actions{gap:4px}.header-actions::before,.header-actions>.btn{display:none}.guest-account-menu{display:block}.header .nav{gap:16px}.header .nav a,.home-account-menu summary{font-size:.82rem}.header .nav a[href="/reservations"],.header .nav a[href="/admin/spaces"]{display:none}.account-trigger-label{max-width:100px}}
+@media(max-width:480px){.header{gap:8px}.header .nav{gap:10px}.header .nav a,.home-account-menu summary{font-size:.76rem}.header-actions{gap:0}.home-account-menu summary{padding:0 6px;gap:4px}.home-account-menu summary>svg:first-child{display:none}.account-trigger-label{max-width:64px}}
 .home-shell .header{background:linear-gradient(180deg,rgba(9,27,49,.65) 0%,rgba(9,27,49,.34) 60%,rgba(9,27,49,0) 100%)}
-@media(min-width:851px){.header .nav{position:relative;padding-right:28px}.header .nav::after{content:"";position:absolute;right:0;top:50%;height:22px;width:1px;background:var(--line);transform:translateY(-50%)}.home-shell .header .nav::after{background:#ffffff45}.header .home-account-menu{margin-left:4px}}
-@media(max-width:1100px){.home-shell .header-credit{display:none}}
-@media(max-width:850px){.header .nav a,.header .home-account-menu summary,.home-shell .header .nav a,.home-shell .header .home-account-menu summary{font-size:.82rem}.account-trigger-label{max-width:100px}}
-@media(max-width:480px){.header .nav a,.header .home-account-menu summary,.home-shell .header .nav a,.home-shell .header .home-account-menu summary{font-size:.76rem}.account-trigger-label{max-width:64px}.header .home-account-menu summary{padding:8px;gap:5px}}

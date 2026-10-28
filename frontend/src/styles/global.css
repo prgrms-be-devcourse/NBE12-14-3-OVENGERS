@@ -14,10 +14,6 @@ p{color:var(--muted)}
 .brand{display:flex;align-items:center;gap:12px;font-size:1.65rem;letter-spacing:-.04em;font-weight:600;white-space:nowrap}
 .brandmark{width:40px;height:40px;display:block;flex:none;border-radius:12px}
 .brand em{font-style:normal;color:var(--cyan)}
-.nav{display:flex;gap:36px;align-items:center;margin-right:auto}
-.nav a{color:var(--muted);font-size:.95rem;padding:28px 0;border-bottom:2px solid transparent}
-.nav a.active{color:var(--blue);border-bottom-color:var(--blue)}
-.header-actions{display:flex;gap:10px;align-items:center;font-size:.9rem}
 .container{max-width:1280px;padding:48px 32px 80px;margin:auto}
 .hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:center;gap:64px;padding-top:30px;padding-bottom:72px}
 .hero h1{font-size:clamp(2.4rem,3.8vw,3.75rem);line-height:1.2;letter-spacing:-.06em;margin-bottom:26px;text-wrap:pretty}
@@ -235,8 +231,7 @@ dialog .modal-actions{display:flex;justify-content:end;gap:12px;margin-top:26px}
 .refund-dot{grid-row:1/3;display:grid;place-items:center;width:30px;height:30px;border-radius:50%}.refund-dot.green{background:#e6f5ed;color:var(--green)}.refund-dot.cyan{background:#e6effc;color:var(--cyan)}.refund-dot.red{background:#fde9ed;color:var(--red)}
 .payment-summary>.btn{min-height:58px;margin-top:18px;font-size:1rem}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-@media(max-width:1100px){.nav{gap:16px}
-.header{padding:0 24px;gap:24px}
+@media(max-width:1100px){.header{padding:0 24px}
 .hero{gap:35px}
 .hero-art{height:400px}
 .grid3{gap:16px}
@@ -245,7 +240,7 @@ dialog .modal-actions{display:flex;justify-content:end;gap:12px;margin-top:26px}
 .admin-main{padding:35px 24px}
 .hero h1{font-size:3rem}
 }
-@media(max-width:850px){.header .nav{display:none}
+@media(max-width:850px){
 .hero,.split,.auth-layout,.payment-layout{grid-template-columns:1fr}
 .hero-art{height:380px}
 .hero{gap:30px}
@@ -271,10 +266,6 @@ dialog .modal-actions{display:flex;justify-content:end;gap:12px;margin-top:26px}
 .header .brand{font-weight:500;font-size:1.4rem;letter-spacing:-.03em}
 .header .brand em{color:inherit}
 .header .brandmark{border-radius:0}
-.header .nav{margin-left:auto;margin-right:0}
-.header .nav a{font-size:1rem;padding:24px 0}
-.header-actions .muted{font-size:.9rem}
-.header-actions .badge{font-weight:500}
 .container{padding-top:56px;padding-bottom:76px}
 .pagehead{margin-bottom:32px;align-items:center}
 .pagehead h1{margin-bottom:12px}
@@ -422,10 +413,10 @@ dialog h2{font-size:1.6rem;font-weight:400;line-height:1.5}
 dialog::backdrop{background:#142d4e66;backdrop-filter:blur(4px)}
 dialog .modal-actions{flex-wrap:wrap}
 #toast{background:#142d4e;color:#f7fbff;box-shadow:0 8px 28px #142d4e26}
-@media(max-width:1100px){.header{gap:18px}.header-actions>.muted{display:none}.payment-layout{grid-template-columns:minmax(0,1.2fr) minmax(315px,1fr)}.payment-reservation{grid-template-columns:1fr}.payment-reservation>img{height:210px}}
-@media(max-width:850px){.split,.payment-layout{grid-template-columns:1fr}.header .nav{display:flex;gap:16px}.header .nav a{font-size:.88rem;padding:12px 0}.header-actions{display:none}.header{height:72px;padding:0 20px;gap:14px}.header .brand{font-size:1.2rem;gap:5px}.header .brandmark{width:30px;height:30px}.nav a[href="/reservations"],.nav a[href="/admin/spaces"]{display:none}.admin-shell{grid-template-columns:1fr}.sidebar{padding:10px 16px;gap:8px}.sidebar a{padding:9px 14px;font-size:.95rem}.admin-main{padding:30px 20px 60px}.sticky{position:static}.container{padding:36px 22px 60px}.footer{align-items:flex-start;gap:15px}.footer>span{text-align:left}.payment-reservation{grid-template-columns:180px minmax(0,1fr)}.payment-page{padding:0}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.pagehead{align-items:flex-start}.pagehead>.btn{flex:none}.auth-layout{grid-template-columns:1fr;min-height:0}.auth-form{padding:36px}.auth-cover{display:none}}
+@media(max-width:1100px){.payment-layout{grid-template-columns:minmax(0,1.2fr) minmax(315px,1fr)}.payment-reservation{grid-template-columns:1fr}.payment-reservation>img{height:210px}}
+@media(max-width:850px){.split,.payment-layout{grid-template-columns:1fr}.header{height:72px;padding:0 20px}.header .brand{font-size:1.2rem;gap:5px}.header .brandmark{width:30px;height:30px}.admin-shell{grid-template-columns:1fr}.sidebar{padding:10px 16px;gap:8px}.sidebar a{padding:9px 14px;font-size:.95rem}.admin-main{padding:30px 20px 60px}.sticky{position:static}.container{padding:36px 22px 60px}.footer{align-items:flex-start;gap:15px}.footer>span{text-align:left}.payment-reservation{grid-template-columns:180px minmax(0,1fr)}.payment-page{padding:0}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.pagehead{align-items:flex-start}.pagehead>.btn{flex:none}.auth-layout{grid-template-columns:1fr;min-height:0}.auth-form{padding:36px}.auth-cover{display:none}}
 @media(max-width:600px){.grid3,.form-grid{grid-template-columns:1fr}.filters{flex-direction:column;align-items:stretch;padding:20px}.filters label{width:100%;min-width:0}.pagehead{flex-direction:column;gap:20px}.pagehead h1{font-size:2rem}.panel,.payment-card{padding:22px}.booking-row{grid-template-columns:80px minmax(0,1fr);gap:16px;padding:18px}.booking-row img,.booking-row>.photo-placeholder{width:80px;height:90px}.booking-row>.photo-placeholder span{font-size:.85rem}.booking-row>.photo-placeholder small{display:none}.booking-row h3{font-size:1.15rem}.booking-row p{font-size:.92rem}.booking-right{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:14px}.booking-right .price{margin:0}.auth-form{padding:28px 24px}.auth-form h1{font-size:2rem}.slotgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.definition{gap:14px;flex-wrap:wrap}.payment-reservation{grid-template-columns:1fr}.payment-section-title{display:block}.payment-method{grid-template-columns:auto auto minmax(0,1fr);gap:12px;padding:18px}.payment-method>b{grid-column:2/-1;font-size:.95rem}.payment-booking-data>div{grid-template-columns:76px minmax(0,1fr)}.payment-steps{gap:10px}.payment-steps li{flex-direction:column;gap:8px;align-items:flex-start}.payment-steps li b{font-size:.83rem;padding-right:0}.payment-summary-row{grid-template-columns:minmax(0,1fr) auto}.payment-summary-row>span:first-child{grid-column:1/-1}.payment-summary-total strong{font-size:1.55rem}.payment-info-card,.payment-expiry-card{padding:20px}.summary-strip{padding:20px;gap:20px}.form-grid .full{grid-column:auto}.terminal>.note{padding:18px}.auth-layout{margin:0}.image-picker{flex-wrap:wrap}.image-picker button{flex-basis:40%}}
-@media(max-width:480px){.header{padding:0 14px;gap:8px}.header .nav{gap:12px}.header .nav a{font-size:.76rem}.header .brand{font-size:1rem}.header .nav a[href="/door"]{display:none}.header .brandmark{width:25px;height:25px}.slotgrid{gap:7px}.tablefoot{align-items:flex-start}.tablefoot .actions{width:100%;justify-content:flex-end}}
+@media(max-width:480px){.header{padding:0 14px}.header .brand{font-size:1rem}.header .brandmark{width:25px;height:25px}.slotgrid{gap:7px}.tablefoot{align-items:flex-start}.tablefoot .actions{width:100%;justify-content:flex-end}}
 @media(prefers-reduced-motion:reduce){.loading-indicator{animation:none}.spacecard:hover{transform:none}}
 /* 누락 이미지, 필드 메시지와 긴 데이터의 마무리 상태 */
 .payment-reservation>.photo-placeholder{width:100%;height:150px;border-radius:12px}
