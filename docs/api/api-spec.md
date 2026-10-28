@@ -211,6 +211,10 @@
 
 인증 회원 본인의 충전 내역을 최신순으로 반환한다. 결제가 시도되지 않은 `PENDING` 주문은 제외하고 `PAID`·`CONFIRMING`·`FAILED`만 노출한다. 응답: **200**, `ApiResponse<PageResponse<{ orderId, amount, status, paymentMethod, paymentProvider, createdAt, updatedAt }>>` (`updatedAt`은 승인·실패 등 마지막 상태 변경 시각). `paymentMethod`(예: 카드·간편결제·계좌이체)와 `paymentProvider`(간편결제 제공사, 예: 토스페이)는 토스 승인 응답에서 저장한 표시용 값이며, 이 기능(V21) 이전 주문과 PG 조회 복구로 승인된 주문은 `null`이다. 결제수단 저장은 충전 확정과 별도 단계라 실패해도 충전은 유지된다. 오류: `AUTHENTICATION_REQUIRED`(401). 크레딧 사용·환불 내역은 포함하지 않는다.
 
+### 5-0-1-2. 내 관리자 지급 내역 조회 — `GET /credits/grants?page=0&size=10`
+
+인증 회원 본인이 관리자에게 지급받은 크레딧(`credit_transaction.type = ADMIN_GRANT`) 내역을 최신순(`id DESC`)으로 반환한다. 충전 내역 화면에서 PG 충전 내역 아래에 함께 보여 주며, 지급 알림(`CREDIT_GRANTED`)의 "충전 내역 보기" 링크가 이 화면으로 이어진다. 응답: **200**, `ApiResponse<PageResponse<{ transactionId, amount, reason, createdAt }>>`. `reason`은 관리자가 입력한 지급 사유로, 지급 알림 본문에 담기는 내용과 같다. 가입 지급(`SIGNUP_GRANT`)과 크레딧 사용·환불 내역은 포함하지 않는다. 오류: `AUTHENTICATION_REQUIRED`(401).
+
 ### 5-0-2. PG 크레딧 충전 승인 — `POST /credits/charge-orders/confirm`
 
 - 인증 및 `Idempotency-Key` 헤더가 필요하다.
