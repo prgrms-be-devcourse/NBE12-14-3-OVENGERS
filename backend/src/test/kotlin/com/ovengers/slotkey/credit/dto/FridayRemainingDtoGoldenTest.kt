@@ -32,7 +32,7 @@ class FridayRemainingDtoGoldenTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("contracts")
     fun roundTripKeepsJavaJson(
-        name: String,
+        @Suppress("UNUSED_PARAMETER") name: String,
         type: Class<*>,
         json: String,
     ) {

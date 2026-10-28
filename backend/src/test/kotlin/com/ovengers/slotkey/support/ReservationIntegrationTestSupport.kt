@@ -246,9 +246,9 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
     companion object {
         const val PRICE_PER_SLOT: Int = 5000
 
-        @JvmStatic protected fun successCount(results: List<out Throwable?>): Int = results.count { it == null }
+        @JvmStatic protected fun successCount(results: List<Throwable?>): Int = results.count { it == null }
 
-        @JvmStatic protected fun failures(results: List<out Throwable?>): List<Any> =
+        @JvmStatic protected fun failures(results: List<Throwable?>): List<Any> =
             results.filterNotNull().map {
                 if (it is BusinessException) it.errorCode else it
             }

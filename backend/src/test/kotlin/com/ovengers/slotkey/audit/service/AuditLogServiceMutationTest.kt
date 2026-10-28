@@ -14,7 +14,6 @@ import org.mockito.BDDMockito.then
 import org.mockito.Mock
 import org.mockito.Mockito.never
 import org.mockito.junit.jupiter.MockitoExtension
-import java.util.Map
 
 /**
  * #191: 기본 PIT 대상에 AuditLogService를 추가했을 때 드러난 공개 nullable 계약 공백을 고정한다.
@@ -44,8 +43,8 @@ class AuditLogServiceMutationTest {
                 AuditTargetType.SPACE,
                 10L,
                 "사유",
-                Map.of("price", 3000),
-                Map.of("price", 5000),
+                mapOf("price" to 3000),
+                mapOf("price" to 5000),
             )
         }.isInstanceOf(IllegalArgumentException::class.java)
 
@@ -62,8 +61,8 @@ class AuditLogServiceMutationTest {
                 null,
                 10L,
                 "사유",
-                Map.of("price", 3000),
-                Map.of("price", 5000),
+                mapOf("price" to 3000),
+                mapOf("price" to 5000),
             )
         }.isInstanceOf(IllegalArgumentException::class.java)
 

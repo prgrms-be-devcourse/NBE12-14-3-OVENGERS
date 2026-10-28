@@ -53,7 +53,7 @@ class AdminControllerParameterBindingTest {
 
     // 이름 없는 @RequestParam 대조군
     fun controlMissingParamNameMethod(
-        @RequestParam(required = true) missingParam: String,
+        @Suppress("UNUSED_PARAMETER") @RequestParam(required = true) missingParam: String,
     ) {
     }
 

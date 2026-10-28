@@ -390,7 +390,7 @@ class TossPaymentsPgClientTest {
     @MethodSource("networkFailures")
     @DisplayName("조회 네트워크 실패는 Payment 객체가 없는 UNKNOWN으로 분류한다")
     fun findByPaymentKey_networkFailure_hasNoPaymentObject(
-        name: String,
+        @Suppress("UNUSED_PARAMETER") name: String,
         failure: IOException,
     ) {
         server
@@ -459,7 +459,7 @@ class TossPaymentsPgClientTest {
     @MethodSource("approvalResponseMismatches")
     @DisplayName("승인 응답의 주문 또는 금액이 요청과 다르면 결과 모름으로 둔다")
     fun confirm_responseMismatch_isIndeterminate(
-        name: String,
+        @Suppress("UNUSED_PARAMETER") name: String,
         responseOrderId: String,
         responseAmount: Long,
         output: CapturedOutput,
@@ -475,7 +475,7 @@ class TossPaymentsPgClientTest {
                       "status": "DONE",
                       "totalAmount": %d
                     }
-                    """.trimIndent().formatted(responseOrderId, responseAmount),
+                    """.trimIndent().format(responseOrderId, responseAmount),
                     MediaType.APPLICATION_JSON,
                 ),
             )
@@ -496,7 +496,7 @@ class TossPaymentsPgClientTest {
     @MethodSource("networkFailures")
     @DisplayName("네트워크 예외는 승인 결과 모름으로 분류한다")
     fun confirm_networkFailure_isIndeterminate(
-        name: String,
+        @Suppress("UNUSED_PARAMETER") name: String,
         failure: IOException,
         output: CapturedOutput,
     ) {
@@ -540,7 +540,7 @@ class TossPaymentsPgClientTest {
                       "status": "%s",
                       "newField": true
                     }
-                    """.trimIndent().formatted(pgStatus),
+                    """.trimIndent().format(pgStatus),
                     MediaType.APPLICATION_JSON,
                 ),
             )
@@ -602,7 +602,7 @@ class TossPaymentsPgClientTest {
                       "totalAmount": 1000,
                       "currency": "KRW"
                     }
-                    """.trimIndent().formatted(status),
+                    """.trimIndent().format(status),
                     MediaType.APPLICATION_JSON,
                 ),
             )

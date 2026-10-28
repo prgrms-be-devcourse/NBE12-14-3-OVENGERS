@@ -1123,7 +1123,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             })!!
 
         // 초기 토큰 1 발급
-        val initialTokenResp = doorAccessTokenService.issue(userMember.id!!, reservationId)
+        doorAccessTokenService.issue(userMember.id!!, reservationId)
         val oldToken = doorAccessTokenRepository.findByReservationIdAndRevokedAtIsNull(reservationId).orElseThrow()
 
         // 초기 토큰 발급 시 호출된 invocation 기록 초기화
@@ -1259,7 +1259,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             })!!
 
         // 1. 초기 토큰 1 발급
-        val token1Resp = doorAccessTokenService.issue(userMember.id!!, reservationId)
+        doorAccessTokenService.issue(userMember.id!!, reservationId)
         val token1 = doorAccessTokenRepository.findByReservationIdAndRevokedAtIsNull(reservationId).orElseThrow()
 
         // 2. 토큰 재발급 먼저 커밋: 토큰 1은 REISSUED로 폐기, 새 토큰 2 발급
