@@ -61,6 +61,6 @@ class NotificationQueryIntegrationTest : ReservationIntegrationTestSupport() {
             eventId,
             message,
         )
-        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM notification WHERE member_id = ?", Long::class.javaObjectType, memberId)!!
+        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM notification WHERE member_id = ?", Long::class.javaObjectType, memberId)
     }
 }

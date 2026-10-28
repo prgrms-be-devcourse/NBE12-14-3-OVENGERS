@@ -83,5 +83,5 @@ class SlotReleasedHandlerConcurrencyTest : ReservationIntegrationTestSupport() {
             "SELECT COUNT(*) FROM notification WHERE waitlist_entry_id = ?",
             Int::class.javaObjectType,
             entryId,
-        )!!
+        )
 }

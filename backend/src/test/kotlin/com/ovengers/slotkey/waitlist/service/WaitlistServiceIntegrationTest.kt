@@ -575,7 +575,7 @@ class WaitlistServiceIntegrationTest : ReservationIntegrationTestSupport() {
             Int::class.javaObjectType,
             ownerId,
             status,
-        )!!
+        )
 
     private companion object {
         private const val BALANCE = 100_000

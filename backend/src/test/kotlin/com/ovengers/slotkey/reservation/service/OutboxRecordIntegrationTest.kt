@@ -371,7 +371,7 @@ class OutboxRecordIntegrationTest : ReservationIntegrationTestSupport() {
             "SELECT COUNT(*) FROM reservation WHERE space_id = ?",
             Int::class.javaObjectType,
             space,
-        )!!
+        )
 
     private fun events(reservation: Long): List<Map<String, Any?>> =
         jdbcTemplate.queryForList("SELECT * FROM outbox_event WHERE JSON_EXTRACT(payload, '\$.reservationId') = ?", reservation)

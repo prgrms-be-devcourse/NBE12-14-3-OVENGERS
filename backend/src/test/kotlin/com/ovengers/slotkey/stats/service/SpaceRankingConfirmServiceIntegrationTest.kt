@@ -421,7 +421,7 @@ class SpaceRankingConfirmServiceIntegrationTest : ReservationIntegrationTestSupp
             "SELECT MAX(id) FROM reservation WHERE space_id = ?",
             Long::class.javaObjectType,
             spaceId,
-        )!!
+        )
     }
 
     private fun charge(

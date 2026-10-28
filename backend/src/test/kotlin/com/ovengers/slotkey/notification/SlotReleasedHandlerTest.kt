@@ -438,29 +438,29 @@ class SlotReleasedHandlerTest : ReservationIntegrationTestSupport() {
             "SELECT COUNT(*) FROM notification WHERE waitlist_entry_id = ?",
             Int::class.javaObjectType,
             entryId,
-        )!!
+        )
 
     private fun processedCount(): Int =
         jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM processed_event WHERE event_id = ?",
             Int::class.javaObjectType,
             eventId,
-        )!!
+        )
 
     private fun statusOfEntry(entryId: Long): String =
-        jdbcTemplate.queryForObject("SELECT status FROM waitlist_entry WHERE id = ?", String::class.java, entryId)!!
+        jdbcTemplate.queryForObject("SELECT status FROM waitlist_entry WHERE id = ?", String::class.java, entryId)
 
     private fun lastNotifiedAt(entryId: Long): LocalDateTime =
         jdbcTemplate.queryForObject(
             "SELECT last_notified_at FROM waitlist_entry WHERE id = ?",
             LocalDateTime::class.java,
             entryId,
-        )!!
+        )
 
     private fun lastNotifiedAtIsSet(entryId: Long): Boolean =
         jdbcTemplate.queryForObject(
             "SELECT last_notified_at IS NOT NULL FROM waitlist_entry WHERE id = ?",
             Boolean::class.javaObjectType,
             entryId,
-        )!!
+        )
 }

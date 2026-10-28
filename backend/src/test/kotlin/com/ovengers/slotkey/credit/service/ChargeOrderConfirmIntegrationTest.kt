@@ -774,7 +774,7 @@ class ChargeOrderConfirmIntegrationTest : IntegrationTestSupport() {
                 "WHERE member_id = ? AND type = 'TOP_UP'",
             Int::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private fun countAudit(action: String): Int = countAudit(orderId, action)
 
@@ -789,7 +789,7 @@ class ChargeOrderConfirmIntegrationTest : IntegrationTestSupport() {
             Int::class.javaObjectType,
             targetOrderId,
             action,
-        )!!
+        )
 
     private fun clientIdempotencyKey(targetOrderId: String): String? =
         jdbcTemplate.queryForObject(
@@ -805,7 +805,7 @@ class ChargeOrderConfirmIntegrationTest : IntegrationTestSupport() {
                 "WHERE co.order_id = ? AND ct.type = 'TOP_UP'",
             Int::class.javaObjectType,
             targetOrderId,
-        )!!
+        )
 
     private fun countIdempotencyRecords(key: String): Int =
         jdbcTemplate.queryForObject(
@@ -814,7 +814,7 @@ class ChargeOrderConfirmIntegrationTest : IntegrationTestSupport() {
             Int::class.javaObjectType,
             key,
             memberId,
-        )!!
+        )
 
     private fun assertTopUpOnce() {
         assertThat(status()).isEqualTo("PAID")
@@ -828,7 +828,7 @@ class ChargeOrderConfirmIntegrationTest : IntegrationTestSupport() {
             "SELECT balance FROM member WHERE id = ?",
             Long::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private fun assertBalanceInvariant(targetMemberId: Long) {
         val balance =

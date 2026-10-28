@@ -67,14 +67,14 @@ class WaitlistApplyConcurrencyTest : ReservationIntegrationTestSupport() {
             Int::class.javaObjectType,
             memberId,
             status,
-        )!!
+        )
 
     private fun countActiveWaitlistRows(): Int =
         jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM waitlist_entry WHERE member_id = ? AND active IS NOT NULL",
             Int::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private companion object {
         private const val BALANCE = 100_000

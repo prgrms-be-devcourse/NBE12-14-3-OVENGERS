@@ -684,7 +684,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             "SELECT COUNT(*) FROM outbox_event WHERE JSON_EXTRACT(payload, '$.reservationId') = ?",
             Int::class.javaObjectType,
             reservationId,
-        )!!
+        )
 
     private fun capture(task: Runnable): Throwable? {
         try {

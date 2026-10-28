@@ -407,7 +407,7 @@ class TossWebhookIntegrationTest : IntegrationTestSupport() {
             "SELECT COUNT(*) FROM pg_webhook_event WHERE transmission_id = ?",
             Int::class.javaObjectType,
             transmissionId,
-        )!!
+        )
 
     companion object {
         private const val WEBHOOK_PATH = "/api/v1/webhooks/tosspayments"

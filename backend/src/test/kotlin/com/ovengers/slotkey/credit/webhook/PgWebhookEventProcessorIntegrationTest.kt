@@ -497,7 +497,7 @@ class PgWebhookEventProcessorIntegrationTest : IntegrationTestSupport() {
             "SELECT COUNT(*) FROM credit_transaction WHERE member_id = ? AND type = 'TOP_UP'",
             Int::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private fun balance(): Long =
         memberRepository
@@ -511,14 +511,14 @@ class PgWebhookEventProcessorIntegrationTest : IntegrationTestSupport() {
             "SELECT COALESCE(SUM(amount), 0) FROM credit_transaction WHERE member_id = ?",
             Long::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private fun idempotencyCount(): Int =
         jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM idempotency_key WHERE member_id = ?",
             Int::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     companion object {
         private const val AMOUNT = 1_000L

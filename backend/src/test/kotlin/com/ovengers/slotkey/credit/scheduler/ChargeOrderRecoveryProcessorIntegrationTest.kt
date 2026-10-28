@@ -90,7 +90,7 @@ class ChargeOrderRecoveryProcessorIntegrationTest : IntegrationTestSupport() {
                 "SELECT id FROM charge_order WHERE order_id = ?",
                 Long::class.javaObjectType,
                 orderId,
-            )!!
+            )
         jdbcTemplate.update(
             "UPDATE charge_order SET updated_at = ?, recovery_next_attempt_at = ? WHERE id = ?",
             NOW.minusMinutes(2),
@@ -390,21 +390,21 @@ class ChargeOrderRecoveryProcessorIntegrationTest : IntegrationTestSupport() {
             "SELECT balance FROM member WHERE id = ?",
             Long::class.javaObjectType,
             memberId,
-        )!!
+        )
 
     private fun topUpCount(): Int =
         jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM credit_transaction WHERE charge_order_id = ?",
             Int::class.javaObjectType,
             chargeOrderId,
-        )!!
+        )
 
     private fun idempotencyCount(): Int =
         jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM idempotency_key WHERE idempotency_key = ?",
             Int::class.javaObjectType,
             clientIdempotencyKey,
-        )!!
+        )
 
     private fun assertManualReviewAudit(expectedReason: String) {
         assertThat(
@@ -440,7 +440,7 @@ class ChargeOrderRecoveryProcessorIntegrationTest : IntegrationTestSupport() {
             ),
             Int::class.javaObjectType,
             chargeOrderId,
-        )!!
+        )
 
     private fun recoverConcurrently(
         ready: CountDownLatch,

@@ -148,13 +148,13 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
     }
 
     protected fun balanceOf(memberId: Long): Int =
-        jdbcTemplate.queryForObject("SELECT balance FROM member WHERE id = ?", Int::class.java, memberId)!!
+        jdbcTemplate.queryForObject("SELECT balance FROM member WHERE id = ?", Int::class.java, memberId)
 
     protected fun statusOf(reservationId: Long): String =
-        jdbcTemplate.queryForObject("SELECT status FROM reservation WHERE id = ?", String::class.java, reservationId)!!
+        jdbcTemplate.queryForObject("SELECT status FROM reservation WHERE id = ?", String::class.java, reservationId)
 
     protected fun countSlots(reservationId: Long): Int =
-        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM reservation_slot WHERE reservation_id = ?", Int::class.java, reservationId)!!
+        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM reservation_slot WHERE reservation_id = ?", Int::class.java, reservationId)
 
     protected fun countSlotsInRange(
         spaceId: Long,
@@ -167,7 +167,7 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
             spaceId,
             fromInclusive,
             toExclusive,
-        )!!
+        )
 
     protected fun countLedger(
         reservationId: Long,
@@ -178,7 +178,7 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
             Int::class.java,
             reservationId,
             type,
-        )!!
+        )
 
     protected fun sumLedger(
         reservationId: Long,
@@ -189,7 +189,7 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
             Int::class.java,
             reservationId,
             type,
-        )!!
+        )
 
     protected fun countHistory(
         reservationId: Long,
@@ -200,10 +200,10 @@ abstract class ReservationIntegrationTestSupport : IntegrationTestSupport() {
             Int::class.java,
             reservationId,
             toStatus,
-        )!!
+        )
 
     protected fun countIdempotencyKeys(memberId: Long): Int =
-        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM idempotency_key WHERE member_id = ?", Int::class.java, memberId)!!
+        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM idempotency_key WHERE member_id = ?", Int::class.java, memberId)
 
     protected fun runConcurrently(tasks: List<Runnable>): List<Throwable> {
         val executor = Executors.newFixedThreadPool(tasks.size)

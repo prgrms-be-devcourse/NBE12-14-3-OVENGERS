@@ -206,14 +206,14 @@ class OutboxRelayIntegrationTest : ReservationIntegrationTestSupport() {
             "{\"tag\":\"" + tag + "\"}",
             now(),
         )
-        return jdbcTemplate.queryForObject("SELECT id FROM outbox_event WHERE event_id = ?", Long::class.javaObjectType, eventId)!!
+        return jdbcTemplate.queryForObject("SELECT id FROM outbox_event WHERE event_id = ?", Long::class.javaObjectType, eventId)
     }
 
     private fun statusOfEvent(id: Long): String? =
         jdbcTemplate.queryForObject("SELECT status FROM outbox_event WHERE id = ?", String::class.java, id)
 
     private fun attempts(id: Long): Int =
-        jdbcTemplate.queryForObject("SELECT attempts FROM outbox_event WHERE id = ?", Int::class.javaObjectType, id)!!
+        jdbcTemplate.queryForObject("SELECT attempts FROM outbox_event WHERE id = ?", Int::class.javaObjectType, id)
 
     private fun publishedAt(id: Long): LocalDateTime? =
         jdbcTemplate.queryForObject("SELECT published_at FROM outbox_event WHERE id = ?", LocalDateTime::class.java, id)
