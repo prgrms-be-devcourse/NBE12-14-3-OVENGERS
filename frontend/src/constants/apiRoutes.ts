@@ -26,6 +26,7 @@ export const API_ROUTES = {
     chargeOrders: '/credits/charge-orders',
     chargeOrder: (orderId: string) => `/credits/charge-orders/${orderId}`,
     confirmChargeOrder: '/credits/charge-orders/confirm',
+    grants: '/credits/grants',
   },
   spaces: {
     list: '/spaces',

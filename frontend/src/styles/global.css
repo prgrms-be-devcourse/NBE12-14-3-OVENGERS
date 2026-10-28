@@ -647,6 +647,8 @@ dialog .modal-actions{flex-wrap:wrap}
 .charge-history-row p { margin: 4px 0 0; }
 .charge-history-method { font-size: .9rem; color: var(--text, inherit); font-weight: 500; }
 .charge-history-order { font-size: .78rem; overflow-wrap: anywhere; }
+.charge-history-grants { margin-top: 32px; }
+.charge-history-grants h2 { font-size: 1.1rem; margin: 0 0 12px; }
 /* 예약 대기: 예약된 칸(주황)과 지난 칸(취소선)을 구분하고, 내 대기 목록 행을 둔다 */
 .slotgrid button.reserved{background:#fff4e0;border-color:#f0c987;color:#8a5a00}
 .slotgrid button.reserved:disabled{background:#fff4e0;color:#8a5a00;text-decoration:none;opacity:1}

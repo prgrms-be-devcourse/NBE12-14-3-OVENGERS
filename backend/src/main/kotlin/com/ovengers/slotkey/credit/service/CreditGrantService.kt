@@ -1,5 +1,6 @@
 package com.ovengers.slotkey.credit.service
 
+import com.ovengers.slotkey.credit.dto.response.CreditGrantHistoryResponse
 import com.ovengers.slotkey.credit.entity.CreditTransaction
 import com.ovengers.slotkey.credit.entity.CreditTransactionType
 import com.ovengers.slotkey.credit.repository.CreditBalanceRepository
@@ -8,6 +9,8 @@ import com.ovengers.slotkey.global.error.BusinessException
 import com.ovengers.slotkey.global.error.ErrorCode
 import com.ovengers.slotkey.member.entity.Member
 import com.ovengers.slotkey.member.repository.MemberRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -95,6 +98,16 @@ class CreditGrantService(
         // 지급 후 잔액 반환
         return updatedMember.balance
     }
+
+    // 내 관리자 지급 내역 조회(최신순)
+    @Transactional(readOnly = true)
+    fun getMyAdminGrants(
+        memberId: Long?,
+        pageable: Pageable,
+    ): Page<CreditGrantHistoryResponse> =
+        creditTransactionRepository
+            .findByMember_IdAndTypeOrderByIdDesc(memberId, CreditTransactionType.ADMIN_GRANT, pageable)
+            .map(CreditGrantHistoryResponse::from)
 
     // 회원 잔액 증가
     private fun increaseBalance(

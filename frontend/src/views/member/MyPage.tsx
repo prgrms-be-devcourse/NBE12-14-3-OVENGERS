@@ -135,7 +135,7 @@ export default function MyPage() {
             <nav className="mypage-shortcuts" aria-label="바로가기">
               <Link href={ROUTES.reservations}><b>예약 내역</b><span>다가오는 일정과 지난 이용</span></Link>
               <Link href={ROUTES.waitlist}><b>빈자리 알림</b><span>자리를 기다리는 시간</span></Link>
-              <Link href={ROUTES.creditHistory}><b>충전 내역</b><span>PG 결제 기록</span></Link>
+              <Link href={ROUTES.creditHistory}><b>충전 내역</b><span>PG 결제·관리자 지급 기록</span></Link>
               <Link href={ROUTES.inquiries}><b>내 문의</b><span>문의 내역과 답변</span></Link>
             </nav>
           )}

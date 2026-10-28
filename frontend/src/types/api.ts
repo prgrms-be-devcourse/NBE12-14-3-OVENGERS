@@ -169,6 +169,14 @@ export interface ChargeOrderHistoryItem extends ChargeOrder {
   updatedAt: string;
 }
 
+/** 내 관리자 지급(ADMIN_GRANT) 내역 한 줄. */
+export interface CreditGrantHistoryItem {
+  transactionId: number;
+  amount: number;
+  reason: string | null;
+  createdAt: string;
+}
+
 export interface ConfirmChargeOrderRequest {
   paymentKey: string;
   orderId: string;

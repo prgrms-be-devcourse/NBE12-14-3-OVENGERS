@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import Link from 'next/link';
-import { getChargeHistory } from '../../api/creditApi';
+import { getChargeHistory, getCreditGrantHistory } from '../../api/creditApi';
 import { useAsync } from '../../hooks/useApi';
 import { usePagination } from '../../hooks/usePagination';
 import { ROUTES } from '../../constants/routePaths';
@@ -23,12 +23,19 @@ const STATUS_VIEW: Record<ChargeOrderStatus, { label: string; tone: Tone }> = {
   PENDING: { label: '결제 대기', tone: 'gray' },
 };
 
-/** PG 결제로 크레딧을 충전한 내역. 예약 결제·환불 같은 크레딧 사용 내역은 포함하지 않는다. */
+/** PG 결제 충전과 관리자 지급 내역. 예약 결제·환불 같은 크레딧 사용 내역은 포함하지 않는다. */
 export default function ChargeHistoryPage() {
   const { page, size, setPage } = usePagination({ initialSize: 10 });
   const fetchHistory = useCallback(() => getChargeHistory({ page, size }), [page, size]);
   const { data, loading, error, run } = useAsync(fetchHistory, [fetchHistory]);
   const items = data?.content ?? [];
+  const grantPagination = usePagination({ initialSize: 10 });
+  const fetchGrants = useCallback(
+    () => getCreditGrantHistory({ page: grantPagination.page, size: grantPagination.size }),
+    [grantPagination.page, grantPagination.size],
+  );
+  const grants = useAsync(fetchGrants, [fetchGrants]);
+  const grantItems = grants.data?.content ?? [];
 
   return (
     <div className="charge-history">
@@ -36,7 +43,7 @@ export default function ChargeHistoryPage() {
         <div>
           <p className="page-kicker">CHARGE HISTORY</p>
           <h1>충전 내역</h1>
-          <p>PG 결제로 충전한 크레딧 내역입니다.</p>
+          <p>PG 결제로 충전한 내역과 관리자가 지급한 크레딧 내역입니다.</p>
         </div>
         <Link href={ROUTES.creditCharge} className="btn primary">크레딧 충전하기</Link>
       </div>
@@ -79,6 +86,30 @@ export default function ChargeHistoryPage() {
           totalElements={data.totalElements}
           onChange={setPage}
         />
+      )}
+
+      {grantItems.length > 0 && (
+        <section className="charge-history-grants" aria-label="관리자 지급 내역">
+          <h2>관리자 지급 내역</h2>
+          {grantItems.map((grant) => (
+            <div className="panel charge-history-row" key={grant.transactionId}>
+              <div>
+                <strong>{formatCredit(grant.amount)}</strong>
+                {grant.reason && <p className="charge-history-method">사유: {grant.reason}</p>}
+                <p className="muted">{formatDateTime(grant.createdAt)}</p>
+              </div>
+              <Badge tone="green">관리자 지급</Badge>
+            </div>
+          ))}
+          {grants.data && (
+            <Pagination
+              page={grants.data.page}
+              totalPages={grants.data.totalPages}
+              totalElements={grants.data.totalElements}
+              onChange={grantPagination.setPage}
+            />
+          )}
+        </section>
       )}
     </div>
   );
