@@ -143,7 +143,7 @@ Base URL `/api/v1`, 인증은 `Authorization: Bearer {accessToken}`(Refresh Toke
 | 골든 테스트 | Java 구현 기준으로 저장한 주요 API 응답(JSON)과 Kotlin 전환 후 응답을 비교해 HTTP 계약 불변을 검증 → [골든 가이드](docs/testing/java-kotlin-golden-guide.md) |
 | 시간 경계 | `Clock` 주입으로 체크인 시작·마감, HOLD 만료, 종료 직전·정각·직후를 고정 시각으로 검증 |
 | 뮤테이션 | 핵심 도메인에 한해 PIT 수동 실행(`./gradlew pitest`), CI 미연결 → [결정](docs/decisions/mutation-testing.md) |
-| 미검증 | E2E 브라우저 자동화, `SUM(credit_transaction) == member.balance` 전체 불변식 |
+| 미검증 | E2E 브라우저 자동화, 운영 환경 Kafka 연동 실측, `SUM(credit_transaction) == member.balance` 전체 불변식 |
 
 전략과 시나리오-테스트 대응표: [test-strategy.md](docs/testing/test-strategy.md)
 
