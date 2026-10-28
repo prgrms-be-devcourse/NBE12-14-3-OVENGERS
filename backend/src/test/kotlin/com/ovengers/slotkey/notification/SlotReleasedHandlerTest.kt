@@ -268,7 +268,7 @@ class SlotReleasedHandlerTest : ReservationIntegrationTestSupport() {
 
         // 직접 만든 인스턴스에는 @Transactional 프록시가 없으므로 트랜잭션을 직접 연다.
         TransactionTemplate(transactionManager).executeWithoutResult(
-            { status -> fixedClockHandler.handle(eventId, reservationId) },
+            { _ -> fixedClockHandler.handle(eventId, reservationId) },
         )
 
         assertThat(notificationCount(atNow)).isZero()

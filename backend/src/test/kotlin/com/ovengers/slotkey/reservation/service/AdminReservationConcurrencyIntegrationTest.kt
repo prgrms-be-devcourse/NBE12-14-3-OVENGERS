@@ -261,7 +261,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -304,7 +304,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             executorService.submit(
                 Runnable {
                     try {
-                        newRequiresNewTx().execute({ status ->
+                        newRequiresNewTx().execute({ _ ->
                             val resp =
                                 doorAccessVerificationService.verify(
                                     userMember.id!!,
@@ -323,7 +323,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInSnapshotCreated.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread A (메인 스레드): 관리자 강제 취소 실행 및 커밋 완료
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             adminReservationService.forceCancel(reservationId, "동시 강제 취소", adminMember.id!!)
         })
 
@@ -340,7 +340,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInResp.reasonCode).isEqualTo(AccessDenyReason.RESERVATION_NOT_ACTIVE)
 
         // 2. DB 최종 상태 재조회
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(finalRes.cancelledAt).isNotNull()
@@ -386,7 +386,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -428,7 +428,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val cancelThread =
             Thread({
                 try {
-                    newRequiresNewTx().execute({ status ->
+                    newRequiresNewTx().execute({ _ ->
                         adminReservationService.forceCancel(reservationId, "동시 강제 취소", adminMember.id!!)
                         return@execute null
                     })
@@ -441,7 +441,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(cancelReadDone.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread B: 사용자 결제 확인 커밋 완료
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             reservationPaymentConfirmService.confirm(
                 userMember.id!!,
                 reservationId,
@@ -459,7 +459,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_STATE_CONFLICT)
 
         // DB 재조회: CONFIRMED 유지, 슬롯 2개, 크레딧 차감 1건, 감사 로그 0건
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val reloaded = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(reloaded.getStatus()).isEqualTo(ReservationStatus.CONFIRMED)
             assertThat(reloaded.cancelledAt).isNull()
@@ -489,7 +489,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
         val tokenRef = AtomicReference<DoorAccessToken>()
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -534,7 +534,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val cancelThread =
             Thread({
                 try {
-                    newRequiresNewTx().execute({ status ->
+                    newRequiresNewTx().execute({ _ ->
                         adminReservationService.forceCancel(reservationId, "동시 강제 취소", adminMember.id!!)
                         return@execute null
                     })
@@ -547,7 +547,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(cancelReadDone.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread B: 실제 자동 퇴실 배치 서비스 트랜잭션 실행 및 커밋
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val processed = reservationBatchProcessor.autoCheckOut(reservationId, TestClockConfig.BASE_TIME)
             assertThat(processed).isTrue()
         })
@@ -561,7 +561,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_STATE_CONFLICT)
 
         // DB 재조회: COMPLETED 유지, checkedOutAt 기록, 슬롯 1건 보존, 토큰 폐기, AUTO_CHECK_OUT 이력, 강제 취소 감사 로그 0건
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val reloaded = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(reloaded.getStatus()).isEqualTo(ReservationStatus.COMPLETED)
             assertThat(reloaded.checkedOutAt).isNotNull()
@@ -596,7 +596,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -639,7 +639,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             executorService.submit(
                 Runnable {
                     try {
-                        newRequiresNewTx().execute({ status ->
+                        newRequiresNewTx().execute({ _ ->
                             val resp =
                                 doorAccessVerificationService.verify(
                                     userMember.id!!,
@@ -657,7 +657,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInSnapshotCreated.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread A (메인 스레드): 동시 최초 체크인 커밋 (IN_USE) + 토큰 재발급 커밋 (기존 토큰 폐기)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val updated =
                 reservationRepository.checkInIfConfirmed(
                     reservationId,
@@ -681,7 +681,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInResp.reasonCode).isEqualTo(AccessDenyReason.TOKEN_REVOKED)
 
         // 2. DB 최종 상태 재조회
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.IN_USE)
 
@@ -708,7 +708,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -751,7 +751,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             executorService.submit(
                 Runnable {
                     try {
-                        newRequiresNewTx().execute({ status ->
+                        newRequiresNewTx().execute({ _ ->
                             val resp =
                                 doorAccessVerificationService.verify(
                                     userMember.id!!,
@@ -769,7 +769,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInSnapshotCreated.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread A (메인 스레드): 사용자가 토큰을 직접 폐기 (예약 상태는 CONFIRMED 그대로 유지)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             doorAccessTokenService.revokeByReservationId(
                 userMember.id!!,
                 reservationId,
@@ -790,7 +790,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(checkInResp.reasonCode).isEqualTo(AccessDenyReason.TOKEN_REVOKED)
 
         // 2. DB 최종 상태 재조회: 예약은 CONFIRMED 유지, 슬롯 보존, 이력 0건, ALLOW 로그 0건
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.CONFIRMED)
             assertThat(finalRes.checkedInAt).isNull()
@@ -826,7 +826,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -869,7 +869,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             executorService.submit(
                 Runnable {
                     try {
-                        newRequiresNewTx().execute({ status ->
+                        newRequiresNewTx().execute({ _ ->
                             val resp =
                                 doorAccessVerificationService.verify(
                                     userMember.id!!,
@@ -887,7 +887,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(reentrySnapshotCreated.await(5, TimeUnit.SECONDS)).isTrue()
 
         // Thread A (메인 스레드): 관리자 강제 취소 커밋 (CANCELLED, 슬롯 삭제, 토큰 폐기, 감사 로그)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val cancelResp =
                 adminReservationService.forceCancel(
                     reservationId,
@@ -909,7 +909,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(reentryResp.reasonCode).isEqualTo(AccessDenyReason.RESERVATION_NOT_ACTIVE)
 
         // 2. DB 최종 상태 재조회: CANCELLED, 슬롯 0개, 추가 ALLOW 로그 0건 (최초 체크인 ALLOW 1건만 존재)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(reservationSlotRepository.count()).isZero()
@@ -943,7 +943,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -984,7 +984,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
                     try {
                         startLatch.await(5, TimeUnit.SECONDS)
                         val resp =
-                            newRequiresNewTx().execute({ status ->
+                            newRequiresNewTx().execute({ _ ->
                                 adminReservationService.forceCancel(reservationId, "동시 강제 취소", adminMember.id!!)
                             })
                         cancelResponseRef.set(resp)
@@ -1002,7 +1002,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
                     try {
                         startLatch.await(5, TimeUnit.SECONDS)
                         val resp =
-                            newRequiresNewTx().execute({ status ->
+                            newRequiresNewTx().execute({ _ ->
                                 doorAccessVerificationService.verify(
                                     userMember.id!!,
                                     DoorAccessVerifyRequest(space.id!!, rawToken),
@@ -1022,7 +1022,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         checkInFuture.get(5, TimeUnit.SECONDS)
 
         // then: DB 상태의 일관성 및 선후관계 불변식 단언
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             val finalSlots = reservationSlotRepository.findAll()
             val finalToken = doorAccessTokenRepository.findById(token.id!!).orElseThrow()
@@ -1101,7 +1101,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1152,7 +1152,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         // Thread A: 관리자 강제 취소 시작 (Reservation 행 잠금 획득 후 revokeByReservation에서 대기)
         val cancelFuture =
             executorService.submit<Any?>({
-                newRequiresNewTx().executeWithoutResult({ status ->
+                newRequiresNewTx().executeWithoutResult({ _ ->
                     val cancelResp =
                         adminReservationService.forceCancel(
                             reservationId,
@@ -1172,7 +1172,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             executorService.submit(
                 Runnable {
                     try {
-                        newRequiresNewTx().execute({ status ->
+                        newRequiresNewTx().execute({ _ ->
                             val resp = doorAccessTokenService.issue(userMember.id!!, reservationId)
                             reissueResponseRef.set(resp)
                             return@execute null
@@ -1210,7 +1210,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_STATE_CONFLICT)
 
         // 2. DB 최종 상태: CANCELLED, 슬롯 0개, 활성 토큰 0건, 이전 토큰 ADMIN_FORCE_CANCEL 폐기, 감사 1건
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(reservationSlotRepository.count()).isZero()
@@ -1237,7 +1237,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1264,20 +1264,20 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
 
         // 2. 토큰 재발급 먼저 커밋: 토큰 1은 REISSUED로 폐기, 새 토큰 2 발급
         val token2Resp =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 doorAccessTokenService.issue(userMember.id!!, reservationId)
             })!!
         assertThat(token2Resp).isNotNull()
 
         // 3. 관리자 강제 취소 실행
         val cancelResp =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 adminReservationService.forceCancel(reservationId, "재발급 후 강제 취소", adminMember.id!!)
             })!!
         assertThat(cancelResp.status).isEqualTo(ReservationStatus.CANCELLED)
 
         // then: 불변식 단언
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(reservationSlotRepository.count()).isZero()
@@ -1316,7 +1316,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1365,7 +1365,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
                 Runnable {
                     try {
                         val resp =
-                            newRequiresNewTx().execute({ status ->
+                            newRequiresNewTx().execute({ _ ->
                                 // 1. Reservation 비관적 락 선행 획득
                                 reservationRepository.findByIdForUpdate(reservationId).orElseThrow()
                                 verifyHoldingReservationLock.countDown()
@@ -1400,7 +1400,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
                 Runnable {
                     try {
                         val resp =
-                            newRequiresNewTx().execute({ status ->
+                            newRequiresNewTx().execute({ _ ->
                                 doorAccessTokenService.issue(userMember.id!!, reservationId)
                             })
                         reissueResponseRef.set(resp)
@@ -1437,7 +1437,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         assertThat(reissueResponseRef.get()).isNotNull()
 
         // DB 최종 상태 확인: 상태는 IN_USE, 활성 토큰 1개 존재
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val finalRes = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(finalRes.getStatus()).isEqualTo(ReservationStatus.IN_USE)
 
@@ -1463,7 +1463,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1488,7 +1488,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val token = doorAccessTokenRepository.findByReservationIdAndRevokedAtIsNull(reservationId).orElseThrow()
 
         // 1. 체크인 실행 및 완료
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val resp =
                 doorAccessVerificationService.verify(
                     userMember.id!!,
@@ -1498,7 +1498,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         })
 
         // 2. IN_USE 상태에서 관리자 강제 취소 실행 -> 현재 서비스 정책상 정상 성공!
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val cancelResp =
                 adminReservationService.forceCancel(
                     reservationId,
@@ -1509,7 +1509,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         })
 
         // 3. DB 최종 상태 단언: CANCELLED, 슬롯 삭제(0개), 토큰 폐기, IN_USE -> CANCELLED 이력, 감사 로그 1건
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val reloaded = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(reloaded.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(reloaded.cancelledAt).isNotNull()
@@ -1537,7 +1537,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(2)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1558,7 +1558,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             })!!
 
         // 1. 1차 강제 취소 완료 커밋 (CONFIRMED -> CANCELLED)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             adminReservationService.forceCancel(reservationId, "1차 강제 취소", adminMember.id!!)
         })
 
@@ -1568,7 +1568,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_STATE_CONFLICT)
 
         // 3. 감사 로그는 1차 취소 1건만 존재
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             assertThat(auditLogRepository.count()).isEqualTo(1)
         })
     }
@@ -1580,7 +1580,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
         val end = start.plusHours(1)
 
         val reservationId =
-            newRequiresNewTx().execute({ status ->
+            newRequiresNewTx().execute({ _ ->
                 val res =
                     reservationRepository.save(
                         Reservation
@@ -1602,7 +1602,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             })!!
 
         // 1. 관리자 강제 취소 완료 커밋 (CONFIRMED -> CANCELLED)
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             adminReservationService.forceCancel(reservationId, "연장 전 강제 취소", adminMember.id!!)
         })
 
@@ -1615,7 +1615,7 @@ class AdminReservationConcurrencyIntegrationTest : IntegrationTestSupport() {
             .hasFieldOrPropertyWithValue("errorCode", ErrorCode.RESERVATION_EXTEND_NOT_ALLOWED)
 
         // 3. DB 재조회: CANCELLED 상태 유지, 슬롯은 0개, 추가 차감 없음
-        newRequiresNewTx().executeWithoutResult({ status ->
+        newRequiresNewTx().executeWithoutResult({ _ ->
             val reloaded = reservationRepository.findById(reservationId).orElseThrow()
             assertThat(reloaded.getStatus()).isEqualTo(ReservationStatus.CANCELLED)
             assertThat(reservationSlotRepository.count()).isZero()

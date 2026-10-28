@@ -126,7 +126,7 @@ class MemberWithdrawalHoldConcurrencyIntegrationTest : IntegrationTestSupport() 
         val transactionTemplate = TransactionTemplate(transactionManager)
 
         memberId =
-            transactionTemplate.execute({ status ->
+            transactionTemplate.execute({ _ ->
                 val member =
                     memberRepository.saveAndFlush(
                         Member(
@@ -200,7 +200,7 @@ class MemberWithdrawalHoldConcurrencyIntegrationTest : IntegrationTestSupport() 
             // Thread 1: HOLD 생성 후 트랜잭션 커밋 전 대기 (회원 배타 잠금 유지)
             val holdFuture =
                 executor.submit<ReservationResponse?>({
-                    transactionTemplate.execute({ status ->
+                    transactionTemplate.execute({ _ ->
                         val response = reservationHoldService.createHold(memberId, spaceId, start, end)
                         holdCreatedLatch.countDown()
                         try {
@@ -226,7 +226,7 @@ class MemberWithdrawalHoldConcurrencyIntegrationTest : IntegrationTestSupport() 
                 Proxy.newProxyInstance(
                     MemberRepository::class.java.getClassLoader(),
                     arrayOf(MemberRepository::class.java),
-                    { proxy, method, args ->
+                    { _, method, args ->
                         if ("findByIdForUpdate".equals(method.getName()) &&
                             (memberId == args!![0])
                         ) {
@@ -306,7 +306,7 @@ class MemberWithdrawalHoldConcurrencyIntegrationTest : IntegrationTestSupport() 
             // Thread 1: 탈퇴 수행 후 트랜잭션 커밋 전 대기 (회원 배타 잠금 유지)
             val withdrawFuture =
                 executor.submit<Void?>({
-                    transactionTemplate.execute({ status ->
+                    transactionTemplate.execute({ _ ->
                         memberWithdrawalService.withdraw(memberId, RAW_PASSWORD)
                         withdrawExecutedLatch.countDown()
                         try {
@@ -332,7 +332,7 @@ class MemberWithdrawalHoldConcurrencyIntegrationTest : IntegrationTestSupport() 
                 Proxy.newProxyInstance(
                     MemberRepository::class.java.getClassLoader(),
                     arrayOf(MemberRepository::class.java),
-                    { proxy, method, args ->
+                    { _, method, args ->
                         if ("findByIdForUpdate".equals(method.getName()) &&
                             (memberId == args!![0])
                         ) {

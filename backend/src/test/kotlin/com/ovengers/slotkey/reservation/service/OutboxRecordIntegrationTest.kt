@@ -220,9 +220,9 @@ class OutboxRecordIntegrationTest : ReservationIntegrationTestSupport() {
                 tomorrowAt(15, 0),
             )
         jdbcTemplate.update("UPDATE reservation SET hold_expires_at = ? WHERE id = ?", now().minusMinutes(1), reservation)
-        transactionTemplate.executeWithoutResult { tx -> assertThat(expirationService.expireHold(reservation, now())).isTrue() }
+        transactionTemplate.executeWithoutResult { _ -> assertThat(expirationService.expireHold(reservation, now())).isTrue() }
         assertEvent(reservation, space, "HOLD_EXPIRED")
-        transactionTemplate.executeWithoutResult { tx -> assertThat(expirationService.expireHold(reservation, now())).isFalse() }
+        transactionTemplate.executeWithoutResult { _ -> assertThat(expirationService.expireHold(reservation, now())).isFalse() }
         assertThat(events(reservation)).hasSize(1)
     }
 
@@ -238,7 +238,7 @@ class OutboxRecordIntegrationTest : ReservationIntegrationTestSupport() {
                 tomorrowAt(14, 0),
                 tomorrowAt(15, 0),
             )
-        transactionTemplate.executeWithoutResult { tx -> assertThat(expirationService.expireHold(reservation, now())).isFalse() }
+        transactionTemplate.executeWithoutResult { _ -> assertThat(expirationService.expireHold(reservation, now())).isFalse() }
         assertThat(events(reservation)).isEmpty()
     }
 
@@ -255,7 +255,7 @@ class OutboxRecordIntegrationTest : ReservationIntegrationTestSupport() {
                 tomorrowAt(15, 0),
             )
         assertThatThrownBy({
-            transactionTemplate.executeWithoutResult { tx ->
+            transactionTemplate.executeWithoutResult { _ ->
                 cancelService.cancel(member, reservation)
                 assertThat(events(reservation)).hasSize(1)
                 throw IllegalStateException("rollback after outbox insert")

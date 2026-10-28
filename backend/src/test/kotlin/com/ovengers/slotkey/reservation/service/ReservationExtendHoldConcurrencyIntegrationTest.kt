@@ -64,7 +64,7 @@ class ReservationExtendHoldConcurrencyIntegrationTest : ReservationIntegrationTe
             Proxy.newProxyInstance(
                 MemberRepository::class.java.getClassLoader(),
                 arrayOf(MemberRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForUpdate".equals(method.getName()) &&
                         (memberId == args!![0])
                     ) {
@@ -160,7 +160,7 @@ class ReservationExtendHoldConcurrencyIntegrationTest : ReservationIntegrationTe
             Proxy.newProxyInstance(
                 MemberRepository::class.java.getClassLoader(),
                 arrayOf(MemberRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForUpdate".equals(method.getName()) &&
                         (memberId == args!![0])
                     ) {

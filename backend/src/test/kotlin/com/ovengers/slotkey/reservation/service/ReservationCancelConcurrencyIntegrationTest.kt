@@ -77,7 +77,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 MemberRepository::class.java.getClassLoader(),
                 arrayOf(MemberRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForUpdate".equals(method.getName()) &&
                         (memberId == args!![0])
                     ) {
@@ -177,7 +177,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 MemberRepository::class.java.getClassLoader(),
                 arrayOf(MemberRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForUpdate".equals(method.getName()) &&
                         (memberId == args!![0])
                     ) {
@@ -297,7 +297,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.space.repository.SpaceRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.space.repository.SpaceRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForShare".equals(method.getName()) && (spaceId == args!![0])) {
                         holdEnteredSpace.countDown()
                     }
@@ -319,7 +319,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("save".equals(method.getName())) {
                         adminReachedHistory.countDown()
                         if (!resumeAdmin.await(10, TimeUnit.SECONDS)) {
@@ -443,7 +443,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.space.repository.SpaceRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.space.repository.SpaceRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForShare".equals(method.getName()) && (spaceId == args!![0])) {
                         holdEnteredSpace.countDown()
                     }
@@ -465,7 +465,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("save".equals(method.getName())) {
                         adminReachedHistory.countDown()
                         if (!resumeAdmin.await(10, TimeUnit.SECONDS)) {
@@ -592,7 +592,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.space.repository.SpaceRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.space.repository.SpaceRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("findByIdForShare".equals(method.getName()) && (spaceId == args!![0])) {
                         extendEnteredSpace.countDown()
                     }
@@ -614,7 +614,7 @@ class ReservationCancelConcurrencyIntegrationTest : ReservationIntegrationTestSu
             Proxy.newProxyInstance(
                 com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java.getClassLoader(),
                 arrayOf(com.ovengers.slotkey.reservation.repository.ReservationStatusHistoryRepository::class.java),
-                { proxy, method, args ->
+                { _, method, args ->
                     if ("save".equals(method.getName())) {
                         adminReachedHistory.countDown()
                         if (!resumeAdmin.await(10, TimeUnit.SECONDS)) {

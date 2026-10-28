@@ -165,7 +165,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
         val spaceUpdateFuture =
             executor.submit(
                 Runnable {
-                    txTemplate.execute<Any?>({ status ->
+                    txTemplate.execute<Any?>({ _ ->
                         // 배타 락 획득
                         val space = spaceRepository.findByIdForUpdate(spaceId).orElseThrow()
                         spaceLockAcquiredLatch.countDown()
@@ -249,7 +249,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
         val adminFuture =
             executor.submit(
                 Runnable {
-                    txTemplate.execute<Any?>({ status ->
+                    txTemplate.execute<Any?>({ _ ->
                         val space = spaceRepository.findByIdForUpdate(spaceId).orElseThrow()
                         adminLockAcquiredLatch.countDown()
                         try {
@@ -343,7 +343,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
         val holdFuture =
             executor.submit(
                 Runnable {
-                    txTemplate.execute<Any?>({ status ->
+                    txTemplate.execute<Any?>({ _ ->
                         reservationHoldService.createHold(memberId, spaceId, start, end)
                         holdLockAcquiredLatch.countDown()
                         try {
@@ -433,7 +433,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
         val adminFuture =
             executor.submit(
                 Runnable {
-                    txTemplate.execute<Any?>({ status ->
+                    txTemplate.execute<Any?>({ _ ->
                         val space = spaceRepository.findByIdForUpdate(spaceId).orElseThrow()
                         adminPriceLockLatch.countDown()
                         try {
@@ -521,7 +521,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
         val payFuture =
             executor.submit(
                 Runnable {
-                    txTemplate.execute<Any?>({ status ->
+                    txTemplate.execute<Any?>({ _ ->
                         val confirmed =
                             reservationPaymentConfirmService.confirm(
                                 memberId,
@@ -749,7 +749,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
             val extendFuture =
                 executor.submit(
                     Runnable {
-                        txTemplate.execute<Any?>({ status ->
+                        txTemplate.execute<Any?>({ _ ->
                             val extended =
                                 reservationExtendService.extend(
                                     memberId,
@@ -778,7 +778,7 @@ class SpaceReservationLockIntegrationTest : IntegrationTestSupport() {
                 executor.submit<Any?>({
                     secondTxAttemptStartedLatch.countDown()
                     try {
-                        return@submit txTemplate.execute({ status ->
+                        return@submit txTemplate.execute({ _ ->
                             // 잠금 순서에 따라 Space 공유 락 먼저 통과 확인
                             val targetSpaceId = reservationRepository.findSpaceIdById(hold.reservationId)
                             spaceRepository.findByIdForShare(targetSpaceId!!).orElseThrow()

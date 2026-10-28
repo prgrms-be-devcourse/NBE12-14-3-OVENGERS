@@ -247,7 +247,7 @@ class AdminReservationServiceIntegrationTest : IntegrationTestSupport() {
     @DisplayName("강제 취소 시 이미 상태가 전이되었으면 조건부 UPDATE가 0행을 반환하여 409 예외가 발생하고 후속 처리가 롤백된다")
     fun forceCancel_whenConcurrentTransitionOccurs_failsWithConflictAndAborts() {
         // given: 다른 트랜잭션이 이미 IN_USE -> COMPLETED로 전이 완료했다고 가정
-        transactionTemplate.executeWithoutResult({ status ->
+        transactionTemplate.executeWithoutResult({ _ ->
             reservationRepository.checkInIfConfirmed(
                 reservation.getId(),
                 LocalDateTime.of(2026, 9, 20, 14, 0),
